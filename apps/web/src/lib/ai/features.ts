@@ -137,6 +137,30 @@ export async function translateBatch(strings: string[], from: string, to: string
   return arr.map((s) => (typeof s === "string" ? s : ""));
 }
 
+// ─── AI Site Builder ────────────────────────────────────
+export interface SitePlan {
+  brandName: string;
+  tagline: string;
+  theme: { brand: string; brandDark: string; accent: string; fontPair: "modern" | "elegant" | "bold" | "minimal" | "editorial"; radius: "sharp" | "soft" | "round"; headerStyle: "light" | "dark" };
+  nav: { label: string; slug: string }[];
+  pages: { slug: string; title: string; intent: string }[];
+}
+
+/** Plan a whole site from a one-line business description. */
+export async function generateSitePlan(description: string, locale: string): Promise<SitePlan> {
+  const system = `You are EdgePress's site architect. From a business description, plan a small marketing website.
+Return ONLY JSON:
+{"brandName":"...","tagline":"short tagline in ${locale === "fr" ? "French" : "English"}","theme":{"brand":"#hex (deep primary)","brandDark":"#hex (darker)","accent":"#hex (vivid accent)","fontPair":"modern|elegant|bold|minimal|editorial","radius":"sharp|soft|round","headerStyle":"light|dark"},"nav":[{"label":"Home","slug":""},{"label":"...","slug":"..."}],"pages":[{"slug":"","title":"Home","intent":"what this page should contain"}, ...]}
+Rules: 3-5 pages including a home (slug "") and a contact page. Choose colors that fit the brand's feel. Keep it realistic.`;
+  const { text } = await aiComplete("siteBuilder", { system, prompt: description, json: true, maxTokens: 1200 });
+  const plan = extractJson<SitePlan>(text);
+  // Defensive defaults.
+  plan.pages = (plan.pages ?? []).slice(0, 5);
+  if (!plan.pages.some((p) => p.slug === "")) plan.pages.unshift({ slug: "", title: "Home", intent: `Home page for ${plan.brandName}` });
+  plan.nav = (plan.nav ?? []).slice(0, 6);
+  return plan;
+}
+
 /** SEO keyword & content-gap ideas for a topic. */
 export async function keywordIdeas(topic: string): Promise<{ keywords: string[]; gaps: string[] }> {
   const system = `You are an SEO strategist. For the given topic, return JSON {"keywords":[...10 realistic search keywords...],"gaps":[...5 content ideas/pages the site is likely missing...]}. Return ONLY JSON.`;
