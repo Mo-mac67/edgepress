@@ -67,7 +67,7 @@ export function PostEditor({ initial, uiLocale }: { initial: Post; uiLocale: Loc
         </div>
         <div className="card p-5">
           <span className="mb-2 block text-sm font-medium text-ink">Body ({locale.toUpperCase()})</span>
-          <RichText key={locale} value={post.body[locale]} onChange={(html) => patch({ body: { ...post.body, [locale]: html } })} />
+          <RichText key={locale} value={post.body[locale]} onChange={(html) => patch({ body: { ...post.body, [locale]: html } })} locale={locale} />
         </div>
       </div>
     </div>

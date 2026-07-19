@@ -112,31 +112,19 @@ export async function pingIndexNow(slug: string): Promise<void> {
   }
 }
 
-// ─── AI meta generation (Claude, env-gated) ─────────────
+// ─── AI meta generation (routed through the provider-agnostic AI engine) ──
 export async function generateMeta(page: Page, locale: "en" | "fr"): Promise<{ title: string; description: string } | { error: string }> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return { error: "ANTHROPIC_API_KEY is not configured" };
+  const { aiComplete, extractJson } = await import("./ai/engine");
   const text = pageText(page, locale).slice(0, 4000);
   const lang = locale === "fr" ? "French" : "English";
   try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 300,
-        messages: [
-          {
-            role: "user",
-            content: `You are an expert SEO copywriter. Based on this web page's content, write in ${lang}:\n1. An SEO title (30-60 characters, compelling, include the most relevant keyword)\n2. A meta description (120-160 characters, with a call to action)\n\nMatch the page's own topic and tone — do not invent an industry.\n\nPage content:\n${text}\n\nRespond ONLY with JSON: {"title": "...", "description": "..."}`,
-          },
-        ],
-      }),
+    const { text: raw } = await aiComplete("seoMeta", {
+      system: `You are an expert SEO copywriter. Based on the web page content, write in ${lang} an SEO title (30-60 chars, include the top keyword) and a meta description (120-160 chars, with a call to action). Match the page's own topic — do not invent an industry. Respond ONLY with JSON: {"title":"...","description":"..."}`,
+      prompt: text,
+      json: true,
+      maxTokens: 300,
     });
-    if (!res.ok) return { error: `AI request failed (${res.status})` };
-    const data = await res.json();
-    const raw = data.content?.[0]?.text ?? "";
-    const json = JSON.parse(raw.slice(raw.indexOf("{"), raw.lastIndexOf("}") + 1));
+    const json = extractJson<{ title: string; description: string }>(raw);
     return { title: String(json.title ?? ""), description: String(json.description ?? "") };
   } catch (err) {
     return { error: err instanceof Error ? err.message : "AI generation failed" };

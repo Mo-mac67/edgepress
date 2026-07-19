@@ -2,13 +2,14 @@ import { NextResponse } from "next/server";
 import { getRole, isAuthed } from "@/lib/admin-auth";
 import { logAudit } from "@/lib/audit-store";
 import { getSeo, saveSeo } from "@/lib/cms-store";
+import { aiReady } from "@/lib/ai/engine";
 import { DEFAULT_SEO, type SeoSettings } from "@/lib/cms-types";
 
 export async function GET() {
   if (!(await isAuthed())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   return NextResponse.json({
     seo: await getSeo(),
-    aiAvailable: !!process.env.ANTHROPIC_API_KEY,
+    aiAvailable: await aiReady(),
     siteUrl: process.env.SITE_URL ?? "",
   });
 }
