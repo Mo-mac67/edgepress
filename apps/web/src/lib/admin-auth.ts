@@ -21,14 +21,30 @@ function secret(): string {
 function hash(password: string): string {
   return createHash("sha256").update(password + secret()).digest("hex");
 }
-function superHash(): string {
-  return hash(process.env.SUPERADMIN_PASSWORD ?? "Mhb123654");
+/** The super role exists only when SUPERADMIN_PASSWORD is explicitly set — no
+ *  hardcoded default (this is open-source; a shipped default would be a
+ *  backdoor). Returns null when unset, so no password can match it. */
+function superHash(): string | null {
+  const p = process.env.SUPERADMIN_PASSWORD;
+  return p ? hash(p) : null;
 }
 
 const readJson = <T>(key: string, fallback: T) => readJsonDoc<T>(key, fallback);
 const writeJson = (key: string, data: unknown) => writeJsonDoc(key, data);
 
-type AdminConfig = { passwordHash?: string; tabPermissions?: Record<string, string[]> };
+type AdminConfig = { passwordHash?: string; tabPermissions?: Record<string, string[]>; setupDone?: boolean };
+
+/** First-run detection: true once the owner has completed the setup wizard. */
+export async function isSetupDone(): Promise<boolean> {
+  const cfg = await readJson<AdminConfig>(CONFIG_FILE, {});
+  return !!cfg.setupDone;
+}
+export async function completeSetup(password: string): Promise<boolean> {
+  if (!password || password.length < 6) return false;
+  const cfg = await readJson<AdminConfig>(CONFIG_FILE, {});
+  await writeJson(CONFIG_FILE, { ...cfg, passwordHash: hash(password), setupDone: true });
+  return true;
+}
 
 /** Primary client-admin hash: persisted (after change) or env-derived. */
 async function primaryAdminHash(): Promise<string> {
