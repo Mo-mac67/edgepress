@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getRole, isAuthed } from "@/lib/admin-auth";
 import { logAudit } from "@/lib/audit-store";
-import { deletePage, getPages, savePage } from "@/lib/cms-store";
+import { deletePage, getPages, savePage, snapshotRevision } from "@/lib/cms-store";
 import { pingIndexNow } from "@/lib/seo";
 import type { Page } from "@/lib/cms-types";
 
@@ -35,6 +35,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       noindex: typeof body.seo.noindex === "boolean" ? body.seo.noindex : existing.seo?.noindex,
     };
   }
+  await snapshotRevision(id); // version history: capture the pre-save state
   await savePage(merged);
   await logAudit({ action: "page_save", role: await getRole(), detail: merged.slug || "home" });
   // Instant indexing: notify search engines when a page goes (or stays) live.

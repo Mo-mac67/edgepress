@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { AdminLogin } from "@/components/admin/AdminLogin";
 import { PageEditor } from "@/components/admin/PageEditor";
+import { AdminUIProvider } from "@/components/admin/ui";
 import { isLocale } from "@/i18n/config";
 import { isAuthed } from "@/lib/admin-auth";
 import { getPages } from "@/lib/cms-store";
@@ -14,5 +15,9 @@ export default async function EditPage({ params }: PageProps<"/[lang]/admin/page
 
   const page = (await getPages()).find((p) => p.id === id);
   if (!page) notFound();
-  return <PageEditor initial={page} uiLocale={lang} />;
+  return (
+    <AdminUIProvider>
+      <PageEditor initial={page} uiLocale={lang} />
+    </AdminUIProvider>
+  );
 }

@@ -5,14 +5,17 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/Icon";
 import { MediaLibrary } from "./MediaLibrary";
+import { useAdminUI } from "./ui";
 import type { Locale } from "@/i18n/config";
 import type { NavItem, Page, Post, SiteSettings } from "@/lib/cms-types";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
+const slugify = (s: string) => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 
 // ─── Pages ──────────────────────────────────────────────
 export function PagesPanel({ locale }: { locale: Locale }) {
   const router = useRouter();
+  const ui = useAdminUI();
   const [pages, setPages] = useState<Page[]>([]);
   const [err, setErr] = useState("");
   const [dragging, setDragging] = useState(false);
@@ -38,11 +41,15 @@ export function PagesPanel({ locale }: { locale: Locale }) {
   }
 
   async function create() {
-    const title = window.prompt("Page title:");
+    const title = await ui.prompt({
+      title: "New page",
+      label: "Page title",
+      placeholder: "e.g. Pricing",
+      confirmLabel: "Create",
+      validate: (v) => (v.trim() ? null : "Enter a title"),
+    });
     if (!title) return;
-    const slug = window.prompt("URL slug (e.g. warranty):", title.toLowerCase().replace(/[^a-z0-9]+/g, "-"));
-    if (!slug) return;
-    await createPage({ title, slug });
+    await createPage({ title, slug: slugify(title) });
   }
 
   async function importHtml(files: FileList | null) {
@@ -56,11 +63,10 @@ export function PagesPanel({ locale }: { locale: Locale }) {
     setErr("");
     try {
       const rawHtml = await file.text();
-      const guess = file.name.replace(/\.html?$/i, "").toLowerCase().replace(/[^a-z0-9]+/g, "-");
-      const title = window.prompt("Page title for the imported file:", guess.replace(/-/g, " ")) ?? guess;
-      const slug = window.prompt("URL slug:", guess);
-      if (!slug) return;
-      await createPage({ title, slug, rawHtml });
+      const guess = file.name.replace(/\.html?$/i, "");
+      const title = await ui.prompt({ title: "Import HTML page", label: "Page title", defaultValue: guess.replace(/[-_]+/g, " "), confirmLabel: "Import" });
+      if (!title) return;
+      await createPage({ title, slug: slugify(title || guess), rawHtml });
     } finally {
       setImporting(false);
       setDragging(false);
@@ -75,7 +81,10 @@ export function PagesPanel({ locale }: { locale: Locale }) {
     setErr("");
     try {
       const data = JSON.parse(await file.text());
-      const applyNav = Array.isArray(data.nav) && data.nav.length > 0 && window.confirm("Replace the site menu with the imported one too?");
+      const applyNav =
+        Array.isArray(data.nav) && data.nav.length > 0
+          ? await ui.confirm({ title: "Replace the menu too?", message: "The imported template includes a navigation menu. Replace your current site menu with it?", confirmLabel: "Replace menu", cancelLabel: "Keep mine" })
+          : false;
       const res = await fetch("/api/admin/import", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -83,23 +92,25 @@ export function PagesPanel({ locale }: { locale: Locale }) {
       });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || "Import failed");
-      window.alert(
-        `Imported: ${d.imported.pages.length} page(s) as drafts${d.imported.theme ? " + theme applied" : ""}${d.imported.nav ? " + menu" : ""}.` +
-          (d.imported.pages.length ? `\nPages: ${d.imported.pages.join(", ")}` : ""),
+      ui.toast(
+        `Imported ${d.imported.pages.length} page(s) as drafts${d.imported.theme ? " + theme" : ""}${d.imported.nav ? " + menu" : ""}.`,
+        "success",
       );
       await load();
       router.refresh();
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Import failed");
+      ui.toast("Import failed", "error");
     } finally {
       setImporting(false);
     }
   }
 
-  async function remove(id: string) {
-    if (!window.confirm("Delete this page?")) return;
+  async function remove(id: string, title: string) {
+    if (!(await ui.confirm({ title: "Delete page?", message: `“${title}” will be permanently removed.`, confirmLabel: "Delete", danger: true }))) return;
     setPages((p) => p.filter((x) => x.id !== id));
     await fetch(`/api/admin/pages/${id}`, { method: "DELETE" });
+    ui.toast("Page deleted", "success");
   }
 
   return (
@@ -157,7 +168,7 @@ export function PagesPanel({ locale }: { locale: Locale }) {
                 <Icon name="edit" size={15} /> Edit
               </Link>
               {!p.system && (
-                <button onClick={() => remove(p.id)} className="rounded p-2 text-ink-soft hover:text-red-600" title="Delete">
+                <button onClick={() => remove(p.id, p.title[locale] || p.title.en)} className="rounded p-2 text-ink-soft hover:text-red-600" title="Delete">
                   <Icon name="trash" size={16} />
                 </button>
               )}
@@ -230,6 +241,7 @@ export function MediaPanel() {
 // ─── Blog ───────────────────────────────────────────────
 export function BlogPanel({ locale }: { locale: Locale }) {
   const router = useRouter();
+  const ui = useAdminUI();
   const [posts, setPosts] = useState<Post[]>([]);
   const [err, setErr] = useState("");
 
@@ -238,20 +250,22 @@ export function BlogPanel({ locale }: { locale: Locale }) {
   }, []);
 
   async function create() {
-    const title = window.prompt("Post title:");
+    const title = await ui.prompt({ title: "New post", label: "Post title", placeholder: "e.g. How we ship faster", confirmLabel: "Create", validate: (v) => (v.trim() ? null : "Enter a title") });
     if (!title) return;
-    const slug = window.prompt("URL slug:", title.toLowerCase().replace(/[^a-z0-9]+/g, "-"));
-    if (!slug) return;
-    const res = await fetch("/api/admin/posts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ title, slug }) });
+    const res = await fetch("/api/admin/posts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ title, slug: slugify(title) }) });
     const data = await res.json();
     if (res.ok) router.push(`/${locale}/admin/posts/${data.post.id}`);
-    else setErr(data.error || "Failed");
+    else {
+      setErr(data.error || "Failed");
+      ui.toast(data.error || "Failed to create post", "error");
+    }
   }
 
-  async function remove(id: string) {
-    if (!window.confirm("Delete this post?")) return;
+  async function remove(id: string, title: string) {
+    if (!(await ui.confirm({ title: "Delete post?", message: `“${title}” will be permanently removed.`, confirmLabel: "Delete", danger: true }))) return;
     setPosts((p) => p.filter((x) => x.id !== id));
     await fetch(`/api/admin/posts/${id}`, { method: "DELETE" });
+    ui.toast("Post deleted", "success");
   }
 
   return (
@@ -269,7 +283,7 @@ export function BlogPanel({ locale }: { locale: Locale }) {
               <p className="text-xs text-ink-soft">/blog/{p.slug} · {p.date}</p>
             </div>
             <Link href={`/${locale}/admin/posts/${p.id}`} className="btn-secondary py-1.5 text-sm"><Icon name="edit" size={15} /> Edit</Link>
-            <button onClick={() => remove(p.id)} className="rounded p-2 text-ink-soft hover:text-red-600"><Icon name="trash" size={16} /></button>
+            <button onClick={() => remove(p.id, p.title[locale] || p.title.en)} className="rounded p-2 text-ink-soft hover:text-red-600"><Icon name="trash" size={16} /></button>
           </div>
         ))}
         {posts.length === 0 && <p className="p-6 text-center text-sm text-ink-soft">No posts yet.</p>}

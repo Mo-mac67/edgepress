@@ -2,9 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/Icon";
+import { useAdminUI } from "./ui";
 import type { MediaItem } from "@/lib/cms-types";
 
 export function MediaLibrary({ onPick }: { onPick?: (url: string) => void }) {
+  const ui = useAdminUI();
   const [items, setItems] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -42,9 +44,10 @@ export function MediaLibrary({ onPick }: { onPick?: (url: string) => void }) {
   }
 
   async function remove(id: string) {
-    if (!window.confirm("Delete this file?")) return;
+    if (!(await ui.confirm({ title: "Delete file?", message: "This file will be permanently removed from storage.", confirmLabel: "Delete", danger: true }))) return;
     setItems((prev) => prev.filter((i) => i.id !== id));
     await fetch(`/api/admin/media/${id}`, { method: "DELETE" });
+    ui.toast("File deleted", "success");
   }
 
   return (

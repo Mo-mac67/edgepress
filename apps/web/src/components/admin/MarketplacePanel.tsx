@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { marketDict } from "@/lib/marketplace-i18n";
+import { useAdminUI } from "./ui";
 import type { Tender } from "@/lib/tenders-store";
 import type { User } from "@/lib/user-auth";
 
@@ -14,6 +15,7 @@ type TenderWithBids = Tender & { bidCount: number };
  *   {tab === "marketplace" && <MarketplacePanel locale={locale} />}
  */
 export function MarketplacePanel({ locale }: { locale: string }) {
+  const ui = useAdminUI();
   const d = marketDict(locale);
   const t = d.admin;
   const nf = new Intl.NumberFormat(locale === "fr" ? "fr-CA" : "en-CA");
@@ -81,7 +83,7 @@ export function MarketplacePanel({ locale }: { locale: string }) {
   }
 
   async function removeUser(id: string) {
-    if (!window.confirm(t.removeConfirm)) return;
+    if (!(await ui.confirm({ title: t.removeConfirm, confirmLabel: "Remove", danger: true }))) return;
     setUsers((prev) => prev.filter((u) => u.id !== id));
     await act({ action: "remove-user", id });
   }
