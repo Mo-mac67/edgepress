@@ -52,6 +52,23 @@ export function PagesPanel({ locale }: { locale: Locale }) {
     await createPage({ title, slug: slugify(title) });
   }
 
+  async function importFromUrl() {
+    const url = await ui.prompt({ title: "Import from a URL", message: "EdgePress will read the page and rebuild it as an editable draft.", label: "Page URL", placeholder: "https://example.com/about", confirmLabel: "Import", validate: (v) => (/^https?:\/\//.test(v) ? null : "Enter a full URL") });
+    if (!url) return;
+    setImporting(true);
+    ui.toast("Reading and rebuilding the page…");
+    try {
+      const res = await fetch("/api/admin/ai/import-url", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url, locale }) });
+      const d = await res.json();
+      if (res.ok) {
+        ui.toast("Imported as a draft", "success");
+        router.push(`/${locale}/admin/pages/${d.page.id}`);
+      } else setErr(d.error || "Import failed");
+    } finally {
+      setImporting(false);
+    }
+  }
+
   async function generateWithAI() {
     const prompt = await ui.prompt({
       title: "Generate a page with AI",
@@ -154,6 +171,9 @@ export function PagesPanel({ locale }: { locale: Locale }) {
             <Icon name="download" size={16} /> {importing ? "Importing…" : "Import HTML"}
             <input type="file" accept=".html,.htm" hidden onChange={(e) => importHtml(e.target.files)} />
           </label>
+          <button onClick={importFromUrl} className="btn-secondary py-2 text-sm" title="Import a page from a URL with AI">
+            <Icon name="download" size={16} /> Import URL
+          </button>
           <button onClick={generateWithAI} className="btn-secondary py-2 text-sm" title="Generate a page with AI">
             <Icon name="star" size={16} /> Generate with AI
           </button>
