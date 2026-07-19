@@ -158,16 +158,16 @@ export async function aiComplete(feature: AIFeature, req: AIRequest): Promise<AI
   return result;
 }
 
-/** Vision: describe an image for alt text (Workers AI vision model, free). */
+/** Vision: describe an image for alt text (Workers AI LLaVA, free, ungated). */
 export async function describeImage(bytes: Uint8Array): Promise<string> {
   const ai = await workersAiEnv();
   if (!ai) throw new Error("Workers AI binding not available");
-  const res = (await ai.run("@cf/meta/llama-3.2-11b-vision-instruct", {
+  const res = (await ai.run("@cf/llava-hf/llava-1.5-7b-hf", {
     image: Array.from(bytes),
-    prompt: "Write a short, factual alt-text description of this image (one sentence, no preamble).",
+    prompt: "Write a short, factual alt-text description of this image in one sentence, with no preamble.",
     max_tokens: 100,
-  })) as { response?: unknown };
-  const r = res.response;
+  })) as { description?: unknown; response?: unknown };
+  const r = res.description ?? res.response;
   const text = typeof r === "string" ? r : r == null ? "" : JSON.stringify(r);
   return text.trim().replace(/^["']|["']$/g, "").slice(0, 200);
 }
