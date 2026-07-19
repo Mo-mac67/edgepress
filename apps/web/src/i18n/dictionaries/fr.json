@@ -1,0 +1,288 @@
+{
+  "common": {
+    "getQuote": "Obtenir une soumission gratuite",
+    "requestQuote": "Demander une soumission",
+    "callUs": "Appelez-nous",
+    "emailUs": "Écrivez-nous",
+    "learnMore": "En savoir plus",
+    "viewAll": "Voir tout",
+    "viewProjects": "Voir nos projets",
+    "readMore": "Lire la suite",
+    "phoneLabel": "Téléphone",
+    "emailLabel": "Courriel",
+    "addressLabel": "Bureau",
+    "hoursLabel": "Heures",
+    "phone": "+1 (555) 010-0000",
+    "email": "hello@example.com",
+    "address": "Toronto, ON · Serving the GTA",
+    "hours": "Lun–Ven 8h00–18h00 · Sam sur rendez-vous",
+    "companyName": "EdgePress",
+    "companyShort": "EdgePress"
+  },
+  "nav": {
+    "home": "Accueil",
+    "services": "Services",
+    "projects": "Projets",
+    "about": "À propos",
+    "contact": "Contact",
+    "quote": "Soumission"
+  },
+  "home": {
+    "hero": {
+      "badge": "Toronto & RGT · Depuis 2008",
+      "title": "Des maisons bâties pour durer",
+      "subtitle": "EdgePress conçoit et bâtit des maisons sur mesure, des agrandissements et des rénovations primés à Toronto et dans la grande région de Toronto — licencié, assuré et couvert par garantie.",
+      "ctaPrimary": "Démarrer votre projet",
+      "ctaSecondary": "Voir nos réalisations"
+    },
+    "stats": [
+      { "value": "16+", "label": "Années à bâtir dans la RGT" },
+      { "value": "450+", "label": "Projets réalisés" },
+      { "value": "100 %", "label": "Licencié et assuré" },
+      { "value": "4,9★", "label": "Note moyenne des clients" }
+    ],
+    "trustLine": "Licencié, couvert par garantie et fièrement membre des principales associations de construction du Canada.",
+    "servicesTitle": "Ce que nous bâtissons",
+    "servicesSubtitle": "De la maison sur mesure à la rénovation de précision, une seule équipe responsable gère votre projet du début à la fin.",
+    "whyTitle": "Pourquoi les propriétaires choisissent EdgePress",
+    "whySubtitle": "Seize ans de savoir-faire, de transparence et de résultats dignes de confiance.",
+    "why": [
+      { "title": "Contrats à prix fixe", "desc": "Des soumissions détaillées et transparentes, sans coûts cachés — vous connaissez le prix complet avant le début des travaux." },
+      { "title": "Livraison à temps", "desc": "Un calendrier rigoureux et des gestionnaires de projet dédiés gardent votre chantier dans les délais et le budget." },
+      { "title": "Licencié et garanti", "desc": "Entièrement licencié et assuré, chaque maison neuve étant inscrite à la garantie Tarion." },
+      { "title": "Garantie de savoir-faire", "desc": "Des matériaux haut de gamme et des gens de métier qualifiés, appuyés par notre propre garantie de main-d’œuvre." }
+    ],
+    "processTitle": "Notre façon de travailler",
+    "processSubtitle": "Un processus clair en cinq étapes qui vous tient informé à chaque phase.",
+    "process": [
+      { "step": "01", "title": "Consultation", "desc": "Nous discutons de votre vision, de vos besoins et de votre budget — avec des conseils d’experts honnêtes." },
+      { "step": "02", "title": "Conception & plans", "desc": "Notre équipe de design élabore les dessins, les permis et une portée de travaux détaillée à prix fixe." },
+      { "step": "03", "title": "Soumission transparente", "desc": "Vous recevez une soumission ligne par ligne et un calendrier — sans surprise ni frais cachés." },
+      { "step": "04", "title": "Construction", "desc": "Un gestionnaire de projet dédié dirige votre chantier avec des gens de métier qualifiés et des mises à jour régulières." },
+      { "step": "05", "title": "Remise & garantie", "desc": "Nous effectuons une inspection complète et appuyons chaque projet par notre garantie de main-d’œuvre." }
+    ],
+    "projectsTitle": "Projets récents",
+    "projectsSubtitle": "Une sélection de maisons sur mesure, d’agrandissements et de rénovations réalisés dans la RGT.",
+    "credentialsTitle": "Licencié, certifié et primé",
+    "credentialsSubtitle": "Nous détenons les accréditations qui vous protègent — et la reconnaissance qui reflète nos standards.",
+    "testimonialsTitle": "Ce que disent nos clients",
+    "testimonialsSubtitle": "Nous sommes fiers des relations que nous bâtissons en même temps que les maisons.",
+    "ctaTitle": "Prêt à bâtir quelque chose d’exceptionnel?",
+    "ctaSubtitle": "Réservez une consultation gratuite et sans engagement. Parlez-nous de votre projet et nous vous montrerons ce qui est possible.",
+    "ctaButton": "Obtenir votre soumission gratuite"
+  },
+  "services": {
+    "title": "Nos services",
+    "subtitle": "Des services complets de conception-construction pour les propriétaires et les entreprises de la grande région de Toronto.",
+    "items": [
+      {
+        "id": "custom_home",
+        "title": "Maisons sur mesure",
+        "desc": "Des maisons sur mesure bâties selon votre mode de vie — de la conception architecturale aux touches finales.",
+        "features": ["Conception architecturale & permis", "Matériaux et finitions haut de gamme", "Garantie de maison neuve Tarion", "Constructions écoénergétiques"]
+      },
+      {
+        "id": "home_addition",
+        "title": "Agrandissements",
+        "desc": "Ajoutez de l’espace et de la valeur avec des ajouts d’étage, des extensions et des logements accessoires parfaitement intégrés.",
+        "features": ["Ajouts d’un deuxième étage", "Extensions arrière et latérales", "Logements accessoires", "Ingénierie structurale"]
+      },
+      {
+        "id": "renovation",
+        "title": "Rénovations complètes",
+        "desc": "Transformez des espaces désuets en maisons modernes et fonctionnelles grâce à une rénovation complète et bien gérée.",
+        "features": ["Conversions à aire ouverte", "Rénovations intérieures complètes", "Mises à jour de maisons patrimoniales", "Gestion de projet"]
+      },
+      {
+        "id": "kitchen_bath",
+        "title": "Cuisines & salles de bain",
+        "desc": "Des cuisines superbes et fonctionnelles et des salles de bain dignes d’un spa, conçues pour durer.",
+        "features": ["Armoires sur mesure", "Comptoirs haut de gamme", "Plomberie & électricité", "Aperçus de conception 3D"]
+      },
+      {
+        "id": "basement",
+        "title": "Aménagement de sous-sol",
+        "desc": "Gagnez un étage complet — appartements légaux, cinémas maison, salles d’entraînement et espaces de vie.",
+        "features": ["Logements secondaires légaux", "Imperméabilisation & sous-œuvre", "Fenêtres de sortie", "Insonorisation"]
+      },
+      {
+        "id": "commercial",
+        "title": "Construction commerciale",
+        "desc": "Aménagements et rénovations de bureaux, commerces et usages mixtes livrés à temps et avec un minimum de dérangement.",
+        "features": ["Améliorations locatives", "Aménagements commerciaux et de bureaux", "Permis & conformité au code", "Horaires en dehors des heures"]
+      }
+    ]
+  },
+  "projects": {
+    "title": "Nos projets",
+    "subtitle": "Découvrez une sélection de maisons sur mesure, d’agrandissements et de rénovations réalisés à Toronto et dans la RGT.",
+    "categories": [
+      { "id": "all", "label": "Tous" },
+      { "id": "custom_home", "label": "Maisons sur mesure" },
+      { "id": "renovation", "label": "Rénovations" },
+      { "id": "home_addition", "label": "Agrandissements" },
+      { "id": "kitchen_bath", "label": "Cuisines & bains" },
+      { "id": "commercial", "label": "Commercial" }
+    ],
+    "items": [
+      { "id": "p1", "title": "Maison sur mesure moderne", "category": "custom_home", "location": "Forest Hill, Toronto", "desc": "Une maison contemporaine sur mesure de 4 200 pi² avec rez-de-chaussée à aire ouverte et vitrage pleine hauteur." },
+      { "id": "p2", "title": "Ajout d’un deuxième étage", "category": "home_addition", "location": "Etobicoke", "desc": "Espace de vie doublé grâce à l’ajout d’un étage complet, parfaitement agencé à la brique d’origine." },
+      { "id": "p3", "title": "Rénovation de cuisine de chef", "category": "kitchen_bath", "location": "Oakville", "desc": "Une rénovation complète offrant une cuisine de chef lumineuse et ouverte, avec armoires sur mesure et surfaces de quartz." },
+      { "id": "p4", "title": "Rénovation complète de maison", "category": "renovation", "location": "Leaside, Toronto", "desc": "Transformation intérieure complète d’une maison des années 1940 en un espace familial moderne et lumineux." },
+      { "id": "p5", "title": "Logement légal au sous-sol", "category": "renovation", "location": "Mississauga", "desc": "Un appartement de sous-sol entièrement légal et autonome, avec entrée privée et fenêtres de sortie." },
+      { "id": "p6", "title": "Salle de bain spa", "category": "kitchen_bath", "location": "Vaughan", "desc": "Une luxueuse salle de bain attenante avec planchers chauffants, douche sans seuil et pierre naturelle." },
+      { "id": "p7", "title": "Aménagement commercial", "category": "commercial", "location": "Centre-ville de Toronto", "desc": "Un aménagement commercial au rez-de-chaussée réalisé en dehors des heures pour ne pas perturber les unités voisines." },
+      { "id": "p8", "title": "Maison de prestige", "category": "custom_home", "location": "King City", "desc": "Une résidence de prestige de 6 000 pi² avec façade en pierre naturelle, ascenseur et cour arrière de style resort." }
+    ]
+  },
+  "about": {
+    "title": "À propos de EdgePress",
+    "subtitle": "Un constructeur torontois de confiance — avec le savoir-faire, les accréditations et le souci du détail qui vont avec.",
+    "story": [
+      "EdgePress a été fondée en 2008 avec une conviction simple : construire ou rénover une maison devrait être stimulant, et non stressant. En seize ans, nous sommes devenus l’un des constructeurs de maisons sur mesure et de rénovations les plus fiables de la grande région de Toronto.",
+      "De notre première rénovation aux résidences de prestige et projets commerciaux que nous réalisons aujourd’hui, notre approche n’a pas changé : faire un travail exceptionnel, communiquer honnêtement et traiter chaque maison comme si c’était la nôtre. C’est pourquoi une grande partie de notre travail provient de clients fidèles et de références.",
+      "Aujourd’hui, notre équipe interne de concepteurs, gestionnaires de projet et gens de métier prend en charge chaque projet du début à la fin, pour que vous ayez un seul partenaire responsable, du premier croquis à l’inspection finale."
+    ],
+    "valuesTitle": "Nos valeurs",
+    "values": [
+      { "title": "Intégrité", "desc": "Des conseils honnêtes, des prix transparents et aucune surprise — jamais." },
+      { "title": "Savoir-faire", "desc": "Des matériaux haut de gamme et des gens de métier qualifiés dans chaque détail." },
+      { "title": "Responsabilité", "desc": "Une seule équipe dédiée responsable de votre projet du début à la fin." },
+      { "title": "Communication", "desc": "Des mises à jour régulières et un gestionnaire de projet qui répond au téléphone." }
+    ],
+    "statsTitle": "En chiffres",
+    "teamTitle": "Dirigé par des bâtisseurs, pas des vendeurs",
+    "teamDesc": "Chaque projet EdgePress est guidé par des professionnels chevronnés qui ont passé leur carrière sur les chantiers de la RGT. En travaillant avec nous, vous travaillez directement avec les gens qui bâtissent votre maison."
+  },
+  "credentials": {
+    "title": "Licencié, certifié et primé",
+    "subtitle": "Nous détenons toutes les accréditations qui vous protègent comme propriétaire, et nous sommes reconnus par les organisations les plus respectées de l’industrie. (Accréditations représentatives — certificats vérifiés disponibles sur demande.)",
+    "licenses": {
+      "title": "Licences & inscriptions",
+      "subtitle": "Entièrement licencié, assuré et couvert par garantie pour protéger votre investissement.",
+      "items": [
+        { "name": "Constructeur licencié HCRA", "desc": "Licencié par la Home Construction Regulatory Authority de l’Ontario." },
+        { "name": "Inscrit à la garantie Tarion", "desc": "Chaque maison neuve est inscrite au programme de garantie de maison neuve Tarion de l’Ontario." },
+        { "name": "Entrepreneur licencié de la Ville de Toronto", "desc": "Licence municipale d’entrepreneur et de métiers en règle." },
+        { "name": "Couverture WSIB", "desc": "Couverture de la Commission de la sécurité et de l’assurance au travail sur chaque chantier." },
+        { "name": "Assurance responsabilité de 5 M$", "desc": "Couverture complète de responsabilité civile commerciale." }
+      ]
+    },
+    "certifications": {
+      "title": "Certifications",
+      "subtitle": "Formés et certifiés pour bâtir selon les plus hauts standards modernes.",
+      "items": [
+        { "name": "Constructeur Net Zéro ACCH", "org": "Association canadienne des constructeurs d’habitations" },
+        { "name": "ENERGY STAR pour maisons neuves", "org": "Ressources naturelles Canada" },
+        { "name": "Constructeur inscrit Tarion", "org": "Société de garantie Tarion" },
+        { "name": "Spécialiste du maintien à domicile (CAPS)", "org": "CAPS / NAHB" },
+        { "name": "Certifié travaux sans plomb", "org": "Sécurité en rénovation certifiée" },
+        { "name": "SIMDUT & travail en hauteur", "org": "Sécurité de chantier certifiée" }
+      ]
+    },
+    "awards": {
+      "title": "Prix & reconnaissances",
+      "subtitle": "Reconnus pour le design, la qualité et le service dans toute la RGT.",
+      "items": [
+        { "name": "Constructeur de l’année BILD — Finaliste", "year": "2023", "org": "Prix BILD" },
+        { "name": "Prix de distinction OHBA", "year": "2022", "org": "Ontario Home Builders' Association" },
+        { "name": "Prix du choix des consommateurs — RGT", "year": "2023", "org": "Choix des consommateurs" },
+        { "name": "Prix HomeStars Best of", "year": "2021–2024", "org": "HomeStars" },
+        { "name": "Houzz — Best of Design & Service", "year": "2022–2024", "org": "Houzz" },
+        { "name": "Rénovateur de l’année — Nominé", "year": "2021", "org": "Prix BILD" }
+      ]
+    },
+    "memberships": {
+      "title": "Adhésions & accréditations",
+      "items": [
+        "BILD — Building Industry and Land Development Association",
+        "OHBA — Ontario Home Builders' Association",
+        "ACCH — Association canadienne des constructeurs d’habitations",
+        "Rénovateur RenoMark",
+        "Entreprise accréditée BBB — Cote A+"
+      ]
+    }
+  },
+  "testimonials": {
+    "title": "Ce que disent nos clients",
+    "subtitle": "Nous sommes fiers des relations que nous bâtissons en même temps que les maisons.",
+    "items": [
+      { "quote": "EdgePress a bâti notre maison sur mesure exactement comme promis — dans le budget et avec seulement une semaine de retard malgré un hiver rigoureux. Le savoir-faire est exceptionnel et leur gestionnaire de projet était toujours joignable.", "author": "Sarah & Michael T.", "role": "Maison sur mesure", "location": "Forest Hill" },
+      { "quote": "Nous avons rencontré cinq constructeurs pour notre ajout d’étage. EdgePress a été le seul à nous donner un prix fixe et un vrai calendrier. Ils ont respecté les deux. Nos voisins n’en reviennent pas que ce soit la même maison.", "author": "David L.", "role": "Agrandissement", "location": "Etobicoke" },
+      { "quote": "La rénovation de notre cuisine a été impeccable, de la conception à la finition. Des prix honnêtes, un chantier propre et une qualité au-delà de nos attentes. Nous les avons déjà réservés pour notre sous-sol.", "author": "Priya & Anand K.", "role": "Rénovation de cuisine", "location": "Oakville" },
+      { "quote": "Comme propriétaire commercial, j’ai travaillé avec plusieurs entrepreneurs. Le professionnalisme de EdgePress, sa connaissance des permis et ses horaires en dehors des heures les distinguent. Fortement recommandé.", "author": "Robert M.", "role": "Aménagement commercial", "location": "Centre-ville de Toronto" }
+    ]
+  },
+  "contact": {
+    "title": "Bâtissons votre projet",
+    "subtitle": "Parlez-nous un peu de ce que vous avez en tête et nous vous répondrons en un jour ouvrable avec les prochaines étapes — gratuitement et sans engagement.",
+    "infoTitle": "Nous joindre",
+    "serviceAreaTitle": "Zone de service",
+    "serviceArea": "Nous desservons fièrement Toronto et la grande région de Toronto, notamment :",
+    "serviceAreaList": ["Toronto", "North York", "Etobicoke", "Scarborough", "Mississauga", "Vaughan", "Markham", "Richmond Hill", "Oakville", "Burlington", "Brampton", "King City"],
+    "form": {
+      "heading": "Demandez votre soumission gratuite",
+      "name": "Nom complet",
+      "namePlaceholder": "Votre nom",
+      "email": "Adresse courriel",
+      "emailPlaceholder": "vous@exemple.com",
+      "phone": "Numéro de téléphone",
+      "phonePlaceholder": "(416) 555-0100",
+      "city": "Ville / secteur",
+      "cityPlaceholder": "ex. North York",
+      "projectType": "Type de projet",
+      "projectTypes": {
+        "custom_home": "Maison sur mesure",
+        "home_addition": "Agrandissement",
+        "renovation": "Rénovation complète",
+        "kitchen_bath": "Cuisine ou salle de bain",
+        "basement": "Aménagement de sous-sol",
+        "commercial": "Projet commercial",
+        "design_build": "Conception-construction",
+        "other": "Autre chose"
+      },
+      "budget": "Budget estimé",
+      "budgets": ["Moins de 50 k$", "50 k$ – 150 k$", "150 k$ – 350 k$", "350 k$ – 750 k$", "Plus de 750 k$", "Pas encore sûr"],
+      "timeline": "Début idéal",
+      "timelines": ["Dès que possible", "1 à 3 mois", "3 à 6 mois", "6 à 12 mois", "Simple planification"],
+      "message": "Détails du projet",
+      "messagePlaceholder": "Parlez-nous de votre projet, de vos objectifs et de tout détail utile…",
+      "preferredTimes": "Meilleurs moments pour vous joindre",
+      "times": ["Matins en semaine", "Après-midis en semaine", "Soirs en semaine", "Fins de semaine"],
+      "submit": "Envoyer ma demande",
+      "submitting": "Envoi…",
+      "successTitle": "Merci — nous avons bien reçu votre demande!",
+      "success": "Un conseiller de projet EdgePress vous contactera en un jour ouvrable. Pour toute urgence, appelez-nous au +1 (555) 010-0000.",
+      "another": "Envoyer une autre demande",
+      "errorGeneric": "Une erreur s’est produite. Veuillez réessayer ou nous appeler directement.",
+      "errorName": "Veuillez saisir votre nom.",
+      "errorEmail": "Veuillez saisir une adresse courriel valide.",
+      "errorPhone": "Veuillez saisir un numéro de téléphone valide.",
+      "required": "Requis"
+    }
+  },
+  "footer": {
+    "tagline": "Maisons sur mesure, agrandissements et rénovations primés à Toronto et dans la RGT. Licencié, assuré et couvert par garantie.",
+    "quickLinksTitle": "Entreprise",
+    "servicesTitle": "Services",
+    "contactTitle": "Contact",
+    "rights": "Tous droits réservés.",
+    "credit": "Conçu, développé et déployé par Synergion.ca",
+    "licenseNote": "Licencié HCRA · Inscrit Tarion · Couvert WSIB · Entièrement assuré"
+  },
+  "admin": {
+    "title": "Admin EdgePress",
+    "login": "Se connecter",
+    "password": "Mot de passe",
+    "signOut": "Se déconnecter",
+    "overview": "Aperçu",
+    "leads": "Prospects",
+    "activity": "Activité",
+    "audit": "Audit",
+    "settings": "Paramètres"
+  },
+  "legal": {
+    "privacyTitle": "Politique de confidentialité",
+    "termsTitle": "Conditions d’utilisation"
+  }
+}
