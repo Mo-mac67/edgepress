@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "edgepress-dev",
+  "name": "edgepress",
   "main": ".open-next/worker.js",
   "compatibility_date": "2025-09-23",
   "compatibility_flags": ["nodejs_compat"],
@@ -10,11 +10,11 @@
   },
   // Default EdgePress storage: Cloudflare KV (documents) + R2 (media).
   // Swap these bindings — or set EDGEPRESS_STORAGE/EDGEPRESS_MEDIA to "fs" — to
-  // run on any other host. IDs below belong to the private dev instance.
+  // run on any other host. The KV id below is created per-account at deploy.
   "kv_namespaces": [
     {
       "binding": "APP_KV",
-      "id": "2a9f46d105ba4602ac316580a8ee27eb"
+      "id": "PLACEHOLDER_CREATE_ON_YOUR_ACCOUNT"
     }
   ],
   "r2_buckets": [
@@ -30,7 +30,7 @@
   },
   "workers_dev": true,
   "vars": {
-    "SITE_URL": "https://edgepress-dev.kingsproca.workers.dev",
+    "SITE_URL": "https://edgepress.mh-bamzadeh.workers.dev",
     "EDGEPRESS_STORAGE": "kv",
     "EDGEPRESS_MEDIA": "r2"
   },
