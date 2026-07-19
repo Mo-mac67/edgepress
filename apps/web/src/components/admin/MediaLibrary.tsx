@@ -11,6 +11,7 @@ export function MediaLibrary({ onPick }: { onPick?: (url: string) => void }) {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
+  const [altBusy, setAltBusy] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   async function load() {
@@ -48,6 +49,20 @@ export function MediaLibrary({ onPick }: { onPick?: (url: string) => void }) {
     setItems((prev) => prev.filter((i) => i.id !== id));
     await fetch(`/api/admin/media/${id}`, { method: "DELETE" });
     ui.toast("File deleted", "success");
+  }
+
+  async function genAlt(id: string) {
+    setAltBusy(id);
+    try {
+      const r = await fetch("/api/admin/ai/alt", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) });
+      const d = await r.json();
+      if (r.ok) {
+        setItems((prev) => prev.map((i) => (i.id === id ? { ...i, alt: d.alt } : i)));
+        ui.toast("Alt text generated", "success");
+      } else ui.toast(d.error || "Alt generation failed", "error");
+    } finally {
+      setAltBusy(null);
+    }
   }
 
   return (
@@ -91,10 +106,16 @@ export function MediaLibrary({ onPick }: { onPick?: (url: string) => void }) {
                     Use
                   </button>
                 )}
+                {m.kind !== "video" && (
+                  <button type="button" onClick={() => genAlt(m.id)} disabled={altBusy === m.id} className="rounded-lg bg-white/90 p-1.5 text-brand" title="Generate alt text with AI">
+                    <Icon name="star" size={15} />
+                  </button>
+                )}
                 <button type="button" onClick={() => remove(m.id)} className="rounded-lg bg-white/90 p-1.5 text-red-600" title="Delete">
                   <Icon name="trash" size={15} />
                 </button>
               </div>
+              {m.alt && <p className="truncate px-2 py-1 text-[10px] text-ink-soft" title={m.alt}>alt: {m.alt}</p>}
             </div>
           ))}
           {items.length === 0 && <p className="col-span-full text-center text-sm text-ink-soft">No media yet.</p>}
