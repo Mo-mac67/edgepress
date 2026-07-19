@@ -14,7 +14,7 @@
   "kv_namespaces": [
     {
       "binding": "APP_KV",
-      "id": "PLACEHOLDER_CREATE_ON_YOUR_ACCOUNT"
+      "id": "***REMOVED-KV-ID***"
     }
   ],
   "r2_buckets": [
