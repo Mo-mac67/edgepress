@@ -1,10 +1,10 @@
 import "server-only";
 
 /**
- * Storage abstraction. On Cloudflare Workers the JSON "documents" live in a KV
- * namespace (binding APP_KV); locally they fall back to JSON files under
- * DATA_DIR. Every store goes through readJsonDoc / writeJsonDoc so callers never
- * care which backend is active.
+ * Storage adapter. Documents live in Cloudflare KV (binding APP_KV) by default;
+ * with EDGEPRESS_STORAGE=fs (Docker/Node self-host) they live as JSON files
+ * under DATA_DIR. Every store goes through readJsonDoc / writeJsonDoc so callers
+ * never care which backend is active.
  */
 
 export type KVNamespace = {
@@ -14,16 +14,26 @@ export type KVNamespace = {
   list(options?: { prefix?: string; cursor?: string }): Promise<{ keys: { name: string }[]; list_complete: boolean; cursor?: string }>;
 };
 
-/** Returns the KV namespace when running on Cloudflare, else null (local dev). */
+/** Returns the KV namespace when running on Cloudflare, else null (fs mode). */
 export async function getKV(): Promise<KVNamespace | null> {
   return kv();
 }
 
 async function kv(): Promise<KVNamespace | null> {
+  // Explicit filesystem mode skips the Cloudflare lookup entirely.
+  if (process.env.EDGEPRESS_STORAGE === "fs") return null;
   try {
     const mod = await import("@opennextjs/cloudflare");
     const env = mod.getCloudflareContext().env as Record<string, unknown> | undefined;
-    return (env?.APP_KV as KVNamespace | undefined) ?? null;
+    // Honor a custom binding name (EDGEPRESS_KV_BINDING) or any *_KV binding.
+    const bindingName = process.env.EDGEPRESS_KV_BINDING;
+    if (env) {
+      if (bindingName && env[bindingName]) return env[bindingName] as KVNamespace;
+      if (env.APP_KV) return env.APP_KV as KVNamespace;
+      const kvKey = Object.keys(env).find((k) => k.endsWith("_KV"));
+      if (kvKey) return env[kvKey] as KVNamespace;
+    }
+    return null;
   } catch {
     return null;
   }
