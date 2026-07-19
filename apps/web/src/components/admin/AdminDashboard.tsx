@@ -12,6 +12,7 @@ import { MarketplacePanel } from "./MarketplacePanel";
 import { TabPermissionsCard } from "./TabPermissionsCard";
 import { SeoPanel } from "./SeoPanel";
 import { ThemePanel } from "./ThemePanel";
+import { useAdminUI } from "./ui";
 import { computeAnalytics } from "@/lib/analytics";
 import type { SiteEvent } from "@/lib/events-store";
 import type { AuditEntry } from "@/lib/audit-store";
@@ -284,6 +285,7 @@ function LeadsTable({
   base: string;
   locale: Locale;
 }) {
+  const ui = useAdminUI();
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | LeadStatus>("all");
 
@@ -304,9 +306,10 @@ function LeadsTable({
   }
 
   async function remove(id: string) {
-    if (!window.confirm("Delete this lead?")) return;
+    if (!(await ui.confirm({ title: "Delete lead?", message: "This enquiry will be permanently removed.", confirmLabel: "Delete", danger: true }))) return;
     setLeads(leads.filter((l) => l.id !== id));
     await fetch(`/api/leads/${id}`, { method: "DELETE" });
+    ui.toast("Lead deleted", "success");
   }
 
   function exportCsv() {

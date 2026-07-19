@@ -19,6 +19,7 @@ type IconName =
   | "info"
   | "menu"
   | "refresh"
+  | "grip"
   | "chart"
   | "gavel"
   | "tools"
@@ -64,6 +65,7 @@ const PATHS: Record<IconName, React.ReactNode> = {
   info: <><circle cx="12" cy="12" r="9" /><path d="M12 11v5m0-8h.01" /></>,
   menu: <path d="M4 7h16M4 12h16M4 17h16" />,
   refresh: <><path d="M21 12a9 9 0 1 1-2.64-6.36" /><path d="M21 4v5h-5" /></>,
+  grip: <><circle cx="9" cy="6" r="1" /><circle cx="15" cy="6" r="1" /><circle cx="9" cy="12" r="1" /><circle cx="15" cy="12" r="1" /><circle cx="9" cy="18" r="1" /><circle cx="15" cy="18" r="1" /></>,
   chart: <><path d="M4 4v16h16" /><path d="M8 16v-4m4 4V8m4 8v-6" /></>,
   gavel: <><path d="m14 3 7 7-3 3-7-7 3-3Z" /><path d="m11 8-6 6 3 3 6-6" /><path d="M4 21h10" /></>,
   tools: <><path d="M14.7 6.3a4 4 0 0 0-5.4 5.2L4 16.8 7.2 20l5.3-5.3a4 4 0 0 0 5.2-5.4l-2.6 2.6-2.2-2.2 2.6-2.4Z" /></>,

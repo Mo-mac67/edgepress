@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/Icon";
+import { useAdminUI } from "./ui";
 import { EMAIL_TEMPLATES } from "@/lib/email-templates";
 import type { Locale } from "@/i18n/config";
 import { LEAD_STATUSES, type Lead, type LeadStatus } from "@/lib/types";
@@ -19,6 +20,7 @@ const STATUS_LABEL: Record<LeadStatus, string> = {
 export function LeadDetail({ lead, locale }: { lead: Lead; locale: Locale }) {
   const base = `/${locale}`;
   const router = useRouter();
+  const ui = useAdminUI();
 
   const [status, setStatus] = useState<LeadStatus>(lead.status);
   const [notes, setNotes] = useState(lead.notes ?? "");
@@ -38,7 +40,7 @@ export function LeadDetail({ lead, locale }: { lead: Lead; locale: Locale }) {
   }
 
   async function removeLead() {
-    if (!window.confirm("Delete this lead permanently?")) return;
+    if (!(await ui.confirm({ title: "Delete lead?", message: `${lead.name}'s enquiry will be permanently removed.`, confirmLabel: "Delete", danger: true }))) return;
     await fetch(`/api/leads/${lead.id}`, { method: "DELETE" });
     router.push(`${base}/admin`);
   }
