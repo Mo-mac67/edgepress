@@ -52,6 +52,34 @@ export function PagesPanel({ locale }: { locale: Locale }) {
     await createPage({ title, slug: slugify(title) });
   }
 
+  async function generateWithAI() {
+    const prompt = await ui.prompt({
+      title: "Generate a page with AI",
+      message: "Describe the page you want. EdgePress will build a full draft you can refine.",
+      label: "Describe the page",
+      placeholder: "e.g. A landing page for a boutique coffee roaster with our story, products and a contact form",
+      confirmLabel: "Generate",
+      validate: (v) => (v.trim().length > 8 ? null : "Add a bit more detail"),
+    });
+    if (!prompt) return;
+    setImporting(true);
+    ui.toast("Generating your page…");
+    try {
+      const res = await fetch("/api/admin/ai/generate-page", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt, locale }),
+      });
+      const d = await res.json();
+      if (res.ok) {
+        ui.toast("Draft page created", "success");
+        router.push(`/${locale}/admin/pages/${d.page.id}`);
+      } else setErr(d.error || "Generation failed");
+    } finally {
+      setImporting(false);
+    }
+  }
+
   async function importHtml(files: FileList | null) {
     const file = files?.[0];
     if (!file) return;
@@ -126,6 +154,9 @@ export function PagesPanel({ locale }: { locale: Locale }) {
             <Icon name="download" size={16} /> {importing ? "Importing…" : "Import HTML"}
             <input type="file" accept=".html,.htm" hidden onChange={(e) => importHtml(e.target.files)} />
           </label>
+          <button onClick={generateWithAI} className="btn-secondary py-2 text-sm" title="Generate a page with AI">
+            <Icon name="star" size={16} /> Generate with AI
+          </button>
           <button onClick={create} className="btn-primary py-2 text-sm">
             <Icon name="check" size={16} /> New page
           </button>

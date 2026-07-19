@@ -131,6 +131,30 @@ export function PageEditor({ initial, uiLocale }: { initial: Page; uiLocale: Loc
     return () => window.removeEventListener("beforeunload", onBeforeUnload);
   }, [dirty]);
 
+  async function translate() {
+    const to: Locale = locale === "en" ? "fr" : "en";
+    if (!(await ui.confirm({ title: `Translate to ${to.toUpperCase()}?`, message: `AI will fill the ${to.toUpperCase()} version from your ${locale.toUpperCase()} content. Your ${locale.toUpperCase()} text is not changed.`, confirmLabel: "Translate" }))) return;
+    // Save any pending edits first so the translation runs on the latest content.
+    if (dirty) await save({ silent: true });
+    ui.toast(`Translating to ${to.toUpperCase()}…`);
+    const res = await fetch("/api/admin/ai/translate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pageId: page.id, from: locale, to }),
+    });
+    if (res.ok) {
+      const d = await res.json();
+      setPage((p) => ({ ...p, ...d.page }));
+      savedRef.current = serialize({ ...page, ...d.page });
+      setLocale(to);
+      setPreviewKey((k) => k + 1);
+      ui.toast("Translation added", "success");
+    } else {
+      const d = await res.json().catch(() => ({}));
+      ui.toast(d.error || "Translation failed", "error");
+    }
+  }
+
   async function openHistory() {
     setHistory([]);
     const res = await fetch(`/api/admin/pages/${page.id}/revisions`);
@@ -184,6 +208,9 @@ export function PageEditor({ initial, uiLocale }: { initial: Page; uiLocale: Loc
                 </button>
               ))}
             </div>
+            <button onClick={translate} className="btn-secondary hidden py-2 text-sm lg:inline-flex" title="Translate this page with AI">
+              <Icon name="star" size={15} /> Translate
+            </button>
             <button onClick={openHistory} className="btn-secondary hidden py-2 text-sm lg:inline-flex" title="Version history">
               <Icon name="refresh" size={15} /> History
             </button>
