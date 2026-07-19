@@ -139,6 +139,52 @@ export function AiPanel() {
       )}
 
       <button onClick={save} className="btn-primary">{saved ? "Saved ✓" : "Save AI settings"}</button>
+
+      <McpSection />
     </div>
+  );
+}
+
+/** MCP server: expose the site as tools to external agents (Claude, etc.). */
+function McpSection() {
+  const ui = useAdminUI();
+  const [mcp, setMcp] = useState<{ enabled: boolean; token: string; url: string } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/admin/mcp").then(async (r) => r.ok && setMcp(await r.json()));
+  }, []);
+  if (!mcp) return null;
+
+  async function update(payload: Record<string, unknown>) {
+    const r = await fetch("/api/admin/mcp", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    if (r.ok) {
+      const d = await r.json();
+      setMcp((m) => (m ? { ...m, ...d } : m));
+    }
+  }
+
+  return (
+    <section className="card p-5">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="font-display font-bold text-brand">Manage from chat (MCP)</h3>
+          <p className="mt-1 text-sm text-ink-soft">Expose your site as tools to Claude or any MCP agent — create pages, translate, publish, read leads, all from a chat.</p>
+        </div>
+        <label className="flex shrink-0 items-center gap-2 text-sm">
+          <input type="checkbox" checked={mcp.enabled} onChange={(e) => update({ enabled: e.target.checked })} />
+          {mcp.enabled ? "On" : "Off"}
+        </label>
+      </div>
+      {mcp.enabled && (
+        <div className="mt-4 space-y-2 rounded-lg bg-sand p-3 text-sm">
+          <div><span className="font-medium text-ink">Server URL:</span> <code className="break-all text-ink-soft">{mcp.url}</code></div>
+          <div className="flex items-center gap-2"><span className="font-medium text-ink">Token:</span> <code className="break-all text-ink-soft">{mcp.token}</code>
+            <button onClick={() => { navigator.clipboard?.writeText(mcp.token); ui.toast("Token copied", "success"); }} className="text-xs font-semibold text-accent-dark hover:underline">Copy</button>
+          </div>
+          <button onClick={() => update({ regenerate: true })} className="text-xs font-semibold text-red-600 hover:underline">Regenerate token</button>
+          <p className="pt-1 text-xs text-ink-soft">Add it to an MCP client as an HTTP server with header <code>Authorization: Bearer &lt;token&gt;</code>.</p>
+        </div>
+      )}
+    </section>
   );
 }

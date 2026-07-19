@@ -12,6 +12,7 @@ import { MarketplacePanel } from "./MarketplacePanel";
 import { TabPermissionsCard } from "./TabPermissionsCard";
 import { SeoPanel } from "./SeoPanel";
 import { AiPanel } from "./AiPanel";
+import { CopilotPanel } from "./CopilotPanel";
 import { ThemePanel } from "./ThemePanel";
 import { useAdminUI } from "./ui";
 import { computeAnalytics } from "@/lib/analytics";
@@ -30,7 +31,7 @@ const STATUS_LABEL: Record<LeadStatus, string> = {
   lost: "Lost",
 };
 const PALETTE = ["#16324f", "#e0a52e", "#1c4066", "#c2861a", "#5a6571", "#9aa4ae"];
-type Tab = "overview" | "leads" | "marketplace" | "pages" | "menu" | "blog" | "media" | "appearance" | "seo" | "ai" | "site" | "activity" | "settings" | "audit" | "help";
+type Tab = "overview" | "copilot" | "leads" | "marketplace" | "pages" | "menu" | "blog" | "media" | "appearance" | "seo" | "ai" | "site" | "activity" | "settings" | "audit" | "help";
 /** Every dashboard tab id — also the vocabulary for per-admin tab permissions ("audit" stays super-only regardless). */
 const ALL_TAB_IDS: Tab[] = ["overview", "leads", "marketplace", "activity", "audit", "pages", "menu", "blog", "media", "seo", "appearance", "site", "settings", "help"];
 
@@ -74,6 +75,7 @@ export function AdminDashboard({
       title: "Insights",
       items: [
         { id: "overview", label: "Dashboard", icon: "chart" },
+        { id: "copilot", label: "Copilot", icon: "star" },
         { id: "leads", label: "Leads", icon: "user", badge: unread || undefined },
         { id: "marketplace", label: "Marketplace", icon: "gavel" },
         { id: "activity", label: "Activity", icon: "refresh" },
@@ -206,6 +208,7 @@ export function AdminDashboard({
           {tab === "blog" && <BlogPanel locale={locale} />}
           {tab === "media" && <MediaPanel />}
           {tab === "appearance" && <ThemePanel />}
+          {tab === "copilot" && <CopilotPanel locale={locale} />}
           {tab === "seo" && <SeoPanel />}
           {tab === "ai" && <AiPanel />}
           {tab === "help" && <HelpPanel />}
