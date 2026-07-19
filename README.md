@@ -39,9 +39,16 @@ docker compose up -d      # http://localhost:3000
 Data (CMS docs + uploaded media) persists in the `edgepress-data` volume via the
 filesystem storage adapter.
 
-**Cloudflare Workers (the $0 edge deploy):** create a KV namespace + R2 bucket,
-set them in `apps/web/wrangler.jsonc`, then `npm run cf:deploy`. Workers AI is
-included free — no API key needed.
+**Cloudflare Workers (the $0 edge deploy):**
+
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/YOUR_ORG/edgepress)
+
+One click provisions the Worker, KV and R2 and deploys. Or manually: create a KV
+namespace + R2 bucket, set them in `apps/web/wrangler.jsonc`, then
+`npm run cf:deploy`. Workers AI is included free — no API key needed.
+
+On first load, EdgePress shows a **setup wizard** — name your site and choose an
+admin password. No default password ships.
 
 **Local dev:**
 
