@@ -57,6 +57,51 @@ export async function deletePage(id: string): Promise<boolean> {
   return true;
 }
 
+// ─── Page revisions (version history) ──────────────────
+export interface Revision {
+  id: string;
+  at: string;
+  title: string;
+  snapshot: Page;
+}
+const REV_KEY = (pageId: string) => `cms-rev-${pageId}.json`;
+const MAX_REVISIONS = 25;
+
+/** Snapshot the current stored page BEFORE it's overwritten, so the history
+ *  always reflects previously-saved states (not the incoming one). */
+export async function snapshotRevision(pageId: string): Promise<void> {
+  const current = (await getPages()).find((p) => p.id === pageId);
+  if (!current) return;
+  const revs = await readJsonDoc<Revision[]>(REV_KEY(pageId), []);
+  const last = revs[0];
+  // Skip if nothing changed since the last snapshot.
+  if (last && JSON.stringify(last.snapshot.blocks) === JSON.stringify(current.blocks) && JSON.stringify(last.snapshot.title) === JSON.stringify(current.title)) return;
+  const next: Revision[] = [
+    { id: uid(), at: new Date().toISOString(), title: current.title.en || current.slug || "home", snapshot: current },
+    ...revs,
+  ].slice(0, MAX_REVISIONS);
+  try {
+    await writeJsonDoc(REV_KEY(pageId), next);
+  } catch {
+    /* best effort */
+  }
+}
+
+export async function getRevisions(pageId: string): Promise<Omit<Revision, "snapshot">[]> {
+  const revs = await readJsonDoc<Revision[]>(REV_KEY(pageId), []);
+  return revs.map(({ id, at, title }) => ({ id, at, title }));
+}
+
+export async function restoreRevision(pageId: string, revId: string): Promise<Page | null> {
+  const revs = await readJsonDoc<Revision[]>(REV_KEY(pageId), []);
+  const rev = revs.find((r) => r.id === revId);
+  if (!rev) return null;
+  await snapshotRevision(pageId); // preserve the current state before restoring
+  const restored: Page = { ...rev.snapshot, id: pageId };
+  await savePage(restored);
+  return restored;
+}
+
 export function blankPage(slug: string, title: string, rawHtml?: string): Page {
   return {
     id: uid(),

@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { Icon } from "@/components/Icon";
+import { useAdminUI } from "./ui";
 import type { SeoSettings } from "@/lib/cms-types";
 import type { PageAudit } from "@/lib/seo";
 import type { Locale } from "@/i18n/config";
 
 export function SeoPanel() {
+  const ui = useAdminUI();
   const [seo, setSeo] = useState<SeoSettings | null>(null);
   const [aiAvailable, setAiAvailable] = useState(false);
   const [siteUrl, setSiteUrl] = useState("");
@@ -62,10 +64,12 @@ export function SeoPanel() {
       body: JSON.stringify({ pageId, locale: auditLocale, apply: true }),
     });
     setGenerating(null);
-    if (r.ok) runAudit();
-    else {
+    if (r.ok) {
+      runAudit();
+      ui.toast("SEO title & description generated", "success");
+    } else {
       const d = await r.json().catch(() => ({}));
-      alert(d.error || "AI generation failed");
+      ui.toast(d.error || "AI generation failed", "error");
     }
   }
 
