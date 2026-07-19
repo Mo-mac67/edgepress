@@ -1,0 +1,218 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { Icon } from "@/components/Icon";
+import type { SeoSettings } from "@/lib/cms-types";
+import type { PageAudit } from "@/lib/seo";
+import type { Locale } from "@/i18n/config";
+
+export function SeoPanel() {
+  const [seo, setSeo] = useState<SeoSettings | null>(null);
+  const [aiAvailable, setAiAvailable] = useState(false);
+  const [siteUrl, setSiteUrl] = useState("");
+  const [saved, setSaved] = useState(false);
+  const [audits, setAudits] = useState<PageAudit[]>([]);
+  const [auditLocale, setAuditLocale] = useState<Locale>("en");
+  const [auditing, setAuditing] = useState(false);
+  const [openAudit, setOpenAudit] = useState<string | null>(null);
+  const [generating, setGenerating] = useState<string | null>(null);
+  const [indexNowMsg, setIndexNowMsg] = useState("");
+
+  useEffect(() => {
+    fetch("/api/admin/seo").then(async (r) => {
+      if (!r.ok) return;
+      const d = await r.json();
+      setSeo(d.seo);
+      setAiAvailable(d.aiAvailable);
+      setSiteUrl(d.siteUrl);
+    });
+  }, []);
+
+  async function runAudit(locale: Locale = auditLocale) {
+    setAuditing(true);
+    const r = await fetch(`/api/admin/seo/audit?locale=${locale}`);
+    if (r.ok) setAudits((await r.json()).audits);
+    setAuditing(false);
+  }
+  useEffect(() => {
+    runAudit("en");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (!seo) return <p className="text-sm text-ink-soft">Loading…</p>;
+  const set = (patch: Partial<SeoSettings>) => setSeo({ ...seo, ...patch });
+
+  async function save() {
+    const r = await fetch("/api/admin/seo", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ seo }),
+    });
+    if (r.ok) {
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    }
+  }
+
+  async function aiGenerate(pageId: string) {
+    setGenerating(pageId);
+    const r = await fetch("/api/admin/seo/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pageId, locale: auditLocale, apply: true }),
+    });
+    setGenerating(null);
+    if (r.ok) runAudit();
+    else {
+      const d = await r.json().catch(() => ({}));
+      alert(d.error || "AI generation failed");
+    }
+  }
+
+  async function submitIndexNow() {
+    setIndexNowMsg("Submitting…");
+    const r = await fetch("/api/admin/seo/indexnow", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+    const d = await r.json().catch(() => ({}));
+    setIndexNowMsg(r.ok ? `Submitted ${d.submitted} URLs to search engines ✓` : `Failed: ${d.error ?? d.status ?? "error"}`);
+  }
+
+  const scoreColor = (s: number) => (s >= 80 ? "text-green-700 bg-green-50" : s >= 50 ? "text-amber-700 bg-amber-50" : "text-red-700 bg-red-50");
+  const Text = ({ label, value, onChange, ph }: { label: string; value: string; onChange: (v: string) => void; ph?: string }) => (
+    <label className="block">
+      <span className="mb-1 block text-sm font-medium text-ink">{label}</span>
+      <input className="field" value={value} placeholder={ph} onChange={(e) => onChange(e.target.value)} />
+    </label>
+  );
+
+  return (
+    <div className="space-y-6">
+      {/* Page health audit */}
+      <section className="card p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 className="font-display font-bold text-brand">Page health</h3>
+            <p className="mt-1 text-sm text-ink-soft">Automatic SEO checks for every published page — fix the red items first.</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <select
+              className="field max-w-[90px] py-2 text-sm"
+              value={auditLocale}
+              onChange={(e) => {
+                const l = e.target.value as Locale;
+                setAuditLocale(l);
+                runAudit(l);
+              }}
+            >
+              <option value="en">EN</option>
+              <option value="fr">FR</option>
+            </select>
+            <button onClick={() => runAudit()} className="btn-secondary py-2 text-sm">
+              <Icon name="refresh" size={15} /> {auditing ? "Analyzing…" : "Re-analyze"}
+            </button>
+          </div>
+        </div>
+        <div className="mt-4 divide-y divide-line">
+          {audits.map((a) => (
+            <div key={a.pageId} className="py-3">
+              <div className="flex items-center gap-3">
+                <span className={`grid h-10 w-12 place-items-center rounded-lg text-sm font-extrabold ${scoreColor(a.score)}`}>{a.score}</span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-semibold text-brand">{a.title}</p>
+                  <p className="text-xs text-ink-soft">/{a.slug || "(home)"} · {a.checks.filter((c) => !c.pass).length} issue(s)</p>
+                </div>
+                <button
+                  onClick={() => aiGenerate(a.pageId)}
+                  disabled={!aiAvailable || generating === a.pageId}
+                  title={aiAvailable ? "AI-write the SEO title & description" : "Set ANTHROPIC_API_KEY to enable"}
+                  className="btn-secondary py-1.5 text-xs disabled:opacity-40"
+                >
+                  <Icon name="star" size={13} />
+                  {generating === a.pageId ? "Writing…" : "AI meta"}
+                </button>
+                <button onClick={() => setOpenAudit(openAudit === a.pageId ? null : a.pageId)} className="rounded p-2 hover:bg-sand">
+                  <Icon name="chevron-down" size={16} className={openAudit === a.pageId ? "rotate-180" : ""} />
+                </button>
+              </div>
+              {openAudit === a.pageId && (
+                <ul className="mt-3 grid gap-1.5 sm:grid-cols-2">
+                  {a.checks.map((c) => (
+                    <li key={c.id} className="flex items-start gap-2 text-sm">
+                      <Icon name={c.pass ? "check" : "x"} size={16} className={`mt-0.5 shrink-0 ${c.pass ? "text-green-600" : "text-red-500"}`} />
+                      <span>
+                        {c.label}
+                        <span className="ml-1 text-xs text-ink-soft">({c.detail})</span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ))}
+          {audits.length === 0 && <p className="py-6 text-center text-sm text-ink-soft">{auditing ? "Analyzing…" : "No published pages."}</p>}
+        </div>
+        {!aiAvailable && (
+          <p className="mt-3 rounded-lg bg-sand p-3 text-xs text-ink-soft">
+            💡 <b>AI meta writer</b> is off. Add an <code>ANTHROPIC_API_KEY</code> secret to the Worker and every page gets one-click AI titles &amp; descriptions.
+          </p>
+        )}
+      </section>
+
+      {/* Instant indexing */}
+      <section className="card p-5">
+        <h3 className="font-display font-bold text-brand">Instant indexing (IndexNow)</h3>
+        <p className="mt-1 text-sm text-ink-soft">
+          Every time a page or post is published, the site automatically pings Bing, Yandex and other IndexNow engines
+          (key file: <a href={`${siteUrl}/indexnow-key.txt`} target="_blank" rel="noopener noreferrer" className="text-accent-dark underline">/indexnow-key.txt</a>).
+          Google reads the sitemap at{" "}
+          <a href={`${siteUrl}/sitemap.xml`} target="_blank" rel="noopener noreferrer" className="text-accent-dark underline">/sitemap.xml</a> — submit it once in Google Search Console.
+        </p>
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={seo.autoIndexNow} onChange={(e) => set({ autoIndexNow: e.target.checked })} />
+            Auto-ping on publish
+          </label>
+          <button onClick={submitIndexNow} className="btn-secondary py-2 text-sm">
+            <Icon name="arrow-up-right" size={15} /> Submit all pages now
+          </button>
+          {indexNowMsg && <span className="text-sm text-ink-soft">{indexNowMsg}</span>}
+        </div>
+      </section>
+
+      {/* Tracking & verification */}
+      <section className="card p-5">
+        <h3 className="font-display font-bold text-brand">Tracking &amp; verification codes</h3>
+        <p className="mt-1 text-sm text-ink-soft">Paste an ID and the tag is injected on every page automatically — no code needed.</p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <Text label="Google Analytics 4 (G-…)" value={seo.ga4Id} ph="G-XXXXXXXXXX" onChange={(v) => set({ ga4Id: v.trim() })} />
+          <Text label="Google Tag Manager (GTM-…)" value={seo.gtmId} ph="GTM-XXXXXXX" onChange={(v) => set({ gtmId: v.trim() })} />
+          <Text label="Meta (Facebook) Pixel ID" value={seo.fbPixelId} ph="1234567890" onChange={(v) => set({ fbPixelId: v.trim() })} />
+          <Text label="Google site verification" value={seo.googleVerification} ph="content value from Search Console" onChange={(v) => set({ googleVerification: v.trim() })} />
+          <Text label="Bing site verification" value={seo.bingVerification} ph="content value from Bing Webmaster" onChange={(v) => set({ bingVerification: v.trim() })} />
+        </div>
+      </section>
+
+      {/* Structured data */}
+      <section className="card p-5">
+        <h3 className="font-display font-bold text-brand">Business schema (rich results)</h3>
+        <p className="mt-1 text-sm text-ink-soft">Powers the Google business card / map results. Injected as JSON-LD structured data using your Site info.</p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium text-ink">Business type</span>
+            <select className="field" value={seo.business.type} onChange={(e) => set({ business: { ...seo.business, type: e.target.value } })}>
+              <option value="GeneralContractor">General Contractor</option>
+              <option value="HomeAndConstructionBusiness">Home &amp; Construction Business</option>
+              <option value="LocalBusiness">Local Business</option>
+            </select>
+          </label>
+          <Text label="Price range" value={seo.business.priceRange} ph="$$$" onChange={(v) => set({ business: { ...seo.business, priceRange: v } })} />
+          <Text label="Opening hours" value={seo.business.openingHours} ph="Mo-Fr 08:00-18:00" onChange={(v) => set({ business: { ...seo.business, openingHours: v } })} />
+          <Text label="Latitude" value={seo.business.latitude} ph="43.6435" onChange={(v) => set({ business: { ...seo.business, latitude: v } })} />
+          <Text label="Longitude" value={seo.business.longitude} ph="-79.4032" onChange={(v) => set({ business: { ...seo.business, longitude: v } })} />
+          <Text label="Default share image" value={seo.defaultOgImage} ph="/images/photos/hero-custom-home.jpg" onChange={(v) => set({ defaultOgImage: v })} />
+        </div>
+      </section>
+
+      <button onClick={save} className="btn-primary">{saved ? "Saved — live on the site ✓" : "Save SEO settings"}</button>
+    </div>
+  );
+}

@@ -1,0 +1,288 @@
+{
+  "common": {
+    "getQuote": "Get a Free Quote",
+    "requestQuote": "Request a Quote",
+    "callUs": "Call Us",
+    "emailUs": "Email Us",
+    "learnMore": "Learn more",
+    "viewAll": "View all",
+    "viewProjects": "View our projects",
+    "readMore": "Read more",
+    "phoneLabel": "Phone",
+    "emailLabel": "Email",
+    "addressLabel": "Office",
+    "hoursLabel": "Hours",
+    "phone": "+1 (555) 010-0000",
+    "email": "hello@example.com",
+    "address": "Toronto, ON · Serving the GTA",
+    "hours": "Mon–Fri 8:00–18:00 · Sat by appointment",
+    "companyName": "EdgePress",
+    "companyShort": "EdgePress"
+  },
+  "nav": {
+    "home": "Home",
+    "services": "Services",
+    "projects": "Projects",
+    "about": "About",
+    "contact": "Contact",
+    "quote": "Get a Quote"
+  },
+  "home": {
+    "hero": {
+      "badge": "Toronto & GTA · Since 2008",
+      "title": "Building homes that stand the test of time",
+      "subtitle": "EdgePress designs and builds award-winning custom homes, additions and renovations across Toronto and the Greater Toronto Area — licensed, insured and warranty-backed.",
+      "ctaPrimary": "Start your project",
+      "ctaSecondary": "See our work"
+    },
+    "stats": [
+      { "value": "16+", "label": "Years building in the GTA" },
+      { "value": "450+", "label": "Projects completed" },
+      { "value": "100%", "label": "Licensed & insured" },
+      { "value": "4.9★", "label": "Average client rating" }
+    ],
+    "trustLine": "Licensed, warranty-backed, and proudly members of Canada's leading building associations.",
+    "servicesTitle": "What we build",
+    "servicesSubtitle": "From ground-up custom homes to precision renovations, one accountable team manages your project end to end.",
+    "whyTitle": "Why homeowners choose EdgePress",
+    "whySubtitle": "Sixteen years of craftsmanship, transparency and results you can trust.",
+    "why": [
+      { "title": "Fixed-price contracts", "desc": "Detailed, transparent quotes with no hidden costs — you know the full price before we break ground." },
+      { "title": "On-time delivery", "desc": "Disciplined scheduling and dedicated project managers keep your build on track and on budget." },
+      { "title": "Licensed & warranty-backed", "desc": "Fully licensed and insured, with every new home enrolled in Tarion warranty protection." },
+      { "title": "Craftsmanship guarantee", "desc": "Premium materials and skilled trades, backed by our own workmanship warranty on every project." }
+    ],
+    "processTitle": "How we work",
+    "processSubtitle": "A clear, five-step process that keeps you informed at every stage.",
+    "process": [
+      { "step": "01", "title": "Consultation", "desc": "We meet to understand your vision, needs and budget — and give you honest, expert guidance." },
+      { "step": "02", "title": "Design & plans", "desc": "Our design team develops drawings, permits and a detailed, fixed-price scope of work." },
+      { "step": "03", "title": "Transparent quote", "desc": "You receive a line-by-line quote and schedule — no surprises, no hidden fees." },
+      { "step": "04", "title": "Construction", "desc": "A dedicated project manager runs your build with skilled trades and regular updates." },
+      { "step": "05", "title": "Handover & warranty", "desc": "We complete a full walkthrough and back every project with our workmanship warranty." }
+    ],
+    "projectsTitle": "Recent projects",
+    "projectsSubtitle": "A selection of custom homes, additions and renovations we've delivered across the GTA.",
+    "credentialsTitle": "Licensed, certified & award-winning",
+    "credentialsSubtitle": "We hold the credentials that protect you — and the recognition that reflects our standards.",
+    "testimonialsTitle": "What our clients say",
+    "testimonialsSubtitle": "We're proud of the relationships we build alongside the homes.",
+    "ctaTitle": "Ready to build something exceptional?",
+    "ctaSubtitle": "Book a free, no-obligation consultation. Tell us about your project and we'll show you what's possible.",
+    "ctaButton": "Get your free quote"
+  },
+  "services": {
+    "title": "Our services",
+    "subtitle": "Comprehensive design-build and construction services for homeowners and businesses across the Greater Toronto Area.",
+    "items": [
+      {
+        "id": "custom_home",
+        "title": "Custom Homes",
+        "desc": "Ground-up custom homes built to your lifestyle — from architectural design through to the final finishing touches.",
+        "features": ["Architectural design & permits", "Premium materials & finishes", "Tarion new-home warranty", "Energy-efficient builds"]
+      },
+      {
+        "id": "home_addition",
+        "title": "Home Additions",
+        "desc": "Add space and value with second-storey additions, extensions and in-law suites that blend seamlessly with your home.",
+        "features": ["Second-storey additions", "Rear & side extensions", "In-law & garden suites", "Structural engineering"]
+      },
+      {
+        "id": "renovation",
+        "title": "Whole-Home Renovations",
+        "desc": "Transform dated spaces into modern, functional homes with a complete, professionally managed renovation.",
+        "features": ["Open-concept conversions", "Full interior remodels", "Heritage home updates", "Project management"]
+      },
+      {
+        "id": "kitchen_bath",
+        "title": "Kitchens & Bathrooms",
+        "desc": "Beautiful, hard-working kitchens and spa-like bathrooms designed and built to last.",
+        "features": ["Custom cabinetry", "Premium countertops", "Plumbing & electrical", "3D design previews"]
+      },
+      {
+        "id": "basement",
+        "title": "Basement Finishing",
+        "desc": "Unlock a whole extra floor — legal basement apartments, home theatres, gyms and living spaces.",
+        "features": ["Legal secondary suites", "Waterproofing & underpinning", "Egress windows", "Soundproofing"]
+      },
+      {
+        "id": "commercial",
+        "title": "Commercial Construction",
+        "desc": "Office, retail and mixed-use build-outs and renovations delivered on schedule with minimal disruption.",
+        "features": ["Tenant improvements", "Retail & office build-outs", "Permits & code compliance", "After-hours scheduling"]
+      }
+    ]
+  },
+  "projects": {
+    "title": "Our projects",
+    "subtitle": "Explore a selection of the custom homes, additions and renovations we've built across Toronto and the GTA.",
+    "categories": [
+      { "id": "all", "label": "All" },
+      { "id": "custom_home", "label": "Custom Homes" },
+      { "id": "renovation", "label": "Renovations" },
+      { "id": "home_addition", "label": "Additions" },
+      { "id": "kitchen_bath", "label": "Kitchens & Baths" },
+      { "id": "commercial", "label": "Commercial" }
+    ],
+    "items": [
+      { "id": "p1", "title": "Modern Custom Home", "category": "custom_home", "location": "Forest Hill, Toronto", "desc": "A 4,200 sq ft contemporary custom home with an open-concept main floor and floor-to-ceiling glazing." },
+      { "id": "p2", "title": "Second-Storey Addition", "category": "home_addition", "location": "Etobicoke", "desc": "Doubled the living space with a full second-storey addition, seamlessly matched to the original brick." },
+      { "id": "p3", "title": "Chef's Kitchen Renovation", "category": "kitchen_bath", "location": "Oakville", "desc": "A gut renovation delivering a bright, open chef's kitchen with custom cabinetry and quartz surfaces." },
+      { "id": "p4", "title": "Whole-Home Renovation", "category": "renovation", "location": "Leaside, Toronto", "desc": "Complete interior transformation of a 1940s home into a modern, light-filled family space." },
+      { "id": "p5", "title": "Legal Basement Suite", "category": "renovation", "location": "Mississauga", "desc": "A fully legal, self-contained basement apartment with private entrance and egress windows." },
+      { "id": "p6", "title": "Spa Bathroom Retreat", "category": "kitchen_bath", "location": "Vaughan", "desc": "A luxurious primary ensuite featuring heated floors, a curbless shower and natural stone." },
+      { "id": "p7", "title": "Retail Build-Out", "category": "commercial", "location": "Downtown Toronto", "desc": "A ground-floor retail build-out completed after-hours to keep the surrounding units operating." },
+      { "id": "p8", "title": "Custom Estate Home", "category": "custom_home", "location": "King City", "desc": "A 6,000 sq ft estate home with a natural-stone façade, elevator and resort-style backyard." }
+    ]
+  },
+  "about": {
+    "title": "About EdgePress",
+    "subtitle": "A Toronto builder you can trust — with the craftsmanship, credentials and care to match.",
+    "story": [
+      "EdgePress was founded in 2008 with a simple belief: building or renovating a home should be exciting, not stressful. Over sixteen years we've grown into one of the Greater Toronto Area's most trusted custom home and renovation builders.",
+      "From our first renovation to the estate homes and commercial projects we deliver today, our approach hasn't changed — do exceptional work, communicate honestly, and treat every home as if it were our own. That's why so much of our work comes from repeat clients and referrals.",
+      "Today, our in-house team of designers, project managers and skilled trades handles every project end to end, so you have one accountable partner from the first sketch to the final walkthrough."
+    ],
+    "valuesTitle": "What we stand for",
+    "values": [
+      { "title": "Integrity", "desc": "Honest advice, transparent pricing and no surprises — ever." },
+      { "title": "Craftsmanship", "desc": "Premium materials and skilled trades on every detail, big or small." },
+      { "title": "Accountability", "desc": "One dedicated team responsible for your project from start to finish." },
+      { "title": "Communication", "desc": "Regular updates and a project manager who answers the phone." }
+    ],
+    "statsTitle": "By the numbers",
+    "teamTitle": "Led by builders, not salespeople",
+    "teamDesc": "Every EdgePress project is guided by seasoned professionals who have spent their careers on job sites across the GTA. When you work with us, you work directly with the people building your home."
+  },
+  "credentials": {
+    "title": "Licensed, certified & award-winning",
+    "subtitle": "We hold every credential that protects you as a homeowner, and we're recognized by the industry's most respected organizations. (Representative credentials shown — verified certificates available on request.)",
+    "licenses": {
+      "title": "Licenses & Registrations",
+      "subtitle": "Fully licensed, insured and warranty-backed so your investment is protected.",
+      "items": [
+        { "name": "HCRA Licensed Builder", "desc": "Licensed by the Home Construction Regulatory Authority of Ontario." },
+        { "name": "Tarion Warranty Enrolled", "desc": "Every new home is enrolled in Ontario's Tarion new-home warranty program." },
+        { "name": "City of Toronto Licensed Contractor", "desc": "Municipal contractor and trades licensing in good standing." },
+        { "name": "WSIB Coverage", "desc": "Workplace Safety & Insurance Board coverage on every job site." },
+        { "name": "$5M Liability Insurance", "desc": "Comprehensive commercial general liability coverage." }
+      ]
+    },
+    "certifications": {
+      "title": "Certifications",
+      "subtitle": "Trained and certified to build to the highest modern standards.",
+      "items": [
+        { "name": "CHBA Net Zero Builder", "org": "Canadian Home Builders' Association" },
+        { "name": "ENERGY STAR for New Homes", "org": "Natural Resources Canada" },
+        { "name": "Tarion Registered Builder", "org": "Tarion Warranty Corporation" },
+        { "name": "Certified Aging-in-Place Specialist", "org": "CAPS / NAHB" },
+        { "name": "Lead-Safe Certified", "org": "Renovation safety certified" },
+        { "name": "WHMIS & Working-at-Heights", "org": "Certified job-site safety" }
+      ]
+    },
+    "awards": {
+      "title": "Awards & Recognition",
+      "subtitle": "Recognized for design, quality and service across the GTA.",
+      "items": [
+        { "name": "BILD Home Builder of the Year — Finalist", "year": "2023", "org": "BILD Awards" },
+        { "name": "OHBA Award of Distinction", "year": "2022", "org": "Ontario Home Builders' Association" },
+        { "name": "Consumer Choice Award — GTA", "year": "2023", "org": "Consumer Choice" },
+        { "name": "HomeStars Best of Award", "year": "2021–2024", "org": "HomeStars" },
+        { "name": "Houzz — Best of Design & Service", "year": "2022–2024", "org": "Houzz" },
+        { "name": "Renovator of the Year — Nominee", "year": "2021", "org": "BILD Awards" }
+      ]
+    },
+    "memberships": {
+      "title": "Memberships & Accreditations",
+      "items": [
+        "BILD — Building Industry and Land Development Association",
+        "OHBA — Ontario Home Builders' Association",
+        "CHBA — Canadian Home Builders' Association",
+        "RenoMark Renovator",
+        "BBB Accredited Business — A+ Rating"
+      ]
+    }
+  },
+  "testimonials": {
+    "title": "What our clients say",
+    "subtitle": "We're proud of the relationships we build alongside the homes.",
+    "items": [
+      { "quote": "EdgePress built our custom home exactly as promised — on budget and only a week off schedule despite a brutal winter. The craftsmanship is outstanding and their project manager was a phone call away the whole time.", "author": "Sarah & Michael T.", "role": "Custom Home", "location": "Forest Hill" },
+      { "quote": "We interviewed five builders for our second-storey addition. EdgePress was the only one who gave us a fixed price and a real schedule. They delivered on both. Our neighbours can't believe it's the same house.", "author": "David L.", "role": "Home Addition", "location": "Etobicoke" },
+      { "quote": "Our kitchen renovation was flawless from design to finish. Honest pricing, clean job site, and the quality is better than we imagined. We've already booked them for our basement.", "author": "Priya & Anand K.", "role": "Kitchen Renovation", "location": "Oakville" },
+      { "quote": "As a commercial landlord I've worked with many contractors. EdgePress's professionalism, permits knowledge and after-hours scheduling made them stand out. Highly recommended.", "author": "Robert M.", "role": "Commercial Build-Out", "location": "Downtown Toronto" }
+    ]
+  },
+  "contact": {
+    "title": "Let's build your project",
+    "subtitle": "Tell us a bit about what you have in mind and we'll get back to you within one business day with next steps — free of charge, no obligation.",
+    "infoTitle": "Get in touch",
+    "serviceAreaTitle": "Service area",
+    "serviceArea": "We proudly serve Toronto and the Greater Toronto Area, including:",
+    "serviceAreaList": ["Toronto", "North York", "Etobicoke", "Scarborough", "Mississauga", "Vaughan", "Markham", "Richmond Hill", "Oakville", "Burlington", "Brampton", "King City"],
+    "form": {
+      "heading": "Request your free quote",
+      "name": "Full name",
+      "namePlaceholder": "Your name",
+      "email": "Email address",
+      "emailPlaceholder": "you@example.com",
+      "phone": "Phone number",
+      "phonePlaceholder": "(416) 555-0100",
+      "city": "City / area",
+      "cityPlaceholder": "e.g. North York",
+      "projectType": "Project type",
+      "projectTypes": {
+        "custom_home": "Custom home",
+        "home_addition": "Home addition",
+        "renovation": "Whole-home renovation",
+        "kitchen_bath": "Kitchen or bathroom",
+        "basement": "Basement finishing",
+        "commercial": "Commercial project",
+        "design_build": "Design-build",
+        "other": "Something else"
+      },
+      "budget": "Estimated budget",
+      "budgets": ["Under $50k", "$50k – $150k", "$150k – $350k", "$350k – $750k", "Over $750k", "Not sure yet"],
+      "timeline": "Ideal start",
+      "timelines": ["As soon as possible", "1–3 months", "3–6 months", "6–12 months", "Just planning"],
+      "message": "Project details",
+      "messagePlaceholder": "Tell us about your project, goals and any details you'd like us to know…",
+      "preferredTimes": "Best times to reach you",
+      "times": ["Weekday mornings", "Weekday afternoons", "Weekday evenings", "Weekends"],
+      "submit": "Send my request",
+      "submitting": "Sending…",
+      "successTitle": "Thank you — we've got your request!",
+      "success": "A EdgePress project advisor will contact you within one business day. For anything urgent, call us at +1 (555) 010-0000.",
+      "another": "Submit another request",
+      "errorGeneric": "Something went wrong. Please try again or call us directly.",
+      "errorName": "Please enter your name.",
+      "errorEmail": "Please enter a valid email address.",
+      "errorPhone": "Please enter a valid phone number.",
+      "required": "Required"
+    }
+  },
+  "footer": {
+    "tagline": "Award-winning custom homes, additions and renovations across Toronto and the GTA. Licensed, insured and warranty-backed.",
+    "quickLinksTitle": "Company",
+    "servicesTitle": "Services",
+    "contactTitle": "Contact",
+    "rights": "All rights reserved.",
+    "credit": "Designed, built and deployed by Synergion.ca",
+    "licenseNote": "HCRA Licensed · Tarion Enrolled · WSIB Covered · Fully Insured"
+  },
+  "admin": {
+    "title": "EdgePress Admin",
+    "login": "Sign in",
+    "password": "Password",
+    "signOut": "Sign out",
+    "overview": "Overview",
+    "leads": "Leads",
+    "activity": "Activity",
+    "audit": "Audit",
+    "settings": "Settings"
+  },
+  "legal": {
+    "privacyTitle": "Privacy Policy",
+    "termsTitle": "Terms of Use"
+  }
+}

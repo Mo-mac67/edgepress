@@ -1,0 +1,25 @@
+name: Lead follow-ups
+
+# Fires the automatic 3-day follow-up job once a day. The endpoint itself
+# decides who is due (leads still "new", older than FOLLOWUP_DAYS, not yet
+# followed up), so running daily is safe and idempotent.
+on:
+  schedule:
+    - cron: "0 14 * * *" # 14:00 UTC daily (~10 AM Toronto)
+  workflow_dispatch: {} # allow manual runs from the Actions tab
+
+jobs:
+  followups:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping follow-up endpoint
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$CRON_SECRET" ]; then
+            echo "CRON_SECRET repo secret is not set — skipping."; exit 1
+          fi
+          code=$(curl -s -o /tmp/out.json -w "%{http_code}" \
+            "https://kingspro.ca/api/cron/followups?key=$CRON_SECRET")
+          echo "HTTP $code"; cat /tmp/out.json
+          [ "$code" = "200" ]

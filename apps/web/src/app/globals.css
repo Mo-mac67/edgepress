@@ -1,0 +1,359 @@
+@import "tailwindcss";
+
+@theme {
+  /* On-brand fallback (Stone & Mint / editorial). The live values are served
+     by the dynamic /theme.css so the CMS Appearance panel can override them. */
+  --color-brand: #3a3632;
+  --color-brand-dark: #282521;
+  --color-brand-soft: #eae6df;
+  --color-accent: #08b892;
+  --color-accent-dark: #067a63;
+  --color-accent-soft: #dff6ef;
+  --color-sand: #f4f2eb;
+  --color-cream: #faf9f4;
+  --color-ink: #3a3632;
+  --color-ink-soft: #7a736b;
+  --color-line: #e6e1d8;
+  --color-line-dark: #4a453f;
+
+  --font-display: var(--font-fraunces), Georgia, serif;
+  --font-sans: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: #ffffff; }
+}
+
+body {
+  background: #ffffff;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+@layer components {
+  .container-page {
+    width: 100%;
+    max-width: 76rem;
+    margin-inline: auto;
+    padding-inline: 1.25rem;
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.78rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-accent-dark);
+  }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    min-height: 46px;
+    background: var(--color-accent);
+    color: #ffffff;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.75rem 1.6rem;
+    border: 1px solid var(--color-accent);
+    border-radius: var(--ui-radius, 0.6rem);
+    transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+  }
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    background: var(--color-accent-dark);
+    border-color: var(--color-accent-dark);
+  }
+  .btn-primary:active {
+    transform: scale(0.98);
+  }
+
+  .btn-dark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    min-height: 46px;
+    background: var(--color-brand);
+    color: #ffffff;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.75rem 1.6rem;
+    border-radius: var(--ui-radius, 0.6rem);
+    transition: transform 0.15s ease, background 0.15s ease;
+  }
+  .btn-dark:hover { transform: translateY(-2px); background: var(--color-brand-dark); }
+  .btn-dark:active { transform: scale(0.98); }
+
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    min-height: 46px;
+    background: transparent;
+    color: var(--color-brand);
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.75rem 1.6rem;
+    border-radius: var(--ui-radius, 0.6rem);
+    border: 1px solid var(--color-line);
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .btn-secondary:hover {
+    border-color: var(--color-brand);
+    background: var(--color-sand);
+  }
+
+  .btn-ghost-light {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    min-height: 46px;
+    background: transparent;
+    color: #ffffff;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.75rem 1.6rem;
+    border-radius: var(--ui-radius, 0.6rem);
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+  .btn-ghost-light:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: #ffffff;
+  }
+
+  .card {
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    border-radius: var(--ui-radius-lg, 1rem);
+    box-shadow: 0 18px 45px -24px rgba(15, 20, 25, 0.22);
+    transition: box-shadow 0.35s ease, transform 0.35s ease;
+  }
+
+  .section-title {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 3.8vw, 3.3rem);
+    font-weight: 500;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+  }
+
+  .field {
+    width: 100%;
+    background: #ffffff;
+    border: 1.5px solid var(--color-line);
+    border-radius: var(--ui-radius, 0.6rem);
+    padding: 0.75rem 0.95rem;
+    font-size: 1rem;
+    color: var(--color-ink);
+    transition: border-color 0.12s ease, box-shadow 0.12s ease;
+  }
+  .field:focus {
+    outline: none;
+    border-color: var(--color-brand);
+    box-shadow: 0 0 0 3px var(--color-brand-soft);
+  }
+  .field::placeholder { color: #9aa4ae; }
+
+  /* Lightweight rich-text styling for CMS content */
+  .prose { color: var(--color-ink); line-height: 1.7; }
+  .prose > * + * { margin-top: 1rem; }
+  .prose h2 { font-family: var(--font-display); font-size: 1.6rem; font-weight: 700; color: var(--color-brand); margin-top: 1.6rem; }
+  .prose h3 { font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; color: var(--color-brand); margin-top: 1.3rem; }
+  .prose p { margin-top: 0.9rem; }
+  .prose a { color: var(--color-accent-dark); text-decoration: underline; }
+  .prose ul { list-style: disc; padding-left: 1.4rem; margin-top: 0.9rem; }
+  .prose ol { list-style: decimal; padding-left: 1.4rem; margin-top: 0.9rem; }
+  .prose li { margin-top: 0.35rem; }
+  .prose strong { font-weight: 700; }
+  .prose img { border-radius: 0.75rem; margin-top: 1rem; }
+  .prose blockquote { border-left: 3px solid var(--color-accent); padding-left: 1rem; color: var(--color-ink-soft); font-style: italic; }
+}
+
+/* ─── v3 motion & depth ─────────────────────────────────── */
+
+/* Slow cinematic drift for hero images (used when no video is set). */
+@keyframes kenburns {
+  0%   { transform: scale(1) translate(0, 0); }
+  100% { transform: scale(1.1) translate(1.6%, -1.2%); }
+}
+.kenburns { will-change: transform; animation: kenburns 24s ease-in-out infinite alternate; }
+
+/* Scroll-reveal: only once JS marks <html class="fx">; sections rise softly. */
+.fx main section {
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1), transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.fx main section.fx-in { opacity: 1; transform: none; }
+/* The hero must never be hidden (LCP + no-JS safety). */
+.fx main section:first-of-type { opacity: 1; transform: none; }
+
+/* Soft fade bridges between contrasting bands. */
+.fade-top-light { position: absolute; inset: 0 0 auto; height: 72px; background: linear-gradient(180deg, rgba(255,255,255,0.14), transparent); pointer-events: none; }
+.fade-bottom-dark { position: absolute; inset: auto 0 0; height: 96px; background: linear-gradient(180deg, transparent, rgba(15,20,25,0.35)); pointer-events: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .kenburns { animation: none; }
+  .fx main section { opacity: 1; transform: none; transition: none; }
+}
+
+/* ─── v4: living-blueprint hero, depth & a cohesive photo grade ───────── */
+
+/* Cohesive "feed": every content photo shares one navy-leaning colour grade
+   so real, non-luxury shots read as one intentional set. */
+main img { filter: saturate(0.9) contrast(1.06) brightness(0.99); }
+
+/* Hero photo: static slight overscale so translate-drift never reveals edges.
+   The animation only translates — it is NOT a zoom in/out. */
+.hero-drift {
+  transform: scale(1.08);
+  will-change: transform;
+  animation: hero-drift 30s ease-in-out infinite alternate;
+}
+.hero-drift img { filter: saturate(0.92) contrast(1.04) brightness(1.02); }
+@keyframes hero-drift {
+  0%   { transform: scale(1.08) translate3d(-1.4%, 0.6%, 0); }
+  100% { transform: scale(1.08) translate3d(1.4%, -0.8%, 0); }
+}
+
+/* Corner vignette + film grain add atmosphere/depth to the dark band. */
+.hero-vignette {
+  background: radial-gradient(130% 130% at 20% 26%, transparent 46%, rgba(6, 16, 27, 0.5) 100%);
+}
+.hero-grain {
+  opacity: 0.06;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-drift { animation: none; transform: scale(1.04); }
+}
+
+/* ─── v5: subtle chamfer system + refined depth (redesign) ───────────── */
+
+/* Chamfered corners — an engineered, plate-cut bevel instead of sharp 90°
+   angles. Very subtle (9px). Uses clip-path so it's independent of the CMS
+   radius theme; drop-shadow (not box-shadow) so the shadow follows the cut. */
+.ch,
+.card,
+.btn-primary, .btn-dark, .btn-secondary, .btn-ghost-light,
+.field,
+.chamfer {
+  --c: 5px;
+  clip-path: polygon(
+    var(--c) 0, calc(100% - var(--c)) 0, 100% var(--c),
+    100% calc(100% - var(--c)), calc(100% - var(--c)) 100%,
+    var(--c) 100%, 0 calc(100% - var(--c)), 0 var(--c)
+  );
+}
+.btn-primary, .btn-dark, .btn-secondary, .btn-ghost-light, .field { --c: 3px; }
+.ch-lg { --c: 8px; }
+.ch-sm { --c: 3px; }
+/* Shadows follow the chamfer (box-shadow would be clipped away). */
+.card { box-shadow: none; filter: drop-shadow(0 14px 30px rgba(15, 20, 25, 0.13)); }
+.ch-shadow { filter: drop-shadow(0 18px 38px rgba(15, 20, 25, 0.20)); }
+
+/* Section rhythm: hairline gold rule used above section titles. */
+.rule-accent { width: 46px; height: 3px; background: var(--color-accent); }
+
+/* Unified media/project/service card hover. */
+.tile { transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), filter 0.5s ease; }
+.tile:hover { transform: translateY(-8px); filter: drop-shadow(0 30px 55px rgba(15, 20, 25, 0.30)); }
+
+/* Bold licenses / credentials band. Uses color-mix so the glow/grid always
+   matches the active theme's accent — no hardcoded hue. */
+.cred-band {
+  position: relative;
+  background:
+    radial-gradient(80% 140% at 85% 0%, color-mix(in srgb, var(--color-accent) 16%, transparent), transparent 60%),
+    linear-gradient(180deg, var(--color-brand-dark), color-mix(in srgb, var(--color-brand-dark) 80%, black));
+  overflow: hidden;
+}
+.cred-band::before {
+  content: "";
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--color-accent) 10%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--color-accent) 10%, transparent) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: linear-gradient(180deg, transparent, #000 60%, transparent);
+  opacity: 0.6;
+}
+.cred-badge {
+  --c: 6px;
+  clip-path: polygon(
+    var(--c) 0, calc(100% - var(--c)) 0, 100% var(--c),
+    100% calc(100% - var(--c)), calc(100% - var(--c)) 100%,
+    var(--c) 100%, 0 calc(100% - var(--c)), 0 var(--c)
+  );
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 40%, transparent);
+}
+
+/* ─── Hero intro choreography (homepage slideshow) ────────────────────────
+   On load: the slogan fades softly in and stays centered & faded; the
+   KingsPro wordmark rises and swells large from its bottom-left anchor,
+   holds a beat, then settles to its resting size; the certification badges
+   then emerge from behind it, staggered. The wordmark grows from its own
+   corner (transform-origin) so it never crosses the centered slogan.
+   All one-shot, reduced-motion aware. */
+@keyframes hero-slogan-in {
+  0%   { opacity: 0; transform: translateY(18px); }
+  100% { opacity: 0.72; transform: none; }
+}
+.hero-slogan { opacity: 0.72; animation: hero-slogan-in 1.4s cubic-bezier(0.16, 1, 0.3, 1) 0.35s both; }
+
+@keyframes hero-brand-settle {
+  0%   { opacity: 0; transform: translate3d(0, 42px, 0) scale(1.55); }
+  22%  { opacity: 1; }
+  55%  { opacity: 1; transform: translate3d(0, 0, 0) scale(1.55); }
+  100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+.hero-brand { display: inline-block; transform-origin: left bottom; will-change: transform, opacity; animation: hero-brand-settle 3.4s cubic-bezier(0.66, 0, 0.34, 1) 0.5s both; }
+
+@keyframes hero-cert-in {
+  0%   { opacity: 0; transform: translateX(-16px) scale(0.92); }
+  100% { opacity: 1; transform: none; }
+}
+.hero-cert { opacity: 0; animation: hero-cert-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+@keyframes hero-cta-in {
+  0%   { opacity: 0; transform: translateY(12px); }
+  100% { opacity: 1; transform: none; }
+}
+.hero-cta { opacity: 0; animation: hero-cta-in 0.9s ease 4.4s both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-brand, .hero-cert, .hero-cta { animation: none; opacity: 1; transform: none; }
+  .hero-slogan { animation: none; opacity: 0.72; transform: none; }
+}

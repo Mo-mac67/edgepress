@@ -1,0 +1,10 @@
+node_modules/
+.next/
+.open-next/
+.wrangler/
+.dev.vars
+data/
+apps/*/data/
+*.log
+.env*
+!.env.example
