@@ -1,0 +1,12 @@
+{
+  "name": "edgepress-monorepo",
+  "private": true,
+  "version": "0.1.0",
+  "comment": "apps/web is standalone for now (its own node_modules) so OpenNext resolves cleanly on all platforms. It joins the workspace once packages/core is a real dependency — see docs/RFC-001 §2/§9.",
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "dev": "npm --prefix apps/web run dev",
+    "build": "npm --prefix apps/web run build",
+    "typecheck": "npm --prefix apps/web run typecheck"
+  }
+}
