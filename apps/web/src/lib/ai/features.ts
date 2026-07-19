@@ -168,3 +168,62 @@ export async function keywordIdeas(topic: string): Promise<{ keywords: string[];
   const out = extractJson<{ keywords: string[]; gaps: string[] }>(text);
   return { keywords: (out.keywords ?? []).slice(0, 12), gaps: (out.gaps ?? []).slice(0, 8) };
 }
+
+// ─── Cluster 5: CRM AI ──────────────────────────────────
+type LeadLike = Record<string, unknown>;
+function leadSummaryText(lead: LeadLike): string {
+  return Object.entries(lead)
+    .filter(([k, v]) => v && ["name", "email", "phone", "city", "projectType", "budget", "timeline", "message"].includes(k))
+    .map(([k, v]) => `${k}: ${v}`)
+    .join("\n");
+}
+
+/** Score a lead 0-100 with a one-line intent summary. */
+export async function scoreLead(lead: LeadLike): Promise<{ score: number; summary: string; hot: boolean }> {
+  const system = `You are a sales assistant. Assess this inbound lead. Return ONLY JSON {"score": 0-100 (buying intent & fit), "summary": "one concise sentence", "hot": true|false}.`;
+  const { text } = await aiComplete("leadReply", { system, prompt: leadSummaryText(lead), json: true, maxTokens: 200 });
+  const out = extractJson<{ score: number; summary: string; hot: boolean }>(text);
+  const score = Math.max(0, Math.min(100, Math.round(Number(out.score) || 0)));
+  return { score, summary: String(out.summary ?? ""), hot: !!out.hot || score >= 70 };
+}
+
+/** Draft a reply email to a lead in the brand voice. */
+export async function draftLeadReply(lead: LeadLike, instruction: string, locale: string): Promise<{ subject: string; body: string }> {
+  const cfg = await getAIConfig();
+  const system = `You write reply emails to inbound leads for a business. Write in ${locale === "fr" ? "French" : "English"}, warm and helpful, concise. ${instruction ? `Follow this instruction: ${instruction}. ` : ""}Return ONLY JSON {"subject":"...","body":"the email body with a greeting and sign-off"}.${brandVoiceLine(cfg.brandVoice)}`;
+  const { text } = await aiComplete("leadReply", { system, prompt: leadSummaryText(lead), json: true, maxTokens: 700 });
+  const out = extractJson<{ subject: string; body: string }>(text);
+  return { subject: String(out.subject ?? ""), body: String(out.body ?? "") };
+}
+
+// ─── Cluster 6: Visitor Assistant (RAG over site content) ──
+/** Rank page snippets by keyword overlap with the question (lightweight RAG). */
+export function rankContext(question: string, pages: { title: string; text: string; slug: string }[], max = 4): { title: string; text: string; slug: string }[] {
+  const terms = question.toLowerCase().split(/\W+/).filter((w) => w.length > 3);
+  return pages
+    .map((p) => {
+      const hay = (p.title + " " + p.text).toLowerCase();
+      const score = terms.reduce((s, t) => s + (hay.includes(t) ? 1 : 0), 0);
+      return { ...p, score };
+    })
+    .sort((a, b) => b.score - a.score)
+    .slice(0, max);
+}
+
+/** Answer a visitor's question grounded in the site's own content. */
+export async function assistantReply(
+  message: string,
+  context: { title: string; text: string; slug: string }[],
+  history: { role: string; content: string }[],
+  locale: string,
+  siteName: string,
+): Promise<string> {
+  const ctx = context.map((c) => `# ${c.title} (/${c.slug})\n${c.text.slice(0, 1200)}`).join("\n\n");
+  const system = `You are the friendly assistant for ${siteName}'s website. Answer the visitor's question using ONLY the site content below. If the answer isn't in the content, say you're not sure and suggest they use the contact form. Be concise and reply in ${locale === "fr" ? "French" : "English"}.
+
+SITE CONTENT:
+${ctx || "(no content available)"}`;
+  const convo = history.slice(-4).map((h) => `${h.role === "user" ? "Visitor" : "Assistant"}: ${h.content}`).join("\n");
+  const { text } = await aiComplete("assistant", { system, prompt: convo ? `${convo}\nVisitor: ${message}` : message, maxTokens: 500 });
+  return text.trim();
+}
