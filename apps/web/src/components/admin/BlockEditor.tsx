@@ -27,7 +27,7 @@ function FieldInput({
     if (field.type === "textarea")
       return <textarea className="field min-h-[80px]" value={cur} onChange={(e) => set(e.target.value)} />;
     if (field.type === "richtext")
-      return <RichText key={locale} value={cur} onChange={set} />;
+      return <RichText key={locale} value={cur} onChange={set} locale={locale} />;
     return <input className="field" value={cur} onChange={(e) => set(e.target.value)} />;
   }
 

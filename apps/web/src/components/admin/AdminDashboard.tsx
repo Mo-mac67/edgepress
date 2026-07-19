@@ -11,6 +11,7 @@ import { HelpPanel } from "./HelpPanel";
 import { MarketplacePanel } from "./MarketplacePanel";
 import { TabPermissionsCard } from "./TabPermissionsCard";
 import { SeoPanel } from "./SeoPanel";
+import { AiPanel } from "./AiPanel";
 import { ThemePanel } from "./ThemePanel";
 import { useAdminUI } from "./ui";
 import { computeAnalytics } from "@/lib/analytics";
@@ -29,7 +30,7 @@ const STATUS_LABEL: Record<LeadStatus, string> = {
   lost: "Lost",
 };
 const PALETTE = ["#16324f", "#e0a52e", "#1c4066", "#c2861a", "#5a6571", "#9aa4ae"];
-type Tab = "overview" | "leads" | "marketplace" | "pages" | "menu" | "blog" | "media" | "appearance" | "seo" | "site" | "activity" | "settings" | "audit" | "help";
+type Tab = "overview" | "leads" | "marketplace" | "pages" | "menu" | "blog" | "media" | "appearance" | "seo" | "ai" | "site" | "activity" | "settings" | "audit" | "help";
 /** Every dashboard tab id — also the vocabulary for per-admin tab permissions ("audit" stays super-only regardless). */
 const ALL_TAB_IDS: Tab[] = ["overview", "leads", "marketplace", "activity", "audit", "pages", "menu", "blog", "media", "seo", "appearance", "site", "settings", "help"];
 
@@ -90,7 +91,10 @@ export function AdminDashboard({
     },
     {
       title: "Growth",
-      items: [{ id: "seo" as Tab, label: "SEO", icon: "chart" as const }],
+      items: [
+        { id: "seo" as Tab, label: "SEO", icon: "chart" as const },
+        { id: "ai" as Tab, label: "AI", icon: "star" as const },
+      ],
     },
     {
       title: "Design & setup",
@@ -203,6 +207,7 @@ export function AdminDashboard({
           {tab === "media" && <MediaPanel />}
           {tab === "appearance" && <ThemePanel />}
           {tab === "seo" && <SeoPanel />}
+          {tab === "ai" && <AiPanel />}
           {tab === "help" && <HelpPanel />}
           {tab === "site" && <SitePanel />}
           {tab === "activity" && <Activity events={events} />}

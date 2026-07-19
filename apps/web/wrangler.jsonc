@@ -23,6 +23,11 @@
       "bucket_name": "edgepress-media"
     }
   ],
+  // Cloudflare Workers AI — the free, no-API-key default AI provider. Users can
+  // also bring their own Anthropic/OpenAI/Google keys in the admin AI panel.
+  "ai": {
+    "binding": "AI"
+  },
   "workers_dev": true,
   "vars": {
     "SITE_URL": "https://edgepress-dev.kingsproca.workers.dev",
