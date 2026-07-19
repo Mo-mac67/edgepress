@@ -1,0 +1,22 @@
+# Run EdgePress locally or on any server with one command:
+#   docker compose up -d
+# Then open http://localhost:3000 — the first-run setup wizard guides the rest.
+services:
+  edgepress:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      # Filesystem storage — no external services needed.
+      EDGEPRESS_STORAGE: fs
+      EDGEPRESS_MEDIA: fs
+      DATA_DIR: /data
+      SITE_URL: http://localhost:3000
+      # Optional: bring your own AI key (or configure it in the admin panel).
+      # ANTHROPIC_API_KEY: ""
+    volumes:
+      - edgepress-data:/data
+    restart: unless-stopped
+
+volumes:
+  edgepress-data:

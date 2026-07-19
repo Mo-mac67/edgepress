@@ -223,3 +223,11 @@ export async function removeMedia(id: string): Promise<MediaItem | null> {
   await writeJsonDoc(MEDIA, m.filter((x) => x.id !== id));
   return item;
 }
+export async function setMediaAlt(id: string, alt: string): Promise<MediaItem | null> {
+  const m = await readJsonDoc<MediaItem[]>(MEDIA, []);
+  const item = m.find((x) => x.id === id);
+  if (!item) return null;
+  item.alt = alt;
+  await writeJsonDoc(MEDIA, m);
+  return item;
+}

@@ -122,6 +122,15 @@ export function AiPanel() {
         </label>
       </section>
 
+      <section className="card p-5">
+        <h3 className="font-display font-bold text-brand">Visitor assistant</h3>
+        <p className="mt-1 text-sm text-ink-soft">A chat bubble on your live site that answers visitors' questions from your own pages.</p>
+        <label className="mt-3 flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={cfg.assistantEnabled} onChange={(e) => set({ assistantEnabled: e.target.checked })} />
+          <span className="text-ink">Show the assistant on my site</span>
+        </label>
+      </section>
+
       {usage.length > 0 && (
         <section className="card p-5">
           <h3 className="font-display font-bold text-brand">Usage <span className="text-sm font-normal text-ink-soft">· {totalCalls} calls</span></h3>

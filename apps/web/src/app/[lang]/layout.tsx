@@ -10,7 +10,9 @@ import { ScrollFx } from "@/components/ScrollFx";
 import { isLocale, locales } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { SeoTags } from "@/components/SeoTags";
+import { AssistantWidget } from "@/components/AssistantWidget";
 import { getNav, getSeo, getSettings } from "@/lib/cms-store";
+import { getAIConfig } from "@/lib/ai/engine";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -91,7 +93,7 @@ export default async function LangLayout({
   if (!isLocale(lang)) notFound();
 
   const dict = getDictionary(lang);
-  const [nav, settings, seo] = await Promise.all([getNav(), getSettings(), getSeo()]);
+  const [nav, settings, seo, aiCfg] = await Promise.all([getNav(), getSettings(), getSeo(), getAIConfig()]);
   const fonts = `${inter.variable} ${jakarta.variable} ${playfair.variable} ${lora.variable} ${grotesk.variable} ${manrope.variable} ${poppins.variable} ${fraunces.variable}`;
 
   return (
@@ -113,6 +115,7 @@ export default async function LangLayout({
           quoteLabel={dict.nav.quote}
           callLabel={lang === "fr" ? "Appeler" : "Call"}
         />
+        {aiCfg.enabled && aiCfg.assistantEnabled && <AssistantWidget locale={lang} brandName={settings.brandName} />}
       </body>
     </html>
   );

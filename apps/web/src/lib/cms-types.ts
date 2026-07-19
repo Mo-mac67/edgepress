@@ -66,6 +66,8 @@ export interface MediaItem {
   size: number;
   /** "image" (default) or "video" — drives previews and pickers. */
   kind?: "image" | "video";
+  /** AI-generated (or hand-written) alt text. */
+  alt?: string;
   uploadedAt: string;
 }
 

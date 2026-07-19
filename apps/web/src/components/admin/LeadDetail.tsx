@@ -30,6 +30,35 @@ export function LeadDetail({ lead, locale }: { lead: Lead; locale: Locale }) {
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<"sent" | "logged" | "">("");
+  const [score, setScore] = useState<{ score: number; summary: string; hot: boolean } | null>(null);
+  const [scoring, setScoring] = useState(false);
+  const [drafting, setDrafting] = useState(false);
+
+  async function aiScore() {
+    setScoring(true);
+    try {
+      const r = await fetch("/api/admin/ai/lead", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ leadId: lead.id, action: "score" }) });
+      const d = await r.json();
+      if (r.ok) setScore(d);
+      else ui.toast(d.error || "Scoring failed", "error");
+    } finally {
+      setScoring(false);
+    }
+  }
+  async function aiDraft() {
+    setDrafting(true);
+    try {
+      const r = await fetch("/api/admin/ai/lead", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ leadId: lead.id, action: "reply", locale }) });
+      const d = await r.json();
+      if (r.ok) {
+        setSubject(d.subject);
+        setBody(d.body);
+        ui.toast("Reply drafted", "success");
+      } else ui.toast(d.error || "Draft failed", "error");
+    } finally {
+      setDrafting(false);
+    }
+  }
 
   async function patch(p: Partial<Pick<Lead, "status" | "notes">>) {
     await fetch(`/api/leads/${lead.id}`, {
@@ -140,6 +169,18 @@ export function LeadDetail({ lead, locale }: { lead: Lead; locale: Locale }) {
         </div>
       </div>
 
+      <div className="mt-6 flex flex-wrap items-center gap-3 rounded-xl border border-line bg-white p-4">
+        <button onClick={aiScore} disabled={scoring} className="btn-secondary py-2 text-sm">
+          <Icon name="star" size={15} /> {scoring ? "Scoring…" : "AI lead score"}
+        </button>
+        {score && (
+          <div className="flex items-center gap-3">
+            <span className={`grid h-11 w-11 place-items-center rounded-full text-sm font-extrabold ${score.hot ? "bg-red-50 text-red-600" : score.score >= 40 ? "bg-amber-50 text-amber-700" : "bg-sand text-ink-soft"}`}>{score.score}</span>
+            <span className="text-sm text-ink">{score.summary}{score.hot && <span className="ml-2 rounded bg-red-600 px-1.5 py-0.5 text-[10px] font-bold text-white">HOT</span>}</span>
+          </div>
+        )}
+      </div>
+
       <h2 className="mt-8 font-display text-lg font-bold text-brand">Notes</h2>
       <textarea
         className="field mt-3 min-h-[100px] w-full"
@@ -160,10 +201,15 @@ export function LeadDetail({ lead, locale }: { lead: Lead; locale: Locale }) {
       )}
 
       <div className="card mt-8 p-5">
-        <h2 className="mb-3 flex items-center gap-2 font-display font-semibold text-brand">
-          <Icon name="mail" size={18} className="text-accent-dark" />
-          Send a follow-up email
-        </h2>
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <h2 className="flex items-center gap-2 font-display font-semibold text-brand">
+            <Icon name="mail" size={18} className="text-accent-dark" />
+            Send a follow-up email
+          </h2>
+          <button onClick={aiDraft} disabled={drafting} className="btn-secondary py-1.5 text-xs">
+            <Icon name="star" size={13} /> {drafting ? "Drafting…" : "Draft with AI"}
+          </button>
+        </div>
         <select className="field mb-3 w-full" defaultValue="" onChange={(e) => applyTemplate(e.target.value)}>
           <option value="" disabled>
             Choose a template…

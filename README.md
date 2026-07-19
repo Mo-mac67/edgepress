@@ -12,9 +12,38 @@ Also runs on Docker, plain Node, or Vercel via storage adapters.
 
 - Architecture & roadmap: [docs/RFC-001-architecture.md](docs/RFC-001-architecture.md)
 - Product app: `apps/web` (Next.js — public site + admin + Content API)
-- Status: **Phase 1** — ported baseline, fs+KV adapters, private dev deploy
+- Status: building toward v1 (block CMS + CRM + SEO + full AI suite: content
+  studio, translation, site builder, admin copilot, MCP server, visitor
+  assistant). Private dev instance only.
 
-## Quick start (dev)
+## What's inside
+
+- **Block CMS** — drag-and-drop page builder, Tiptap rich text, revisions,
+  autosave, themes, media, blog, menus, multi-locale.
+- **AI, provider-agnostic + BYOK** — free Cloudflare Workers AI by default, or
+  your own Anthropic/OpenAI/Google/Ollama key. Generate pages, translate,
+  rewrite, build a whole site, score leads, answer visitors.
+- **MCP server** — manage the site from Claude or any MCP agent.
+- **CRM + SEO** — lead inbox with AI replies; automated audits, sitemaps,
+  instant indexing, structured data.
+
+## Run it
+
+**Docker (any server — no external services):**
+
+```bash
+cd apps/web
+docker compose up -d      # http://localhost:3000
+```
+
+Data (CMS docs + uploaded media) persists in the `edgepress-data` volume via the
+filesystem storage adapter.
+
+**Cloudflare Workers (the $0 edge deploy):** create a KV namespace + R2 bucket,
+set them in `apps/web/wrangler.jsonc`, then `npm run cf:deploy`. Workers AI is
+included free — no API key needed.
+
+**Local dev:**
 
 ```bash
 cd apps/web

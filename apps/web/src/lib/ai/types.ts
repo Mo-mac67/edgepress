@@ -105,6 +105,8 @@ export interface AIConfig {
   /** AI-generated content always lands as a draft — never auto-published. */
   approveFirst: boolean;
   brandVoice: string;
+  /** Public visitor assistant chat widget on the live site. */
+  assistantEnabled: boolean;
 }
 
 export const DEFAULT_AI_CONFIG: AIConfig = {
@@ -115,6 +117,7 @@ export const DEFAULT_AI_CONFIG: AIConfig = {
   routing: {},
   approveFirst: true,
   brandVoice: "",
+  assistantEnabled: false,
 };
 
 /** Which providers are usable given the current config (key present / free). */

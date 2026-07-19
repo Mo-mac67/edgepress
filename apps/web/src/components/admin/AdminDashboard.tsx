@@ -233,6 +233,21 @@ function Kpi({ label, value }: { label: string; value: string | number }) {
 
 function Overview({ analytics: a }: { analytics: ReturnType<typeof computeAnalytics> }) {
   const pct = (n: number) => `${(n * 100).toFixed(1)}%`;
+  const [q, setQ] = useState("");
+  const [answer, setAnswer] = useState("");
+  const [asking, setAsking] = useState(false);
+  async function ask() {
+    if (!q.trim()) return;
+    setAsking(true);
+    setAnswer("");
+    try {
+      const r = await fetch("/api/admin/ai/analytics", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question: q }) });
+      const d = await r.json();
+      setAnswer(r.ok ? d.answer : d.error || "Couldn't answer that.");
+    } finally {
+      setAsking(false);
+    }
+  }
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -240,6 +255,18 @@ function Overview({ analytics: a }: { analytics: ReturnType<typeof computeAnalyt
         <Kpi label="Sessions" value={a.kpis.sessions} />
         <Kpi label="Page views" value={a.kpis.pageviews} />
         <Kpi label="Conversion" value={pct(a.kpis.conversionRate)} />
+      </div>
+
+      <div className="card p-5">
+        <div className="flex items-center gap-2">
+          <Icon name="star" size={16} className="text-accent-dark" />
+          <span className="text-sm font-semibold text-brand">Ask about your data</span>
+        </div>
+        <div className="mt-3 flex gap-2">
+          <input className="field" placeholder="e.g. Which page drives the most leads?" value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => e.key === "Enter" && ask()} />
+          <button onClick={ask} disabled={asking || !q.trim()} className="btn-primary py-2 text-sm">{asking ? "…" : "Ask"}</button>
+        </div>
+        {answer && <p className="mt-3 whitespace-pre-wrap rounded-lg bg-sand p-3 text-sm text-ink">{answer}</p>}
       </div>
 
       <div className="card p-6">
