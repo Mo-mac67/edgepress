@@ -26,7 +26,7 @@ const serialize = (p: Page) => JSON.stringify({ t: p.title, d: p.description, s:
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 
-export function PageEditor({ initial, uiLocale }: { initial: Page; uiLocale: Locale }) {
+export function PageEditor({ initial, uiLocale, contentLocales = ["en", "fr"] }: { initial: Page; uiLocale: Locale; contentLocales?: string[] }) {
   const router = useRouter();
   const ui = useAdminUI();
   const [page, setPage] = useState<Page>({ mode: "blocks", ...initial });
@@ -202,7 +202,7 @@ export function PageEditor({ initial, uiLocale }: { initial: Page; uiLocale: Loc
               Autosave
             </label>
             <div className="flex items-center gap-1 rounded-full border border-line p-0.5 text-sm">
-              {(["en", "fr"] as Locale[]).map((l) => (
+              {contentLocales.map((l) => (
                 <button key={l} onClick={() => setLocale(l)} className={`rounded-full px-3 py-1 ${locale === l ? "bg-accent-soft font-semibold text-accent-dark" : "text-ink-soft"}`}>
                   {l.toUpperCase()}
                 </button>

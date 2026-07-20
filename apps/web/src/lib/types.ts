@@ -1,8 +1,13 @@
-export type Locale = "en" | "fr";
+// A locale code — widened to string so sites can configure any language.
+// (Kept re-exported here for the many modules importing Locale from "@/lib/types".)
+import type { Locale } from "@/i18n/config";
+export type { Locale };
 
+/** Localized text. en/fr always present; any configured locale may be added. */
 export interface LocalizedText {
   en: string;
   fr: string;
+  [locale: string]: string;
 }
 
 /** The kind of build/renovation a prospect is enquiring about. */

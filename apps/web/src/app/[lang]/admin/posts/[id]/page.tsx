@@ -4,7 +4,7 @@ import { PostEditor } from "@/components/admin/PostEditor";
 import { AdminUIProvider } from "@/components/admin/ui";
 import { isLocale } from "@/i18n/config";
 import { isAuthed } from "@/lib/admin-auth";
-import { getPosts } from "@/lib/cms-store";
+import { getActiveLocales, getPosts } from "@/lib/cms-store";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +17,7 @@ export default async function EditPost({ params }: PageProps<"/[lang]/admin/post
   if (!post) notFound();
   return (
     <AdminUIProvider>
-      <PostEditor initial={post} uiLocale={lang} />
+      <PostEditor initial={post} uiLocale={lang} contentLocales={await getActiveLocales()} />
     </AdminUIProvider>
   );
 }

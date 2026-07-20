@@ -84,7 +84,7 @@ function fmtTime(h: number): string {
   return `${hh}:00 ${period}`;
 }
 
-export function BusinessHours({ locale = "en", tone = "dark" }: { locale?: "en" | "fr"; tone?: "dark" | "light" }) {
+export function BusinessHours({ locale = "en", tone = "dark" }: { locale?: string; tone?: "dark" | "light" }) {
   const [open, setOpen] = useState(false);
   const [now, setNow] = useState<ReturnType<typeof torontoNow> | null>(null);
   const ref = useRef<HTMLDivElement>(null);

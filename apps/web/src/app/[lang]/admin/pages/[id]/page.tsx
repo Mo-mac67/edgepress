@@ -4,7 +4,7 @@ import { PageEditor } from "@/components/admin/PageEditor";
 import { AdminUIProvider } from "@/components/admin/ui";
 import { isLocale } from "@/i18n/config";
 import { isAuthed } from "@/lib/admin-auth";
-import { getPages } from "@/lib/cms-store";
+import { getActiveLocales, getPages } from "@/lib/cms-store";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +17,7 @@ export default async function EditPage({ params }: PageProps<"/[lang]/admin/page
   if (!page) notFound();
   return (
     <AdminUIProvider>
-      <PageEditor initial={page} uiLocale={lang} />
+      <PageEditor initial={page} uiLocale={lang} contentLocales={await getActiveLocales()} />
     </AdminUIProvider>
   );
 }

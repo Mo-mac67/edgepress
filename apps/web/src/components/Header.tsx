@@ -91,7 +91,7 @@ export function Header({
           >
             {settings.phone}
           </a>
-          <LanguageSwitcher locale={locale} onDark={light} />
+          <LanguageSwitcher locale={locale} locales={settings.locales?.length ? settings.locales : undefined} onDark={light} />
           <Link
             href={`${base}/contact`}
             className={`hidden text-xs font-semibold uppercase tracking-[0.16em] transition sm:inline-flex ${
