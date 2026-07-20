@@ -84,7 +84,10 @@ Everything reads/writes through one adapter, so the same code runs anywhere:
 | Mode | Set | Documents | Media |
 | --- | --- | --- | --- |
 | Filesystem (default self-host) | `EDGEPRESS_STORAGE=fs` | `data/*.json` | `data/` files |
+| SQLite (self-host) | `EDGEPRESS_STORAGE=sqlite` | `data/edgepress.sqlite` | `data/` files |
 | Cloudflare | `EDGEPRESS_STORAGE=kv` | KV | R2 |
+
+SQLite mode uses Node's built-in `node:sqlite` (Node 22.5+) — no native dependency to compile.
 
 ## Configuration
 
