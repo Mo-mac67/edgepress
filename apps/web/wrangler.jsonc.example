@@ -1,0 +1,50 @@
+{
+  // ─────────────────────────────────────────────────────────────────────────
+  // EdgePress — Cloudflare Workers config TEMPLATE.
+  // Copy this to `wrangler.jsonc`, then fill in the two account-specific values
+  // (KV id + SITE_URL). Nothing here is secret; it just points at YOUR account.
+  //
+  //   cp wrangler.jsonc.example wrangler.jsonc
+  //   npx wrangler kv namespace create edgepress_kv     # → paste the id below
+  //   npx wrangler r2 bucket create edgepress-media
+  //   npm run cf:deploy
+  //
+  // Prefer no Cloudflare at all? Set EDGEPRESS_STORAGE=fs (below) and run on any
+  // Node server or Docker — see README "Self-host on any server".
+  // ─────────────────────────────────────────────────────────────────────────
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "edgepress",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2025-09-23",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "binding": "ASSETS",
+    "directory": ".open-next/assets"
+  },
+  "kv_namespaces": [
+    {
+      "binding": "APP_KV",
+      "id": "<RUN: wrangler kv namespace create edgepress_kv, then paste the id here>"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "MEDIA",
+      "bucket_name": "edgepress-media"
+    }
+  ],
+  // Cloudflare Workers AI — the free, no-API-key default AI provider. Users can
+  // also bring their own Anthropic/OpenAI/Google keys in the admin AI panel.
+  "ai": {
+    "binding": "AI"
+  },
+  "workers_dev": true,
+  "vars": {
+    "SITE_URL": "https://<your-worker>.<your-subdomain>.workers.dev",
+    "EDGEPRESS_STORAGE": "kv",
+    "EDGEPRESS_MEDIA": "r2"
+  },
+  "observability": {
+    "enabled": true
+  }
+}

@@ -35,11 +35,15 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files — the public repo ships only the .example templates.
+# Your real .env.production (with YOUR site URL) stays local, never committed.
 .env*
-# no secrets — just the public site URL baked at build time
-!.env.production
 !.env.example
+!.env.production.example
+
+# Personal Cloudflare deploy config (your KV id + your domain). The public repo
+# ships wrangler.jsonc.example; each adopter copies it to their own wrangler.jsonc.
+/wrangler.jsonc
 
 # runtime data store (leads, events, admin config — contains personal data)
 /data

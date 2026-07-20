@@ -5,9 +5,15 @@ Before flipping to public, complete this list.
 
 ## Security (blocking)
 
-- [ ] **Rotate/remove any secrets in git history.** The repo was seeded from a
-      client codebase; scrub with `git filter-repo` and verify no API keys,
-      passwords, or account IDs remain in history.
+- [ ] **Untrack the owner's personal deploy config** so the public repo ships
+      only the templates: `git rm --cached apps/web/wrangler.jsonc apps/web/.env.production`
+      (both are now git-ignored; local copies stay for the owner's own demo).
+      The public repo keeps `wrangler.jsonc.example` + `.env.production.example`.
+- [ ] **Rotate/remove any secrets AND personal identifiers in git history.** The
+      repo was seeded from a client codebase; scrub with `git filter-repo` and
+      verify no API keys, passwords, account IDs, the demo KV id
+      (`58a978…`), or the demo domain (`edgepress.mh-bamzadeh.workers.dev`)
+      remain in history.
 - [ ] Confirm **no default admin password** ships (setup wizard enforces this).
       `SUPERADMIN_PASSWORD` must be env-only (done).
 - [ ] Set a strong `ADMIN_SECRET` env in every deployment (session hash salt).

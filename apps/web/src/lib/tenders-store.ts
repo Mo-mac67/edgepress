@@ -8,8 +8,7 @@ import { readJsonDoc, writeJsonDoc } from "./storage";
  * sealed: visible to the project owner and admins only (bid count is public).
  * KV/file-backed — free, no external services.
  *
- * OPTIONAL FEATURE MODULE — not in core-manifest.json (MapleSave keeps its own
- * domain-specific copy). Copy manually into an app; see APP-CONTRACT.md.
+ * Optional feature module — enable per project if you need a tender/bid flow.
  */
 export type TenderStatus = "pending" | "open" | "awarded" | "closed";
 
