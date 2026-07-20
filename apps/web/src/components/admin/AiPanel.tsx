@@ -131,6 +131,12 @@ export function AiPanel() {
         </label>
       </section>
 
+      <section className="card p-5">
+        <h3 className="font-display font-bold text-brand">AI call budget</h3>
+        <p className="mt-1 text-sm text-ink-soft">Safety cap on total AI calls — 0 means unlimited. Once reached, AI features stop until you raise it (guards against runaway loops or abuse).</p>
+        <input type="number" min={0} className="field mt-3 max-w-[220px]" value={cfg.callBudget ?? 0} onChange={(e) => set({ callBudget: Math.max(0, Number(e.target.value) || 0) })} />
+      </section>
+
       {usage.length > 0 && (
         <section className="card p-5">
           <h3 className="font-display font-bold text-brand">Usage <span className="text-sm font-normal text-ink-soft">· {totalCalls} calls</span></h3>
@@ -162,6 +168,9 @@ function AiTools({ ready }: { ready: boolean }) {
   const [titles, setTitles] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [translating, setTranslating] = useState(false);
+  const [linkText, setLinkText] = useState("");
+  const [links, setLinks] = useState<{ slug: string; anchor: string }[]>([]);
+  const [linking, setLinking] = useState(false);
 
   async function genTitles() {
     if (!topic.trim()) return ui.toast("Enter a topic or draft headline", "error");
@@ -171,6 +180,16 @@ function AiTools({ ready }: { ready: boolean }) {
     setBusy(false);
     if (res.ok) setTitles(data.titles ?? []);
     else ui.toast(data.error || "Couldn't generate titles", "error");
+  }
+
+  async function suggestLinks() {
+    if (!linkText.trim()) return ui.toast("Paste some content first", "error");
+    setLinking(true); setLinks([]);
+    const res = await fetch("/api/admin/ai/links", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: linkText }) });
+    const data = await res.json().catch(() => ({}));
+    setLinking(false);
+    if (res.ok) { setLinks(data.links ?? []); if (!data.links?.length) ui.toast("No internal links suggested", "info"); }
+    else ui.toast(data.error || "Couldn't suggest links", "error");
   }
 
   async function translateSite(to: string) {
@@ -201,6 +220,22 @@ function AiTools({ ready }: { ready: boolean }) {
               <li key={i} className="flex items-center justify-between gap-2 rounded-lg bg-surface-soft px-3 py-2 text-sm">
                 <span>{t}</span>
                 <button onClick={() => { navigator.clipboard?.writeText(t); ui.toast("Copied", "success"); }} className="shrink-0 text-xs font-semibold text-brand">Copy</button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <div className="mt-6 border-t border-line pt-4">
+        <p className="text-sm font-medium text-ink">Internal link suggestions</p>
+        <p className="mt-1 text-xs text-ink-soft">Paste content — get anchors linking to your existing pages (better SEO + navigation).</p>
+        <textarea className="field mt-2 min-h-[90px]" placeholder="Paste a paragraph or a page's content…" value={linkText} onChange={(e) => setLinkText(e.target.value)} />
+        <button onClick={suggestLinks} disabled={linking} className="btn-secondary mt-2">{linking ? "Analyzing…" : "Suggest internal links"}</button>
+        {links.length > 0 && (
+          <ul className="mt-3 space-y-1.5 text-sm">
+            {links.map((l, i) => (
+              <li key={i} className="rounded-lg bg-surface-soft px-3 py-2">
+                “{l.anchor}” → <code className="text-accent-dark">/{l.slug}</code>
               </li>
             ))}
           </ul>

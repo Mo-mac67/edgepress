@@ -34,6 +34,8 @@ export interface Submission {
   id: string;
   data: Record<string, unknown>;
   createdAt: string;
+  /** Heuristic spam flag (non-blocking; owner reviews). */
+  spam?: boolean;
 }
 
 const FORMS_KEY = "forms.json";
@@ -107,9 +109,9 @@ export async function deleteForm(slug: string): Promise<boolean> {
 export async function getSubmissions(slug: string): Promise<Submission[]> {
   return (await readJsonDoc<Submission[]>(subsKey(slug), [])).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
-export async function addSubmission(slug: string, data: Record<string, unknown>): Promise<Submission> {
+export async function addSubmission(slug: string, data: Record<string, unknown>, spam = false): Promise<Submission> {
   const subs = await readJsonDoc<Submission[]>(subsKey(slug), []);
-  const sub: Submission = { id: uid(), data, createdAt: new Date().toISOString() };
+  const sub: Submission = { id: uid(), data, createdAt: new Date().toISOString(), ...(spam ? { spam: true } : {}) };
   subs.push(sub);
   await writeJsonDoc(subsKey(slug), subs.slice(-5000));
   return sub;
