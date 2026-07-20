@@ -9,7 +9,7 @@ import { RichText } from "./RichText";
 import type { Post } from "@/lib/cms-types";
 import type { Locale } from "@/i18n/config";
 
-export function PostEditor({ initial, uiLocale }: { initial: Post; uiLocale: Locale }) {
+export function PostEditor({ initial, uiLocale, contentLocales = ["en", "fr"] }: { initial: Post; uiLocale: Locale; contentLocales?: string[] }) {
   const router = useRouter();
   const [post, setPost] = useState<Post>(initial);
   const [locale, setLocale] = useState<Locale>("en");
@@ -42,7 +42,7 @@ export function PostEditor({ initial, uiLocale }: { initial: Post; uiLocale: Loc
           </Link>
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1 rounded-full border border-line p-0.5 text-sm">
-              {(["en", "fr"] as Locale[]).map((l) => (
+              {contentLocales.map((l) => (
                 <button key={l} onClick={() => setLocale(l)} className={`rounded-full px-3 py-1 ${locale === l ? "bg-accent-soft font-semibold text-accent-dark" : "text-ink-soft"}`}>
                   {l.toUpperCase()}
                 </button>

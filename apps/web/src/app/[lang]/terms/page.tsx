@@ -31,7 +31,7 @@ const CONTENT = {
 export default async function TermsPage({ params }: PageProps<"/[lang]/terms">) {
   const { lang } = await params;
   if (!isLocale(lang)) notFound();
-  const c = CONTENT[lang];
+  const c = CONTENT[lang as keyof typeof CONTENT] ?? CONTENT.en;
 
   return (
     <article className="container-page max-w-3xl pt-32 pb-12">

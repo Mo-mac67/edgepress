@@ -2,9 +2,11 @@
  * CMS content model — shared between server (store/render) and client (editor).
  * NO "server-only" import here so the block editor can use the schema too.
  */
-import type { Locale } from "@/i18n/config";
+import { defaultLocale, type Locale } from "@/i18n/config";
 
-export type Localized = { en: string; fr: string };
+/** Localized text. en/fr are always present (built-ins); any additional
+ *  configured locale may be added as an extra key. */
+export type Localized = { en: string; fr: string; [locale: string]: string };
 
 export interface Block {
   id: string;
@@ -83,11 +85,21 @@ export interface SiteSettings {
   licenseNote: Localized;
   serviceAreas: string[];
   social: { facebook: string; instagram: string; linkedin: string; youtube: string };
+  /** Active content locales (codes). Defaults to ["en","fr"] when unset. */
+  locales?: string[];
 }
 
 export function tx(v: unknown, locale: Locale): string {
-  if (v && typeof v === "object" && locale in (v as Localized)) return (v as Localized)[locale] ?? "";
-  return typeof v === "string" ? v : "";
+  if (typeof v === "string") return v;
+  if (v && typeof v === "object") {
+    const o = v as Record<string, string>;
+    // Requested locale → default language → first non-empty translation.
+    if (o[locale]?.trim()) return o[locale];
+    if (o[defaultLocale]?.trim()) return o[defaultLocale];
+    const first = Object.values(o).find((s) => typeof s === "string" && s.trim());
+    return first ?? "";
+  }
+  return "";
 }
 
 // ─── Block schema (drives the generic editor + defaults) ────────────────

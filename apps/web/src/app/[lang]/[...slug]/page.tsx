@@ -72,7 +72,7 @@ export default async function CmsPage({ params }: PageProps<"/[lang]/[...slug]">
   return <PageView page={page} locale={lang} dict={dict} />;
 }
 
-async function BlogIndex({ lang }: { lang: "en" | "fr" }) {
+async function BlogIndex({ lang }: { lang: string }) {
   const posts = (await getPosts()).filter((p) => p.status === "published");
   return (
     <section className="bg-cream">

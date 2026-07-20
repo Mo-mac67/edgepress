@@ -1,12 +1,11 @@
 import type { MetadataRoute } from "next";
-import { locales } from "@/i18n/config";
-import { getPages, getPosts } from "@/lib/cms-store";
+import { getActiveLocales, getPages, getPosts } from "@/lib/cms-store";
 
 const SITE = process.env.SITE_URL ?? "http://localhost:3000";
 
 /** Built live from the CMS — new pages and posts appear automatically. */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [pages, posts] = await Promise.all([getPages(), getPosts()]);
+  const [pages, posts, locales] = await Promise.all([getPages(), getPosts(), getActiveLocales()]);
   const entries: MetadataRoute.Sitemap = [];
 
   for (const locale of locales) {
