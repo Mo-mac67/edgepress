@@ -34,7 +34,11 @@ async function copyLocalTemplate(src, destApp) {
   const appSrc = existsSync(join(src, APP_SUBDIR)) ? join(src, APP_SUBDIR) : src;
   await cp(appSrc, destApp, {
     recursive: true,
-    filter: (p) => !/[\\/](node_modules|\.next|\.open-next|\.wrangler|data)([\\/]|$)/.test(p),
+    filter: (p) =>
+      // Skip build output + runtime data…
+      !/[\\/](node_modules|\.next|\.open-next|\.wrangler|data|backups)([\\/]|$)/.test(p) &&
+      // …and never copy anyone's PERSONAL deploy config (keep the .example ones).
+      !/[\\/](wrangler\.jsonc|\.env|\.env\.local|\.env\.production)$/.test(p),
   });
 }
 
@@ -95,6 +99,15 @@ async function main() {
     const pkg = JSON.parse(await readFile(pkgPath, "utf8"));
     pkg.name = name.replace(/[^a-z0-9-]/gi, "-").toLowerCase();
     await writeFile(pkgPath, JSON.stringify(pkg, null, 2) + "\n");
+  }
+
+  // Seed the deploy config from the shipped templates so the project is ready
+  // to run/deploy. These hold only placeholders — the adopter fills in their
+  // own Cloudflare KV id + site URL (or ignores them entirely in fs mode).
+  for (const [example, real] of [["wrangler.jsonc.example", "wrangler.jsonc"], [".env.production.example", ".env.production"]]) {
+    const src = join(destApp, example);
+    const dst = join(destApp, real);
+    if (existsSync(src) && !existsSync(dst)) await cp(src, dst);
   }
 
   log(`${c.green}✔ Done!${c.reset}\n`);

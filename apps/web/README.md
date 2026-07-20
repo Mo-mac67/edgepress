@@ -1,59 +1,98 @@
-# MapleSave Energy (temporary brand)
+# EdgePress
 
-Bilingual (EN/FR) lead generator for Canadian energy incentives — federal and
-provincial **loans, grants and rebates** — for both residential and commercial
-properties. Built with Next.js 16 (App Router), React 19 and Tailwind v4.
+**The AI-native CMS that runs free on the edge.**
 
-## Run locally
+A block-based site builder + admin panel + CRM + automated SEO + a full AI suite,
+in one self-hostable app. WordPress bolted AI on with plugins; EdgePress is
+AI-native from day one — and it runs for **$0/month** on Cloudflare's edge, or on
+any Node server or Docker host.
+
+This is the EdgePress app. You own the deployment — it is **not** tied to any
+hosted service or account. Bring it up on your own site and server in minutes.
+
+## Quick start (local)
 
 ```bash
 npm install
-npm run dev        # http://localhost:3000  (redirects to /en or /fr)
-npm run build      # production build + typecheck
+npm run dev        # http://localhost:3000
 ```
 
-Copy `.env.example` to `.env.local` and fill in values as needed. The app runs
-fully with **no keys** (mock address data, console email, admin password `admin`).
+On first load you'll see a **setup wizard** — name your site and choose your
+admin password. That account is the **Owner** (full access). No default password
+ships; you create your own.
 
-## What's included (Phase 1 MVP)
+With zero configuration it runs in **filesystem mode** — content and uploads are
+stored as JSON + files under `data/`. No database, no cloud account needed.
 
-- **Home / Residential / Commercial / Programs** pages, fully bilingual (EN/FR)
-  via `src/i18n` dictionaries and `/[lang]` routing (locale auto-redirect in
-  `src/proxy.ts`).
-- **Eligibility quiz** (`/[lang]/eligibility`): sector → upgrades → address
-  autocomplete → building confirmation → contact details → personalized results
-  with matched programs and an equipment cost estimate.
-- **Lead capture**: stored via `src/lib/leads-store.ts` (JSON file under
-  `data/leads.json`) + email notification (`src/lib/email.ts`).
-- **Admin panel** (`/[lang]/admin`, password from `ADMIN_PASSWORD`): leads
-  dashboard with metrics, search, status workflow, notes, and CSV export.
-- **Incentive dataset** (`src/lib/programs-data.ts`): seed programs for all
-  provinces/territories + federal, loan-focused. Equipment pricing in
-  `src/lib/equipment-data.ts`.
+## Deploy it (pick one)
 
-## Connectors (swap mock → real with one file each)
+### 1. Self-host on any server (Node or Docker) — no external services
 
-- `src/lib/maps.ts` — address autocomplete + building view. Returns mock data
-  until `GOOGLE_MAPS_API_KEY` is set, then uses Google (Street View photo now,
-  3D Tiles / satellite ready to layer in). Falls back to the styled
-  `SoftBuilding` illustration when no key.
-- `src/lib/email.ts` — logs to console until `RESEND_API_KEY` + `LEAD_NOTIFY_TO`
-  are set.
-- `src/lib/leads-store.ts` — JSON file now; swap to Postgres/Supabase later
-  without touching the rest of the app.
+```bash
+docker compose up -d          # http://localhost:3000
+```
 
-## Phase 2 (not yet built)
+Content and media persist in the `edgepress-data` volume via the filesystem
+storage adapter (`EDGEPRESS_STORAGE=fs`). Or run the plain Node build:
 
-- Automated dataset refresh job (fetch official sources + AI extraction) with an
-  admin review/approve step before publishing.
-- Real Google Maps integration (3D building + satellite fallback) once billing
-  is enabled.
-- CRM integration (HubSpot / GoHighLevel) via the lead webhook.
-- Blog / SEO content, soft-3D marketing illustrations.
+```bash
+npm run build && npm start
+```
 
-## Notes
+### 2. Cloudflare Workers — the free edge deploy
 
-- Brand name, logo and colors are temporary (palette: Evergreen `#0E7C5A`,
-  Aqua `#1FB6A6`, Solar amber `#F5A623`, Mint `#EAF6EF`, Deep ink `#10241D`).
-- Program details are **seed data and must be verified**. The app shows a
-  disclaimer; it is not financial advice and not a government service.
+```bash
+cp wrangler.jsonc.example wrangler.jsonc
+npx wrangler kv namespace create edgepress_kv   # paste the id into wrangler.jsonc
+npx wrangler r2 bucket create edgepress-media
+cp .env.production.example .env.production        # set SITE_URL to your URL
+npm run cf:deploy
+```
+
+Documents live in Cloudflare **KV**, media in **R2**, and AI runs on **Workers
+AI** — all on the free tier. `wrangler.jsonc` points at *your* account; the repo
+only ships the `.example` template, so nothing here is wired to anyone else.
+
+### Scaffold a fresh project
+
+```bash
+npx create-edgepress my-site
+```
+
+## What's inside
+
+- **Block CMS** — page builder, Tiptap rich text, revisions, autosave, themes,
+  media library, blog, menus.
+- **Custom Content Types** — model anything (products, team, events…) with typed
+  fields, served through a headless **Content API** (`/api/content/<type>`).
+- **Forms builder** — design forms, collect submissions, export CSV, embed
+  anywhere with a copy-paste snippet.
+- **AI, provider-agnostic + BYOK** — free Cloudflare Workers AI by default, or
+  your own Anthropic/OpenAI/Google/Ollama key. Generate pages, translate,
+  rewrite, build a whole site, score leads, answer visitors.
+- **CRM + SEO** — lead inbox with AI replies; automated audits, sitemaps,
+  instant indexing, structured data.
+- **Auth** — Owner + team roles with per-tab permissions, optional TOTP 2FA.
+- **API keys + Webhooks** — HMAC-signed delivery on content/lead/form events.
+- **Backup/restore** — one-click export/import of the whole site as JSON.
+- **MCP server** — manage the site from Claude or any MCP agent.
+
+## Storage adapters
+
+Everything reads/writes through one adapter, so the same code runs anywhere:
+
+| Mode | Set | Documents | Media |
+| --- | --- | --- | --- |
+| Filesystem (default self-host) | `EDGEPRESS_STORAGE=fs` | `data/*.json` | `data/` files |
+| Cloudflare | `EDGEPRESS_STORAGE=kv` | KV | R2 |
+
+## Configuration
+
+Copy `.env.example` to `.env.local` and set what you need — everything is
+optional and no-ops when unset (email, SMS, CRM webhook, maps, BYOK AI keys).
+Set a long random `ADMIN_SECRET` in production (it salts the session/password
+hashes).
+
+## License
+
+MIT.

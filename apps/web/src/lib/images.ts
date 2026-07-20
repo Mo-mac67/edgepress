@@ -12,10 +12,10 @@ const img = (file: string, en: string, fr: string): SiteImage => ({
 
 /** Real construction photography (Pexels, commercial-use). */
 export const PHOTOS = {
-  heroHome: img("hero-custom-home.jpg", "Modern luxury custom home built by Kingspro", "Maison de luxe moderne construite par Kingspro"),
+  heroHome: img("hero-custom-home.jpg", "Modern luxury custom home", "Maison de luxe moderne"),
   heroSite: img("hero-construction-site.jpg", "Active residential construction site", "Chantier de construction résidentielle en cours"),
   framing: img("framing-timber.jpg", "Timber framing of a new home", "Charpente en bois d’une maison neuve"),
-  team: img("team-workers.jpg", "Kingspro construction team reviewing plans on site", "L’équipe Kingspro examinant les plans sur le chantier"),
+  team: img("team-workers.jpg", "Construction team reviewing plans on site", "L’équipe examinant les plans sur le chantier"),
   blueprint: img("blueprint-planning.jpg", "Reviewing building blueprints and plans", "Examen des plans de construction"),
   kitchen: img("kitchen-modern.jpg", "Modern renovated kitchen", "Cuisine moderne rénovée"),
   bathroom: img("bathroom-luxury.jpg", "Luxury renovated bathroom", "Salle de bain de luxe rénovée"),
@@ -33,7 +33,7 @@ export const PHOTOS = {
   renovation: img("renovation-progress.jpg", "Interior renovation in progress", "Rénovation intérieure en cours"),
   handshake: img("handshake-client.jpg", "Meeting with happy clients", "Rencontre avec des clients satisfaits"),
   skyline: img("toronto-skyline.jpg", "Toronto skyline", "Ligne d’horizon de Toronto"),
-  portrait: img("worker-portrait.jpg", "Confident Kingspro foreman", "Contremaître Kingspro confiant"),
+  portrait: img("worker-portrait.jpg", "Confident construction foreman", "Contremaître confiant"),
 } as const;
 
 /** Maps a service/project category id to a representative photo. */
