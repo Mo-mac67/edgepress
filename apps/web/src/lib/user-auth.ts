@@ -8,10 +8,8 @@ import { readJsonDoc, writeJsonDoc } from "./storage";
  * marketplace. File/KV-backed like every other store — free, no external
  * services. Separate from the admin auth in admin-auth.ts.
  *
- * OPTIONAL FEATURE MODULE — not in core-manifest.json. Copy manually into an
- * app together with the rest of the marketplace module (see APP-CONTRACT.md).
- * MapleSave keeps its own domain-specific copy (lib/user-auth.ts, cookie
- * "ms_user"); do NOT overwrite it.
+ * Optional feature module — enable it if your site needs public end-user
+ * accounts (e.g. a marketplace) alongside the admin auth.
  */
 export type UserRole = "customer" | "business";
 
