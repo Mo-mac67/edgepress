@@ -149,8 +149,73 @@ export function AiPanel() {
 
       <button onClick={save} className="btn-primary">{saved ? "Saved ✓" : "Save AI settings"}</button>
 
+      <AiTools ready={ready} />
       <McpSection />
     </div>
+  );
+}
+
+/** Standalone AI utilities: A/B title ideas + whole-site translation. */
+function AiTools({ ready }: { ready: boolean }) {
+  const ui = useAdminUI();
+  const [topic, setTopic] = useState("");
+  const [titles, setTitles] = useState<string[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [translating, setTranslating] = useState(false);
+
+  async function genTitles() {
+    if (!topic.trim()) return ui.toast("Enter a topic or draft headline", "error");
+    setBusy(true); setTitles([]);
+    const res = await fetch("/api/admin/ai/titles", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ topic }) });
+    const data = await res.json().catch(() => ({}));
+    setBusy(false);
+    if (res.ok) setTitles(data.titles ?? []);
+    else ui.toast(data.error || "Couldn't generate titles", "error");
+  }
+
+  async function translateSite(to: string) {
+    const label = to === "fr" ? "French" : "English";
+    if (!(await ui.confirm({ title: `Translate all pages to ${label}?`, message: "Adds the translation to every page — existing content is preserved. Uses one AI call per page.", confirmLabel: "Translate all" }))) return;
+    setTranslating(true);
+    const res = await fetch("/api/admin/ai/translate-site", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ to }) });
+    const data = await res.json().catch(() => ({}));
+    setTranslating(false);
+    ui.toast(res.ok ? `Translated ${data.translated} page(s) to ${label}` : (data.error || "Translation failed"), res.ok ? "success" : "error");
+  }
+
+  if (!ready) return null;
+
+  return (
+    <section className="card p-5">
+      <h3 className="font-display font-bold text-brand">AI tools</h3>
+
+      <div className="mt-4">
+        <p className="text-sm font-medium text-ink">A/B title ideas</p>
+        <div className="mt-2 flex gap-2">
+          <input className="field" placeholder="Topic or draft headline…" value={topic} onChange={(e) => setTopic(e.target.value)} onKeyDown={(e) => e.key === "Enter" && genTitles()} />
+          <button onClick={genTitles} disabled={busy} className="btn-secondary shrink-0">{busy ? "Thinking…" : "Suggest"}</button>
+        </div>
+        {titles.length > 0 && (
+          <ul className="mt-3 space-y-1.5">
+            {titles.map((t, i) => (
+              <li key={i} className="flex items-center justify-between gap-2 rounded-lg bg-surface-soft px-3 py-2 text-sm">
+                <span>{t}</span>
+                <button onClick={() => { navigator.clipboard?.writeText(t); ui.toast("Copied", "success"); }} className="shrink-0 text-xs font-semibold text-brand">Copy</button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <div className="mt-6 border-t border-line pt-4">
+        <p className="text-sm font-medium text-ink">Whole-site translation</p>
+        <p className="mt-1 text-xs text-ink-soft">Fill a language across every page in one go (additive — nothing is overwritten).</p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <button onClick={() => translateSite("fr")} disabled={translating} className="btn-secondary">{translating ? "Translating…" : "Translate all → French"}</button>
+          <button onClick={() => translateSite("en")} disabled={translating} className="btn-secondary">{translating ? "Translating…" : "Translate all → English"}</button>
+        </div>
+      </div>
+    </section>
   );
 }
 
