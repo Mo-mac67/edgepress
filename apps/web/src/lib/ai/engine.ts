@@ -147,11 +147,21 @@ function resolve(cfg: AIConfig, feature: AIFeature): { provider: AIProviderId; m
 
 export class AIDisabledError extends Error {}
 export class AIUnavailableError extends Error {}
+export class AIBudgetError extends Error {}
+
+/** Total AI calls made so far (across all features/providers). */
+export async function totalAiCalls(): Promise<number> {
+  return (await getUsage()).reduce((sum, r) => sum + r.calls, 0);
+}
 
 /** High-level entry point used by every AI feature. */
 export async function aiComplete(feature: AIFeature, req: AIRequest): Promise<AIResult> {
   const cfg = await getAIConfig();
   if (!cfg.enabled) throw new AIDisabledError("AI features are turned off");
+  // Safety budget: refuse once the configured call cap is reached.
+  if (cfg.callBudget && cfg.callBudget > 0 && (await totalAiCalls()) >= cfg.callBudget) {
+    throw new AIBudgetError("AI call budget reached — raise it in the AI settings to continue.");
+  }
   const { provider, model } = resolve(cfg, feature);
   const result = await callProvider(provider, model, cfg, req);
   await recordUsage(feature, provider, result.inTokens, result.outTokens);

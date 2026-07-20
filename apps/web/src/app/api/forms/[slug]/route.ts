@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { addSubmission, getForm, validateSubmission } from "@/lib/forms-store";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
+import { isSpam } from "@/lib/spam";
 import { dispatchWebhook } from "@/lib/webhooks";
 
 export const dynamic = "force-dynamic";
@@ -27,7 +28,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
   const result = validateSubmission(form, body);
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: 422, headers: cors });
 
-  const sub = await addSubmission(slug, result.data);
+  const spam = isSpam(Object.values(result.data).map(String).join(" "));
+  const sub = await addSubmission(slug, result.data, spam);
   await dispatchWebhook("form.submitted", { form: slug, submission: sub });
   return NextResponse.json({ ok: true, message: form.successMessage }, { status: 201, headers: cors });
 }

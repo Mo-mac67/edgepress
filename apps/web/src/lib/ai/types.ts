@@ -107,6 +107,9 @@ export interface AIConfig {
   brandVoice: string;
   /** Public visitor assistant chat widget on the live site. */
   assistantEnabled: boolean;
+  /** Safety cap on total AI calls (0 / unset = unlimited). Refuses further
+   *  calls once reached, so a runaway loop or abuse can't rack up usage. */
+  callBudget?: number;
 }
 
 export const DEFAULT_AI_CONFIG: AIConfig = {
@@ -118,6 +121,7 @@ export const DEFAULT_AI_CONFIG: AIConfig = {
   approveFirst: true,
   brandVoice: "",
   assistantEnabled: false,
+  callBudget: 0,
 };
 
 /** Which providers are usable given the current config (key present / free). */
