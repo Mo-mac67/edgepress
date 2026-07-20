@@ -161,6 +161,15 @@ Rules: 3-5 pages including a home (slug "") and a contact page. Choose colors th
   return plan;
 }
 
+/** A/B headline variants for a topic or an existing title. */
+export async function titleIdeas(topic: string, locale: string): Promise<string[]> {
+  const cfg = await getAIConfig();
+  const system = `You are a conversion copywriter. Given a topic or existing headline, return JSON {"titles":[...6 distinct, compelling title options...]} in ${locale === "fr" ? "French" : "English"}. Vary the angle (benefit, curiosity, how-to, number, question). Keep each under 70 characters. Return ONLY JSON.${brandVoiceLine(cfg.brandVoice)}`;
+  const { text } = await aiComplete("seoMeta", { system, prompt: topic, json: true, maxTokens: 500 });
+  const out = extractJson<{ titles: string[] }>(text);
+  return (out.titles ?? []).filter((t) => typeof t === "string" && t.trim()).slice(0, 8);
+}
+
 /** SEO keyword & content-gap ideas for a topic. */
 export async function keywordIdeas(topic: string): Promise<{ keywords: string[]; gaps: string[] }> {
   const system = `You are an SEO strategist. For the given topic, return JSON {"keywords":[...10 realistic search keywords...],"gaps":[...5 content ideas/pages the site is likely missing...]}. Return ONLY JSON.`;
