@@ -7,11 +7,11 @@ import { FloatingQuote } from "@/components/FloatingQuote";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ScrollFx } from "@/components/ScrollFx";
-import { isLocale, locales } from "@/i18n/config";
+import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { SeoTags } from "@/components/SeoTags";
 import { AssistantWidget } from "@/components/AssistantWidget";
-import { getNav, getSeo, getSettings } from "@/lib/cms-store";
+import { getActiveLocales, getNav, getSeo, getSettings } from "@/lib/cms-store";
 import { getAIConfig } from "@/lib/ai/engine";
 
 const inter = Inter({
@@ -81,8 +81,8 @@ export const metadata: Metadata = {
   },
 };
 
-export function generateStaticParams() {
-  return locales.map((lang) => ({ lang }));
+export async function generateStaticParams() {
+  return (await getActiveLocales()).map((lang) => ({ lang }));
 }
 
 export default async function LangLayout({
@@ -90,7 +90,7 @@ export default async function LangLayout({
   params,
 }: LayoutProps<"/[lang]">) {
   const { lang } = await params;
-  if (!isLocale(lang)) notFound();
+  if (!isLocale(lang) || !(await getActiveLocales()).includes(lang)) notFound();
 
   const dict = getDictionary(lang);
   const [nav, settings, seo, aiCfg] = await Promise.all([getNav(), getSettings(), getSeo(), getAIConfig()]);

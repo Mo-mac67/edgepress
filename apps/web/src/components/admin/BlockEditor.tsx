@@ -21,7 +21,7 @@ function FieldInput({
   onChange: (v: unknown) => void;
 }) {
   if (field.localized) {
-    const lv = (value as { en: string; fr: string }) ?? { en: "", fr: "" };
+    const lv = (value as Record<string, string>) ?? { en: "", fr: "" };
     const set = (s: string) => onChange({ ...lv, [locale]: s });
     const cur = lv[locale] ?? "";
     if (field.type === "textarea")

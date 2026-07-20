@@ -376,6 +376,17 @@ export function SitePanel() {
         <Text label="Hours" value={s.hours} onChange={(v) => set({ hours: v })} />
       </div>
       <div className="card space-y-3 p-5">
+        <h3 className="font-display font-bold text-brand">Languages</h3>
+        <p className="text-xs text-ink-soft">
+          Content locale codes, comma-separated (e.g. <code className="rounded bg-surface-soft px-1">en, fr, es</code>). English (en) is always kept as the fallback. Add a code, then translate pages into it (per-page Translate, or AI → Whole-site translation). Visitors get a language switcher.
+        </p>
+        <Text
+          label="Active languages"
+          value={(s.locales?.length ? s.locales : ["en", "fr"]).join(", ")}
+          onChange={(v) => set({ locales: v.split(",").map((x) => x.trim().toLowerCase()).filter((x) => /^[a-z]{2}(-[a-z]{2})?$/.test(x)) })}
+        />
+      </div>
+      <div className="card space-y-3 p-5">
         <h3 className="font-display font-bold text-brand">Header</h3>
         <p className="text-xs text-ink-soft">A short kicker shown next to the logo on wide screens.</p>
         <Text label="Tagline (EN)" value={s.headerTagline.en} onChange={(v) => set({ headerTagline: { ...s.headerTagline, en: v } })} />

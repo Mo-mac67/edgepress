@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { readJsonDoc, writeJsonDoc } from "./storage";
 import { DEFAULT_SEO, DEFAULT_THEME, type MediaItem, type NavItem, type Page, type Post, type SeoSettings, type SiteSettings, type ThemeSettings } from "./cms-types";
 import { seedPages, seedNav, seedSettings } from "@/lib/cms-seed";
+import { defaultLocale } from "@/i18n/config";
 
 const PAGES = "cms-pages.json";
 const NAV = "cms-nav.json";
@@ -168,6 +169,17 @@ export async function getSettings(): Promise<SiteSettings> {
 }
 export async function saveSettings(s: SiteSettings): Promise<void> {
   await writeJsonDoc(SETTINGS, s);
+}
+
+/** The site's active content locales — always includes the default language.
+ *  Defaults to the built-in en/fr when the owner hasn't configured any. */
+export async function getActiveLocales(): Promise<string[]> {
+  const s = await getSettings();
+  const clean = (Array.isArray(s.locales) ? s.locales : [])
+    .map((l) => String(l).trim().toLowerCase())
+    .filter((l) => /^[a-z]{2}(-[a-z]{2})?$/.test(l));
+  const list = clean.length ? Array.from(new Set(clean)) : ["en", "fr"];
+  return list.includes(defaultLocale) ? list : [defaultLocale, ...list];
 }
 
 // ─── Blog posts ─────────────────────────────────────────

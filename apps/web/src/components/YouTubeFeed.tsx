@@ -19,7 +19,7 @@ export function YouTubeFeed({
 }: {
   channelId: string;
   count?: number;
-  locale?: "en" | "fr";
+  locale?: string;
   channelUrl?: string;
 }) {
   const [videos, setVideos] = useState<Video[]>([]);

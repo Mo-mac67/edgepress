@@ -5,7 +5,7 @@ import { tx, type Block, type Page } from "./cms-types";
 const SITE = () => process.env.SITE_URL ?? "http://localhost:3000";
 
 // ─── Content extraction ─────────────────────────────────
-function blockText(b: Block, locale: "en" | "fr"): string {
+function blockText(b: Block, locale: string): string {
   const parts: string[] = [];
   const walk = (v: unknown): void => {
     if (v == null) return;
@@ -21,7 +21,7 @@ function blockText(b: Block, locale: "en" | "fr"): string {
   return parts.join(" ");
 }
 
-export function pageText(page: Page, locale: "en" | "fr"): string {
+export function pageText(page: Page, locale: string): string {
   if (page.mode === "html") return (page.rawHtml ?? "").replace(/<script[\s\S]*?<\/script>/gi, "").replace(/<[^>]+>/g, " ");
   return page.blocks.map((b) => blockText(b, locale)).join(" ").replace(/\s+/g, " ").trim();
 }
@@ -42,7 +42,7 @@ export interface PageAudit {
   checks: SeoCheck[];
 }
 
-export async function auditPages(locale: "en" | "fr" = "en"): Promise<PageAudit[]> {
+export async function auditPages(locale: string = "en"): Promise<PageAudit[]> {
   const pages = (await getPages()).filter((p) => p.status === "published");
   return pages.map((p) => {
     const title = tx(p.title, locale);
@@ -113,7 +113,7 @@ export async function pingIndexNow(slug: string): Promise<void> {
 }
 
 // ─── AI meta generation (routed through the provider-agnostic AI engine) ──
-export async function generateMeta(page: Page, locale: "en" | "fr"): Promise<{ title: string; description: string } | { error: string }> {
+export async function generateMeta(page: Page, locale: string): Promise<{ title: string; description: string } | { error: string }> {
   const { aiComplete, extractJson } = await import("./ai/engine");
   const text = pageText(page, locale).slice(0, 4000);
   const lang = locale === "fr" ? "French" : "English";
