@@ -22,6 +22,16 @@ export async function getKV(): Promise<KVNamespace | null> {
 async function kv(): Promise<KVNamespace | null> {
   // Explicit filesystem mode skips the Cloudflare lookup entirely.
   if (process.env.EDGEPRESS_STORAGE === "fs") return null;
+  // SQLite self-host mode: dynamic import so the Workers bundle never loads it.
+  // Falls back to the filesystem adapter if node:sqlite isn't available.
+  if (process.env.EDGEPRESS_STORAGE === "sqlite") {
+    try {
+      const { sqliteKV } = await import("./sqlite-kv");
+      return await sqliteKV();
+    } catch {
+      return null;
+    }
+  }
   try {
     const mod = await import("@opennextjs/cloudflare");
     const env = mod.getCloudflareContext().env as Record<string, unknown> | undefined;
