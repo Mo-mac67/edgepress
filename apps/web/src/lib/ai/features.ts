@@ -170,6 +170,20 @@ export async function titleIdeas(topic: string, locale: string): Promise<string[
   return (out.titles ?? []).filter((t) => typeof t === "string" && t.trim()).slice(0, 8);
 }
 
+/** Suggest internal links to add to a piece of content, chosen from the site's
+ *  existing pages. Only returns links whose slug exists on the site. */
+export async function internalLinkIdeas(text: string, pages: { slug: string; title: string }[]): Promise<{ slug: string; anchor: string }[]> {
+  if (pages.length === 0 || !text.trim()) return [];
+  const list = pages.map((p) => `${p.slug || "(home)"} — ${p.title}`).join("\n");
+  const system = `You are an SEO editor. Given a piece of content and the site's existing pages ("slug — title"), suggest up to 6 internal links to add. Return ONLY JSON {"links":[{"slug":"page-slug","anchor":"short anchor text taken from the content"}]}. Use only slugs from the list. The anchor must be a phrase that appears in the content. Never link a page to itself.`;
+  const { text: out } = await aiComplete("seoKeywords", { system, prompt: `PAGES:\n${list}\n\nCONTENT:\n${text.slice(0, 4000)}`, json: true, maxTokens: 700 });
+  const parsed = extractJson<{ links: { slug: string; anchor: string }[] }>(out);
+  const slugs = new Set(pages.map((p) => p.slug));
+  return (parsed.links ?? [])
+    .filter((l) => l && typeof l.slug === "string" && typeof l.anchor === "string" && slugs.has(l.slug))
+    .slice(0, 8);
+}
+
 /** SEO keyword & content-gap ideas for a topic. */
 export async function keywordIdeas(topic: string): Promise<{ keywords: string[]; gaps: string[] }> {
   const system = `You are an SEO strategist. For the given topic, return JSON {"keywords":[...10 realistic search keywords...],"gaps":[...5 content ideas/pages the site is likely missing...]}. Return ONLY JSON.`;

@@ -6,7 +6,7 @@ import { useAdminUI } from "./ui";
 type FormFieldType = "text" | "email" | "tel" | "textarea" | "number" | "select" | "checkbox";
 interface FormField { key: string; label: string; type: FormFieldType; required?: boolean; placeholder?: string; options?: string[] }
 interface FormDef { id: string; slug: string; name: string; fields: FormField[]; submitLabel: string; successMessage: string }
-interface Submission { id: string; data: Record<string, unknown>; createdAt: string }
+interface Submission { id: string; data: Record<string, unknown>; createdAt: string; spam?: boolean }
 
 const TYPES: FormFieldType[] = ["text", "email", "tel", "textarea", "number", "select", "checkbox"];
 
@@ -164,8 +164,13 @@ function FormDetail({ form, onDelete }: { form: FormDef; onDelete: () => void })
           </thead>
           <tbody>
             {subs.map((s) => (
-              <tr key={s.id} className="border-b border-line last:border-0">
-                {form.fields.map((f) => <td key={f.key} className="py-2.5 pr-4">{String(s.data[f.key] ?? "")}</td>)}
+              <tr key={s.id} className={`border-b border-line last:border-0 ${s.spam ? "bg-red-50/60" : ""}`}>
+                {form.fields.map((f, fi) => (
+                  <td key={f.key} className="py-2.5 pr-4">
+                    {fi === 0 && s.spam && <span className="mr-1.5 rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-bold uppercase text-red-700">spam</span>}
+                    {String(s.data[f.key] ?? "")}
+                  </td>
+                ))}
                 <td className="py-2.5 pr-4 text-ink-soft">{new Date(s.createdAt).toLocaleString()}</td>
                 <td className="py-2.5 text-right"><button onClick={() => delSub(s.id)} className="text-xs font-semibold text-red-600">Delete</button></td>
               </tr>
