@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BrandMark } from "@/components/BrandMark";
@@ -9,6 +9,9 @@ import { BarList, Donut, TimeBars } from "@/components/charts";
 import { BlogPanel, MediaPanel, MenuPanel, PagesPanel, SitePanel } from "./CmsPanels";
 import { HelpPanel } from "./HelpPanel";
 import { MarketplacePanel } from "./MarketplacePanel";
+import { CollectionsPanel } from "./CollectionsPanel";
+import { FormsPanel } from "./FormsPanel";
+import { DeveloperPanel } from "./DeveloperPanel";
 import { TabPermissionsCard } from "./TabPermissionsCard";
 import { SeoPanel } from "./SeoPanel";
 import { AiPanel } from "./AiPanel";
@@ -31,9 +34,9 @@ const STATUS_LABEL: Record<LeadStatus, string> = {
   lost: "Lost",
 };
 const PALETTE = ["#16324f", "#e0a52e", "#1c4066", "#c2861a", "#5a6571", "#9aa4ae"];
-type Tab = "overview" | "copilot" | "leads" | "marketplace" | "pages" | "menu" | "blog" | "media" | "appearance" | "seo" | "ai" | "site" | "activity" | "settings" | "audit" | "help";
-/** Every dashboard tab id — also the vocabulary for per-admin tab permissions ("audit" stays super-only regardless). */
-const ALL_TAB_IDS: Tab[] = ["overview", "leads", "marketplace", "activity", "audit", "pages", "menu", "blog", "media", "seo", "appearance", "site", "settings", "help"];
+type Tab = "overview" | "copilot" | "leads" | "marketplace" | "pages" | "menu" | "blog" | "collections" | "forms" | "media" | "appearance" | "seo" | "ai" | "site" | "developer" | "activity" | "settings" | "audit" | "help";
+/** Every dashboard tab id — also the vocabulary for per-admin tab permissions ("audit"/"developer" stay super-only regardless). */
+const ALL_TAB_IDS: Tab[] = ["overview", "leads", "marketplace", "activity", "audit", "pages", "menu", "blog", "collections", "forms", "media", "seo", "appearance", "site", "developer", "settings", "help"];
 
 export function AdminDashboard({
   locale,
@@ -88,6 +91,8 @@ export function AdminDashboard({
         { id: "pages", label: "Pages", icon: "list" },
         { id: "menu", label: "Menus", icon: "menu" },
         { id: "blog", label: "Blog", icon: "edit" },
+        { id: "collections", label: "Collections", icon: "grid" },
+        { id: "forms", label: "Forms", icon: "list" },
         { id: "media", label: "Media", icon: "image" },
       ],
     },
@@ -103,6 +108,7 @@ export function AdminDashboard({
       items: [
         { id: "appearance", label: "Appearance", icon: "star" },
         { id: "site", label: "Site info", icon: "building" },
+        ...(isSuper ? [{ id: "developer" as Tab, label: "Developer", icon: "code" as const }] : []),
         { id: "settings", label: "Security", icon: "lock" },
         { id: "help", label: "Help & guide", icon: "info" },
       ],
@@ -123,7 +129,7 @@ export function AdminDashboard({
         <div className="flex h-16 items-center gap-2.5 border-b border-line-dark px-5">
           <BrandMark size={32} />
           <span className="font-display font-bold text-white">EdgePress</span>
-          <span className="ml-auto rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-semibold uppercase text-accent">{role}</span>
+          <span className="ml-auto rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-semibold uppercase text-accent">{role === "super" ? "Owner" : "Team"}</span>
         </div>
         <nav className="flex-1 overflow-y-auto px-3 py-4">
           {groups.map((g) => (
@@ -206,6 +212,8 @@ export function AdminDashboard({
           {tab === "pages" && <PagesPanel locale={locale} />}
           {tab === "menu" && <MenuPanel locale={locale} />}
           {tab === "blog" && <BlogPanel locale={locale} />}
+          {tab === "collections" && <CollectionsPanel isSuper={isSuper} />}
+          {tab === "forms" && <FormsPanel />}
           {tab === "media" && <MediaPanel />}
           {tab === "appearance" && <ThemePanel />}
           {tab === "copilot" && <CopilotPanel locale={locale} />}
@@ -214,6 +222,7 @@ export function AdminDashboard({
           {tab === "help" && <HelpPanel />}
           {tab === "site" && <SitePanel />}
           {tab === "activity" && <Activity events={events} />}
+          {tab === "developer" && isSuper && <DeveloperPanel />}
           {tab === "settings" && <Settings isSuper={isSuper} channels={channels} adminUsers={adminUsers} />}
           {tab === "audit" && isSuper && <AuditTab audit={audit} />}
         </div>
@@ -563,6 +572,9 @@ function Settings({
         </p>
       </div>
 
+      {isSuper && <TwoFactorCard />}
+      {isSuper && <BackupCard />}
+
       {isSuper && (
         <div className="card p-6 lg:col-span-2">
           <h3 className="font-display font-semibold text-brand">Admin users</h3>
@@ -604,6 +616,131 @@ function Settings({
           <TabPermissionsCard tabIds={ALL_TAB_IDS} />
         </div>
       )}
+    </div>
+  );
+}
+
+/** Owner-only: enable/disable TOTP two-factor auth. Enrollment shows the secret
+ *  to type into an authenticator app, then confirms with a live code. */
+function TwoFactorCard() {
+  const [enabled, setEnabled] = useState<boolean | null>(null);
+  const [setup, setSetup] = useState<{ secret: string; uri: string } | null>(null);
+  const [code, setCode] = useState("");
+  const [msg, setMsg] = useState("");
+
+  useEffect(() => {
+    fetch("/api/admin/2fa").then((r) => r.json()).then((d) => setEnabled(!!d.enabled)).catch(() => setEnabled(false));
+  }, []);
+
+  async function call(action: string, extra: Record<string, string> = {}) {
+    const res = await fetch("/api/admin/2fa", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action, ...extra }),
+    });
+    return { ok: res.ok, data: await res.json().catch(() => ({})) };
+  }
+
+  async function begin() {
+    setMsg("");
+    const { data } = await call("start");
+    if (data.secret) setSetup(data);
+  }
+  async function confirm() {
+    setMsg("");
+    const { data } = await call("confirm", { code });
+    if (data.ok) {
+      setEnabled(true);
+      setSetup(null);
+      setCode("");
+      setMsg("Two-factor authentication is on.");
+    } else {
+      setMsg("That code didn't match. Try the current one.");
+    }
+  }
+  async function disable() {
+    await call("disable");
+    setEnabled(false);
+    setMsg("Two-factor authentication turned off.");
+  }
+
+  return (
+    <div className="card p-6 lg:col-span-2">
+      <div className="flex items-center justify-between">
+        <h3 className="font-display font-semibold text-brand">Two-factor authentication</h3>
+        <span className={enabled ? "text-sm font-semibold text-accent-dark" : "text-sm text-ink-soft"}>
+          {enabled == null ? "…" : enabled ? "On" : "Off"}
+        </span>
+      </div>
+      <p className="mt-1 text-sm text-ink-soft">
+        Add a one-time code from an authenticator app on top of your password. Owner account only.
+      </p>
+
+      {enabled && !setup && (
+        <button type="button" onClick={disable} className="btn-secondary mt-4">
+          Turn off 2FA
+        </button>
+      )}
+
+      {!enabled && !setup && (
+        <button type="button" onClick={begin} className="btn-primary mt-4">
+          Set up 2FA
+        </button>
+      )}
+
+      {setup && (
+        <div className="mt-4 rounded-lg border border-line p-4">
+          <p className="text-sm text-ink-soft">1. In your authenticator app, add a manual key:</p>
+          <code className="mt-1 block break-all rounded bg-surface-soft px-3 py-2 font-mono text-sm tracking-wider">{setup.secret}</code>
+          <p className="mt-3 text-sm text-ink-soft">2. Enter the 6-digit code it shows:</p>
+          <div className="mt-2 flex gap-2">
+            <input inputMode="numeric" maxLength={6} className="field tracking-[0.3em]" placeholder="000000" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} />
+            <button type="button" onClick={confirm} className="btn-primary shrink-0">Verify &amp; enable</button>
+          </div>
+        </div>
+      )}
+
+      {msg && <p className="mt-3 text-sm text-ink-soft">{msg}</p>}
+    </div>
+  );
+}
+
+/** Owner-only: download a full JSON backup, or restore from one. */
+function BackupCard() {
+  const ui = useAdminUI();
+  const [restoring, setRestoring] = useState(false);
+
+  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!(await ui.confirm({ title: "Restore this backup?", message: "Documents in the file overwrite the matching ones on your site. This can't be undone — download a fresh backup first if unsure.", danger: true, confirmLabel: "Restore" }))) return;
+    setRestoring(true);
+    try {
+      const json = JSON.parse(await file.text());
+      const res = await fetch("/api/admin/backup", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(json) });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) ui.toast(`Restored ${data.restored} document(s). Reload to see changes.`, "success");
+      else ui.toast(data.error || "Restore failed", "error");
+    } catch {
+      ui.toast("That doesn't look like a valid backup file.", "error");
+    }
+    setRestoring(false);
+  }
+
+  return (
+    <div className="card p-6 lg:col-span-2">
+      <h3 className="font-display font-semibold text-brand">Backup &amp; restore</h3>
+      <p className="mt-1 text-sm text-ink-soft">
+        Export every document — pages, posts, collections, forms, leads, settings — as one JSON file. Restore it here or on another EdgePress site. <span className="text-ink-soft">(Media files in R2 aren't included.)</span>
+      </p>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <a href="/api/admin/backup" className="btn-primary">Download backup</a>
+        <label className={`btn-secondary cursor-pointer ${restoring ? "opacity-60" : ""}`}>
+          {restoring ? "Restoring…" : "Restore from file"}
+          <input type="file" accept="application/json,.json" className="hidden" onChange={onFile} disabled={restoring} />
+        </label>
+      </div>
     </div>
   );
 }

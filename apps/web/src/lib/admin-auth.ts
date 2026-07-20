@@ -32,7 +32,7 @@ function superHash(): string | null {
 const readJson = <T>(key: string, fallback: T) => readJsonDoc<T>(key, fallback);
 const writeJson = (key: string, data: unknown) => writeJsonDoc(key, data);
 
-type AdminConfig = { passwordHash?: string; tabPermissions?: Record<string, string[]>; setupDone?: boolean };
+type AdminConfig = { passwordHash?: string; tabPermissions?: Record<string, string[]>; setupDone?: boolean; totp?: { secret: string; enabled: boolean } };
 
 /** First-run detection: true once the owner has completed the setup wizard. */
 export async function isSetupDone(): Promise<boolean> {
@@ -57,16 +57,25 @@ async function storedUsers(): Promise<StoredUser[]> {
   return readJson<StoredUser[]>(USERS_FILE, []);
 }
 
-/** Every hash that grants the "admin" role. */
-async function allAdminHashes(): Promise<string[]> {
-  const users = await storedUsers();
-  return [await primaryAdminHash(), ...users.map((u) => u.passwordHash)];
+/** Hashes for managed team members (NOT the owner). */
+async function managedUserHashes(): Promise<string[]> {
+  return (await storedUsers()).map((u) => u.passwordHash);
 }
 
+/**
+ * Role model:
+ *  - "super" = the SITE OWNER (whoever set the password in the setup wizard, or
+ *    an optional platform SUPERADMIN_PASSWORD). Full control: team, audit, all
+ *    tabs, settings.
+ *  - "admin" = a managed team member the owner created — sees only the tabs the
+ *    owner allows.
+ */
 export async function verifyPassword(password: string): Promise<Role | null> {
   const h = hash(password);
-  if (h === superHash()) return "super";
-  if ((await allAdminHashes()).includes(h)) return "admin";
+  const sh = superHash();
+  if (sh && h === sh) return "super";
+  if (h === (await primaryAdminHash())) return "super"; // the owner
+  if ((await managedUserHashes()).includes(h)) return "admin";
   return null;
 }
 
@@ -90,8 +99,9 @@ export async function getRole(): Promise<Role | null> {
   const value = (await cookies()).get(COOKIE_NAME)?.value;
   if (!value) return null;
   const [role, h] = value.split(".");
-  if (role === "super" && h === superHash()) return "super";
-  if (role === "admin" && (await allAdminHashes()).includes(h)) return "admin";
+  const sh = superHash();
+  if (role === "super" && ((sh && h === sh) || h === (await primaryAdminHash()))) return "super";
+  if (role === "admin" && (await managedUserHashes()).includes(h)) return "admin";
   return null;
 }
 
@@ -111,14 +121,14 @@ export async function setAdminPassword(next: string): Promise<boolean> {
   return true;
 }
 
-/** Which admin identity is signed in: "super", "admin" (primary password) or a managed user's label. */
+/** Who is signed in: "super" (the owner) or a managed member's label. */
 export async function getAdminUsername(): Promise<string | null> {
   const value = (await cookies()).get(COOKIE_NAME)?.value;
   if (!value) return null;
   const [role, h] = value.split(".");
-  if (role === "super" && h === superHash()) return "super";
+  const sh = superHash();
+  if (role === "super" && ((sh && h === sh) || h === (await primaryAdminHash()))) return "super";
   if (role === "admin") {
-    if (h === (await primaryAdminHash())) return "admin";
     const u = (await storedUsers()).find((x) => x.passwordHash === h);
     if (u) return u.label;
   }
@@ -155,3 +165,39 @@ export async function removeAdminUser(id: string): Promise<boolean> {
 }
 
 export { hash as hashPassword };
+
+// ---- Two-factor authentication (owner, optional) ----
+import { generateSecret, totpUri, verifyTotp } from "./totp";
+
+/** Whether the owner has 2FA turned on (checked at login). */
+export async function isTotpEnabled(): Promise<boolean> {
+  const cfg = await readJson<AdminConfig>(CONFIG_FILE, {});
+  return !!cfg.totp?.enabled;
+}
+export async function getTotpStatus(): Promise<{ enabled: boolean }> {
+  return { enabled: await isTotpEnabled() };
+}
+/** Verify a login code against the owner's active 2FA secret. */
+export async function verifyOwnerTotp(code: string): Promise<boolean> {
+  const cfg = await readJson<AdminConfig>(CONFIG_FILE, {});
+  if (!cfg.totp?.enabled || !cfg.totp.secret) return false;
+  return verifyTotp(cfg.totp.secret, code);
+}
+/** Start enrolment: generate a secret (not yet active) + otpauth URI to scan. */
+export async function startTotpSetup(account = "owner"): Promise<{ secret: string; uri: string }> {
+  const cfg = await readJson<AdminConfig>(CONFIG_FILE, {});
+  const secret = generateSecret();
+  await writeJson(CONFIG_FILE, { ...cfg, totp: { secret, enabled: false } });
+  return { secret, uri: totpUri(secret, account) };
+}
+/** Activate 2FA once the owner proves they can generate a valid code. */
+export async function confirmTotp(code: string): Promise<boolean> {
+  const cfg = await readJson<AdminConfig>(CONFIG_FILE, {});
+  if (!cfg.totp?.secret || !verifyTotp(cfg.totp.secret, code)) return false;
+  await writeJson(CONFIG_FILE, { ...cfg, totp: { secret: cfg.totp.secret, enabled: true } });
+  return true;
+}
+export async function disableTotp(): Promise<void> {
+  const cfg = await readJson<AdminConfig>(CONFIG_FILE, {});
+  await writeJson(CONFIG_FILE, { ...cfg, totp: undefined });
+}
