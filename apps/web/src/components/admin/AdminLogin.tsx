@@ -23,21 +23,29 @@ export function AdminLogin() {
 function LoginForm() {
   const router = useRouter();
   const [password, setPassword] = useState("");
-  const [error, setError] = useState(false);
+  const [code, setCode] = useState("");
+  const [needsCode, setNeedsCode] = useState(false);
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    setError(false);
+    setError("");
     const res = await fetch("/api/admin/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password }),
+      body: JSON.stringify({ password, code: code || undefined }),
     });
+    const data = await res.json().catch(() => ({}));
     setLoading(false);
-    if (res.ok) router.refresh();
-    else setError(true);
+    if (res.ok && data.ok) return router.refresh();
+    if (data.needsCode) {
+      setNeedsCode(true);
+      setError(res.status === 401 ? "Invalid authentication code." : "");
+      return;
+    }
+    setError("Incorrect password.");
   }
 
   return (
@@ -48,11 +56,18 @@ function LoginForm() {
         <p className="mt-1 text-sm text-ink-soft">Sign in to manage your site.</p>
         <label className="mt-5 block">
           <span className="mb-1.5 block text-sm font-medium text-ink-soft">Password</span>
-          <input type="password" className="field" value={password} placeholder="••••••••" onChange={(e) => setPassword(e.target.value)} autoFocus />
+          <input type="password" className="field" value={password} placeholder="••••••••" onChange={(e) => setPassword(e.target.value)} autoFocus disabled={needsCode} />
         </label>
-        {error && <p className="mt-3 text-sm font-medium text-red-600">Incorrect password.</p>}
+        {needsCode && (
+          <label className="mt-3 block">
+            <span className="mb-1.5 block text-sm font-medium text-ink-soft">Authentication code</span>
+            <input inputMode="numeric" className="field tracking-[0.3em]" value={code} placeholder="000000" maxLength={6} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} autoFocus />
+            <span className="mt-1 block text-xs text-ink-soft">From your authenticator app.</span>
+          </label>
+        )}
+        {error && <p className="mt-3 text-sm font-medium text-red-600">{error}</p>}
         <button type="submit" disabled={loading} className="btn-primary mt-5 w-full">
-          {loading ? "Signing in…" : "Sign in"}
+          {loading ? "Signing in…" : needsCode ? "Verify" : "Sign in"}
         </button>
       </form>
     </section>

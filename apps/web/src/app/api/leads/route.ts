@@ -4,6 +4,7 @@ import { sendLeadConfirmation } from "@/lib/email";
 import { createLead, getLeads } from "@/lib/leads-store";
 import { notifyLead } from "@/lib/notify";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
+import { dispatchWebhook } from "@/lib/webhooks";
 import { checkEmail, checkPhone, emailDomain } from "@/lib/validation";
 import { isLocale } from "@/i18n/config";
 import { PROJECT_TYPES, type ProjectType } from "@/lib/types";
@@ -67,7 +68,7 @@ export async function POST(request: Request) {
 
   // Notify the business and send the submitter an acknowledgement, in parallel.
   // Both are best-effort — a delivery hiccup must never fail the submission.
-  await Promise.allSettled([notifyLead(lead), sendLeadConfirmation(lead)]);
+  await Promise.allSettled([notifyLead(lead), sendLeadConfirmation(lead), dispatchWebhook("lead.created", lead)]);
   return NextResponse.json({ id: lead.id }, { status: 201 });
 }
 

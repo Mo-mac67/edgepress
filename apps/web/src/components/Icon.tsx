@@ -38,6 +38,8 @@ type IconName =
   | "quote"
   | "clock"
   | "hard-hat"
+  | "grid"
+  | "code"
   | "arrow-up-right"
   | "loan"
   | "logout"
@@ -68,6 +70,8 @@ const PATHS: Record<IconName, React.ReactNode> = {
   grip: <><circle cx="9" cy="6" r="1" /><circle cx="15" cy="6" r="1" /><circle cx="9" cy="12" r="1" /><circle cx="15" cy="12" r="1" /><circle cx="9" cy="18" r="1" /><circle cx="15" cy="18" r="1" /></>,
   chart: <><path d="M4 4v16h16" /><path d="M8 16v-4m4 4V8m4 8v-6" /></>,
   gavel: <><path d="m14 3 7 7-3 3-7-7 3-3Z" /><path d="m11 8-6 6 3 3 6-6" /><path d="M4 21h10" /></>,
+  grid: <><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></>,
+  code: <><path d="m16 18 6-6-6-6" /><path d="m8 6-6 6 6 6" /></>,
   tools: <><path d="M14.7 6.3a4 4 0 0 0-5.4 5.2L4 16.8 7.2 20l5.3-5.3a4 4 0 0 0 5.2-5.4l-2.6 2.6-2.2-2.2 2.6-2.4Z" /></>,
   user: <><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></>,
   list: <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />,
