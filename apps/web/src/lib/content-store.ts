@@ -135,6 +135,36 @@ export async function createEntry(typeSlug: string, input: { slug?: string; stat
   await writeJsonDoc(entriesKey(typeSlug), entries);
   return entry;
 }
+/** Bulk-create entries with a single read + single write (used by CSV import) —
+ *  avoids the per-row read-modify-write that would blow the Workers subrequest
+ *  limit on large imports. */
+export async function createEntriesBatch(typeSlug: string, inputs: { slug?: string; status?: string; data?: Record<string, unknown> }[]): Promise<number> {
+  const type = await getContentType(typeSlug);
+  if (!type) return 0;
+  const entries = await readJsonDoc<Entry[]>(entriesKey(typeSlug), []);
+  const usedSlugs = new Set(entries.map((e) => e.slug));
+  const now = new Date().toISOString();
+  let created = 0;
+  for (const input of inputs) {
+    const base = input.slug || (input.data?.[type.fields[0]?.key] as string) || "entry";
+    let slug = slugify(String(base)) || "entry";
+    while (usedSlugs.has(slug)) slug = `${slug}-${uid()}`;
+    usedSlugs.add(slug);
+    entries.push({
+      id: uid(),
+      type: typeSlug,
+      slug,
+      status: input.status === "published" ? "published" : "draft",
+      data: input.data ?? {},
+      createdAt: now,
+      updatedAt: now,
+    });
+    created++;
+  }
+  await writeJsonDoc(entriesKey(typeSlug), entries);
+  return created;
+}
+
 export async function updateEntry(typeSlug: string, id: string, patch: { slug?: string; status?: string; data?: Record<string, unknown> }): Promise<Entry | null> {
   const entries = await readJsonDoc<Entry[]>(entriesKey(typeSlug), []);
   const e = entries.find((x) => x.id === id);
