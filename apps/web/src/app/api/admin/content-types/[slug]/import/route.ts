@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getRole, isAuthed } from "@/lib/admin-auth";
 import { logAudit } from "@/lib/audit-store";
-import { createEntry, getContentType } from "@/lib/content-store";
+import { createEntriesBatch, getContentType } from "@/lib/content-store";
 import { parseCsvObjects } from "@/lib/csv";
 
 /** Bulk-create entries from a CSV. Columns match field keys or labels
@@ -24,9 +24,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
     byHeader.set(f.label.toLowerCase(), f);
   }
 
-  let created = 0;
   const publishAll = body.status === "published";
-  for (const row of rows) {
+  const inputs = rows.map((row) => {
     const data: Record<string, unknown> = {};
     let rowSlug: string | undefined;
     let rowStatus: string | undefined;
@@ -40,10 +39,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
       else if (field.type === "boolean") data[field.key] = /^(true|1|yes|y)$/i.test(raw.trim());
       else data[field.key] = raw;
     }
-    const result = await createEntry(slug, { slug: rowSlug, status: rowStatus ?? (publishAll ? "published" : "draft"), data });
-    if (!("error" in result)) created++;
-  }
+    return { slug: rowSlug, status: rowStatus ?? (publishAll ? "published" : "draft"), data };
+  });
 
+  const created = await createEntriesBatch(slug, inputs);
   await logAudit({ action: "entries_import", role: await getRole(), detail: `${slug}: ${created} rows` });
   return NextResponse.json({ ok: true, created });
 }

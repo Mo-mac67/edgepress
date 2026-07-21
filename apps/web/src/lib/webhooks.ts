@@ -90,6 +90,7 @@ export async function dispatchWebhook(event: WebhookEvent, payload: unknown): Pr
           method: "POST",
           headers: { "Content-Type": "application/json", "x-edgepress-event": event, "x-edgepress-signature": sig },
           body,
+          signal: AbortSignal.timeout(5000), // don't let a slow endpoint stall the request
         });
         await persistResult(h.id, res.status);
       } catch {
@@ -110,6 +111,7 @@ export async function testWebhook(id: string): Promise<{ ok: boolean; status?: n
       method: "POST",
       headers: { "Content-Type": "application/json", "x-edgepress-event": "test", "x-edgepress-signature": sig },
       body,
+      signal: AbortSignal.timeout(5000),
     });
     await persistResult(id, res.status);
     return { ok: res.ok, status: res.status };

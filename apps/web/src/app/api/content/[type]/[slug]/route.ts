@@ -24,5 +24,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ type
   }
 
   const { id, status, data, createdAt, updatedAt } = entry;
-  return NextResponse.json({ entry: { id, slug: entry.slug, status, ...data, createdAt, updatedAt } }, { headers: cors });
+  // Data first so system fields stay authoritative (see the list route).
+  return NextResponse.json({ entry: { ...data, id, slug: entry.slug, status, createdAt, updatedAt } }, { headers: cors });
 }
