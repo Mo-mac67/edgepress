@@ -28,7 +28,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ type
 
   const all = wantAll ? await getEntries(typeSlug) : await getPublishedEntries(typeSlug);
   const limit = Math.min(Number(url.searchParams.get("limit")) || 100, 500);
-  const entries = all.slice(0, limit).map(({ id, slug, status, data, createdAt, updatedAt }) => ({ id, slug, status, ...data, createdAt, updatedAt }));
+  // Spread data first so system fields stay authoritative even if a content
+  // type defines a field named "status"/"id"/etc.
+  const entries = all.slice(0, limit).map(({ id, slug, status, data, createdAt, updatedAt }) => ({ ...data, id, slug, status, createdAt, updatedAt }));
 
   return NextResponse.json(
     { type: { slug: type.slug, name: type.name, fields: type.fields }, count: entries.length, entries },
