@@ -20,7 +20,13 @@ Before flipping to public, complete this list.
 - [ ] Rate-limit `/api/admin/login` (add if not already) and `/api/setup`.
 - [ ] Review all `/api/admin/*` routes are `isAuthed`-guarded; `/api/mcp`
       token-guarded; `/api/assistant` rate-limited.
-- [ ] Dependency audit (`npm audit`) — fix highs; enable Dependabot.
+- [x] Dependency audit (`npm audit`) — the high (brace-expansion DoS) is fixed
+      via `npm audit fix`. Remaining: 4 **moderate** in the Next.js → postcss
+      chain (`postcss <8.5.10` XSS in CSS *stringify*), only "fixable" by
+      downgrading Next to v9 (`--force`) — declined. It's a **build-time** tool
+      (EdgePress never runs untrusted CSS through postcss at runtime), so runtime
+      risk is negligible; it clears when Next/OpenNext ship a patched postcss.
+      Enable Dependabot to track it.
 - [ ] CSP/headers reviewed (frame-ancestors 'self', HSTS, etc.).
 
 ## Product
