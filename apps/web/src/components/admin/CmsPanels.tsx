@@ -69,6 +69,35 @@ export function PagesPanel({ locale }: { locale: Locale }) {
     }
   }
 
+  async function importWholeSite() {
+    const url = await ui.prompt({
+      title: "Import a whole site",
+      message: "EdgePress reads the site's sitemap.xml and rebuilds every page as an editable draft. Runs in batches — leave this tab open.",
+      label: "Site URL",
+      placeholder: "https://your-old-site.com",
+      confirmLabel: "Import site",
+      validate: (v) => (/^https?:\/\//.test(v) ? null : "Enter a full URL"),
+    });
+    if (!url) return;
+    setImporting(true);
+    try {
+      let done = false;
+      let importedTotal = 0;
+      for (let round = 0; round < 30 && !done; round++) {
+        const res = await fetch("/api/admin/ai/import-site", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url, locale }) });
+        const d = await res.json();
+        if (!res.ok) { setErr(d.error || "Site import failed"); ui.toast(d.error || "Site import failed", "error"); return; }
+        importedTotal += d.imported;
+        done = d.done;
+        if (!done) ui.toast(`Imported ${importedTotal} page(s)… ${d.remaining} to go`);
+      }
+      ui.toast(`Site imported — ${importedTotal} draft page(s) ready for review`, "success");
+      load();
+    } finally {
+      setImporting(false);
+    }
+  }
+
   async function importScreenshot(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = "";
@@ -194,6 +223,9 @@ export function PagesPanel({ locale }: { locale: Locale }) {
           </label>
           <button onClick={importFromUrl} className="btn-secondary py-2 text-sm" title="Import a page from a URL with AI">
             <Icon name="download" size={16} /> Import URL
+          </button>
+          <button onClick={importWholeSite} disabled={importing} className="btn-secondary py-2 text-sm" title="Import every page of a site from its sitemap.xml">
+            <Icon name="refresh" size={16} /> {importing ? "Importing…" : "Import whole site"}
           </button>
           <label className="btn-secondary cursor-pointer py-2 text-sm" title="Rebuild a page from a screenshot with AI (approximate)">
             <Icon name="image" size={16} /> Import screenshot

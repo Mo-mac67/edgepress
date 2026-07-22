@@ -52,11 +52,14 @@ filesystem storage adapter.
 
 **Cloudflare Workers (the $0 edge deploy):**
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/Mo-mac67/edgepress)
+```bash
+npx create-edgepress my-site --cloudflare [--domain my-site.com]
+```
 
-One click provisions the Worker, KV and R2 and deploys. Or manually: create a KV
-namespace + R2 bucket, set them in `apps/web/wrangler.jsonc`, then
-`npm run cf:deploy`. Workers AI is included free — no API key needed.
+One command provisions KV + R2 on your account, configures, and deploys —
+Workers AI included free, no API key needed. Custom domains, multiple sites on
+one account, quotas, migration and self-host storage:
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 On first load, EdgePress shows a **setup wizard** — name your site and choose an
 admin password. No default password ships.
