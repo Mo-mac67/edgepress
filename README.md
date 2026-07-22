@@ -19,13 +19,24 @@ Also runs on Docker, plain Node, or Vercel via storage adapters.
 ## What's inside
 
 - **Block CMS** — drag-and-drop page builder, Tiptap rich text, revisions,
-  autosave, themes, media, blog, menus, multi-locale.
+  autosave, themes, media, blog, menus — plus a code editor for page HTML and
+  site-wide Custom CSS.
+- **Headless too** — Custom Content Types with typed fields + CSV, a public
+  Content API, API keys, and HMAC-signed webhooks.
 - **AI, provider-agnostic + BYOK** — free Cloudflare Workers AI by default, or
-  your own Anthropic/OpenAI/Google/Ollama key. Generate pages, translate,
-  rewrite, build a whole site, score leads, answer visitors.
+  your own Anthropic/OpenAI/Google/Ollama key. Pages, whole sites, articles
+  (single or bulk), translation, image generation, audio transcription,
+  semantic media search, lead scoring, a visitor assistant, SEO diagnosis,
+  A/B titles, intent optimization — with per-feature routing + a call budget.
+- **Any language + RTL** — configurable locales with fallback, whole-site
+  translation, a brand glossary, and outdated-translation flags.
+- **CRM + SEO + analytics** — lead inbox with AI replies; audits, instant
+  indexing, freshness; anomaly alerts, a printable PDF report, and A/B
+  headline testing with conversion tracking.
+- **Forms builder** — submissions, spam-flagging, CSV export, embeds.
+- **Auth & safety** — Owner/team roles, per-tab permissions, TOTP 2FA, audit
+  log, one-file backup/restore.
 - **MCP server** — manage the site from Claude or any MCP agent.
-- **CRM + SEO** — lead inbox with AI replies; automated audits, sitemaps,
-  instant indexing, structured data.
 
 ## Run it
 
@@ -41,7 +52,7 @@ filesystem storage adapter.
 
 **Cloudflare Workers (the $0 edge deploy):**
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/YOUR_ORG/edgepress)
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/Mo-mac67/edgepress)
 
 One click provisions the Worker, KV and R2 and deploys. Or manually: create a KV
 namespace + R2 bucket, set them in `apps/web/wrangler.jsonc`, then

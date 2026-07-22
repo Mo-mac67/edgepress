@@ -65,7 +65,7 @@ function ApiKeysCard() {
 
       {fresh && (
         <div className="mt-4 rounded-lg border border-accent bg-accent/10 p-3">
-          <p className="text-xs font-semibold text-brand">Copy this now — it won't be shown again:</p>
+          <p className="text-xs font-semibold text-brand">Copy this now — it won&apos;t be shown again:</p>
           <code className="mt-1 block break-all font-mono text-sm">{fresh}</code>
           <button onClick={() => { navigator.clipboard?.writeText(fresh); ui.toast("Copied", "success"); }} className="mt-2 text-xs font-semibold text-brand">Copy</button>
         </div>
