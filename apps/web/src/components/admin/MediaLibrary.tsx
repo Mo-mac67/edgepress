@@ -12,7 +12,24 @@ export function MediaLibrary({ onPick }: { onPick?: (url: string) => void }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const [altBusy, setAltBusy] = useState<string | null>(null);
+  const [q, setQ] = useState("");
+  const [results, setResults] = useState<MediaItem[] | null>(null);
+  const [searching, setSearching] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  async function search() {
+    if (!q.trim()) { setResults(null); return; }
+    setSearching(true);
+    const res = await fetch("/api/admin/media/search", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ q }) });
+    if (res.ok) { const d = await res.json(); setResults(d.media); if (!d.semantic && d.media.length === 0) ui.toast("No matches — try 'Build search index' for semantic search", "info"); }
+    setSearching(false);
+  }
+  async function reindex() {
+    ui.toast("Building search index…");
+    const res = await fetch("/api/admin/media/reindex", { method: "POST" });
+    const d = await res.json().catch(() => ({}));
+    ui.toast(res.ok ? `Indexed ${d.indexed} item(s) for semantic search` : (d.error || "Reindex failed"), res.ok ? "success" : "error");
+  }
 
   async function load() {
     setLoading(true);
@@ -113,11 +130,26 @@ export function MediaLibrary({ onPick }: { onPick?: (url: string) => void }) {
         {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
       </div>
 
+      <div className="mt-5 flex flex-wrap items-center gap-2">
+        <div className="flex flex-1 gap-2">
+          <input
+            className="field"
+            placeholder="Search media by meaning — e.g. 'bright kitchen'"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && search()}
+          />
+          <button type="button" onClick={search} disabled={searching} className="btn-secondary shrink-0">{searching ? "Searching…" : "Search"}</button>
+          {results !== null && <button type="button" onClick={() => { setQ(""); setResults(null); }} className="btn-secondary shrink-0">Clear</button>}
+        </div>
+        <button type="button" onClick={reindex} className="btn-secondary shrink-0" title="Embed all media for semantic search">Build search index</button>
+      </div>
+
       {loading ? (
         <p className="mt-6 text-center text-sm text-ink-soft">Loading…</p>
       ) : (
         <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {items.map((m) => (
+          {(results ?? items).map((m) => (
             <div key={m.id} className="group relative overflow-hidden rounded-lg border border-line bg-white">
               {m.kind === "video" ? (
                 <video src={m.url} muted playsInline preload="metadata" className="aspect-square w-full bg-brand-dark object-cover" />
@@ -146,7 +178,7 @@ export function MediaLibrary({ onPick }: { onPick?: (url: string) => void }) {
               {m.alt && <p className="truncate px-2 py-1 text-[10px] text-ink-soft" title={m.alt}>alt: {m.alt}</p>}
             </div>
           ))}
-          {items.length === 0 && <p className="col-span-full text-center text-sm text-ink-soft">No media yet.</p>}
+          {(results ?? items).length === 0 && <p className="col-span-full text-center text-sm text-ink-soft">{results !== null ? "No matches." : "No media yet."}</p>}
         </div>
       )}
     </div>

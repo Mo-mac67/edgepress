@@ -243,3 +243,19 @@ export async function setMediaAlt(id: string, alt: string): Promise<MediaItem | 
   await writeJsonDoc(MEDIA, m);
   return item;
 }
+
+/** Store a semantic-search embedding on a media item. */
+export async function setMediaEmbedding(id: string, embedding: number[]): Promise<void> {
+  const m = await readJsonDoc<MediaItem[]>(MEDIA, []);
+  const item = m.find((x) => x.id === id);
+  if (!item) return;
+  item.embedding = embedding;
+  await writeJsonDoc(MEDIA, m);
+}
+
+/** Bulk-store embeddings (single write) — used by the search reindex. */
+export async function setMediaEmbeddings(map: Record<string, number[]>): Promise<void> {
+  const m = await readJsonDoc<MediaItem[]>(MEDIA, []);
+  for (const item of m) if (map[item.id]) item.embedding = map[item.id];
+  await writeJsonDoc(MEDIA, m);
+}

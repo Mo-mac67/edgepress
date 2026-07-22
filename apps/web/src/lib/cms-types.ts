@@ -73,6 +73,8 @@ export interface MediaItem {
   kind?: "image" | "video";
   /** AI-generated (or hand-written) alt text. */
   alt?: string;
+  /** Semantic-search embedding of alt/filename (Workers AI bge-base). */
+  embedding?: number[];
   uploadedAt: string;
 }
 
