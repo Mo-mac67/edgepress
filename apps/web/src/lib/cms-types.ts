@@ -31,6 +31,9 @@ export interface Page {
   hideChrome?: boolean;
   /** System pages (home, contact) can't be deleted but are fully editable. */
   system?: boolean;
+  /** Per-locale signature of the SOURCE content at translation time — used to
+   *  flag a translation as outdated when the source changes since. */
+  i18n?: Record<string, string>;
   /** Per-page SEO overrides (managed in the editor + SEO tab). */
   seo?: {
     ogImage?: string;
