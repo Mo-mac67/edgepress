@@ -182,6 +182,24 @@ export async function describeImage(bytes: Uint8Array): Promise<string> {
   return text.trim().replace(/^["']|["']$/g, "").slice(0, 200);
 }
 
+/** Text-to-image via Workers AI (flux-1-schnell, free). Returns JPEG bytes.
+ *  Respects the AI enable flag + call budget and records usage. */
+export async function generateImage(prompt: string): Promise<Uint8Array> {
+  const cfg = await getAIConfig();
+  if (!cfg.enabled) throw new AIDisabledError("AI features are turned off");
+  if (cfg.callBudget && cfg.callBudget > 0 && (await totalAiCalls()) >= cfg.callBudget) {
+    throw new AIBudgetError("AI call budget reached — raise it in the AI settings to continue.");
+  }
+  const ai = await workersAiEnv();
+  if (!ai) throw new AIUnavailableError("Workers AI binding not available");
+  const res = (await ai.run("@cf/black-forest-labs/flux-1-schnell", { prompt: prompt.slice(0, 2000) })) as { image?: string };
+  if (!res?.image) throw new Error("No image returned");
+  const { Buffer } = await import("node:buffer");
+  const bytes = new Uint8Array(Buffer.from(res.image, "base64"));
+  await recordUsage("imageGenerate", "workers-ai", 0, 0);
+  return bytes;
+}
+
 /** Parse a JSON object from a model response that may be fenced or chatty. */
 export function extractJson<T = unknown>(raw: string): T {
   const start = raw.indexOf("{");
