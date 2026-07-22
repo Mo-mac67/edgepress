@@ -182,6 +182,20 @@ export async function describeImage(bytes: Uint8Array): Promise<string> {
   return text.trim().replace(/^["']|["']$/g, "").slice(0, 200);
 }
 
+/** Transcribe audio bytes to text (Workers AI Whisper, free). */
+export async function transcribe(bytes: Uint8Array): Promise<string> {
+  const cfg = await getAIConfig();
+  if (!cfg.enabled) throw new AIDisabledError("AI features are turned off");
+  if (cfg.callBudget && cfg.callBudget > 0 && (await totalAiCalls()) >= cfg.callBudget) {
+    throw new AIBudgetError("AI call budget reached — raise it in the AI settings to continue.");
+  }
+  const ai = await workersAiEnv();
+  if (!ai) throw new AIUnavailableError("Workers AI binding not available");
+  const res = (await ai.run("@cf/openai/whisper", { audio: Array.from(bytes) })) as { text?: string };
+  await recordUsage("transcribe", "workers-ai", 0, 0);
+  return (res?.text ?? "").trim();
+}
+
 /** Embed one or more texts (Workers AI bge-base, free) → 768-dim vectors, used
  *  for semantic media search (in-memory cosine — no external vector DB). */
 export async function embed(texts: string[]): Promise<number[][]> {

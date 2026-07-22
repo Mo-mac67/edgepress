@@ -17,10 +17,12 @@ export async function POST(request: Request) {
   if (!(file instanceof File)) return NextResponse.json({ error: "No file" }, { status: 400 });
 
   const isVideo = file.type.startsWith("video/") || /\.(mp4|webm|mov|m4v|ogv)$/i.test(file.name);
+  const isAudio = !isVideo && (file.type.startsWith("audio/") || /\.(mp3|wav|m4a|ogg|oga|aac|flac)$/i.test(file.name));
+  const kind = isVideo ? "video" : isAudio ? "audio" : "image";
   // Workers accept request bodies up to ~100MB on the free plan.
-  const maxBytes = (isVideo ? 90 : 8) * 1024 * 1024;
+  const maxBytes = (isVideo ? 90 : isAudio ? 25 : 8) * 1024 * 1024;
   if (file.size > maxBytes) {
-    return NextResponse.json({ error: `File too large (max ${isVideo ? "90MB for video" : "8MB for images"})` }, { status: 413 });
+    return NextResponse.json({ error: `File too large (max ${isVideo ? "90MB for video" : isAudio ? "25MB for audio" : "8MB for images"})` }, { status: 413 });
   }
 
   const ext = (file.name.split(".").pop() ?? "bin").toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -35,7 +37,7 @@ export async function POST(request: Request) {
     url: `/api/media/${key}`,
     filename: file.name,
     size: file.size,
-    kind: (isVideo ? "video" : "image") as "video" | "image",
+    kind: kind as "video" | "image" | "audio",
     uploadedAt: new Date().toISOString(),
   };
   await addMedia(item);
