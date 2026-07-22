@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import pkg from "../../../package.json";
 import { useRouter } from "next/navigation";
 import { BrandMark } from "@/components/BrandMark";
 import { Icon } from "@/components/Icon";
@@ -165,6 +166,7 @@ export function AdminDashboard({
             <Icon name="logout" size={17} />
             Sign out
           </button>
+          <p className="px-3 pt-1 text-[10px] text-white/30" title="Upgrade with: npx create-edgepress upgrade">EdgePress v{pkg.version}</p>
         </div>
       </aside>
 
@@ -744,9 +746,10 @@ function BackupCard() {
     <div className="card p-6 lg:col-span-2">
       <h3 className="font-display font-semibold text-brand">Backup &amp; restore</h3>
       <p className="mt-1 text-sm text-ink-soft">
-        Export every document — pages, posts, collections, forms, leads, settings — as one JSON file. Restore it here or on another EdgePress site. <span className="text-ink-soft">(Media files in R2 aren't included.)</span>
+        Export every document — pages, posts, collections, forms, leads, settings — as one JSON file. Restore it here or on another EdgePress site. <span className="text-ink-soft">(Media files in R2 aren&apos;t included.)</span>
       </p>
       <div className="mt-4 flex flex-wrap gap-2">
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- API file download, not a page */}
         <a href="/api/admin/backup" className="btn-primary">Download backup</a>
         <label className={`btn-secondary cursor-pointer ${restoring ? "opacity-60" : ""}`}>
           {restoring ? "Restoring…" : "Restore from file"}

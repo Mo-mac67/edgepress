@@ -23,17 +23,24 @@ async function bucket(): Promise<R2Bucket | null> {
 async function localPath(key: string): Promise<string> {
   const path = (await import("node:path")).default;
   const dir = process.env.DATA_DIR || path.join(process.cwd(), "data");
+  // SECURITY: the key comes from the URL — never let it traverse out of the
+  // media dir (e.g. "../admin-config.json" would expose the password hash in
+  // fs/sqlite mode). Keys we generate are always "<id>.<ext>"; reject anything
+  // with path separators, "..", or other unexpected characters.
+  if (!/^[A-Za-z0-9._-]+$/.test(key) || key.includes("..")) {
+    throw new Error("Invalid media key");
+  }
   return path.join(dir, "media", key);
 }
 
 /** S3-compatible object storage (EDGEPRESS_MEDIA=s3). Loaded lazily so it's
  *  only used when configured. */
-function useS3(): boolean {
+function s3Enabled(): boolean {
   return process.env.EDGEPRESS_MEDIA === "s3";
 }
 
 export async function putMedia(key: string, bytes: Uint8Array, contentType: string): Promise<void> {
-  if (useS3()) {
+  if (s3Enabled()) {
     const { putMediaS3 } = await import("./media-s3");
     return putMediaS3(key, bytes, contentType);
   }
@@ -51,7 +58,7 @@ export async function putMedia(key: string, bytes: Uint8Array, contentType: stri
 }
 
 export async function getMediaBlob(key: string): Promise<{ bytes: Uint8Array; contentType: string } | null> {
-  if (useS3()) {
+  if (s3Enabled()) {
     const { getMediaS3 } = await import("./media-s3");
     return getMediaS3(key);
   }
@@ -73,7 +80,7 @@ export async function getMediaBlob(key: string): Promise<{ bytes: Uint8Array; co
 }
 
 export async function deleteMediaBlob(key: string): Promise<void> {
-  if (useS3()) {
+  if (s3Enabled()) {
     const { deleteMediaS3 } = await import("./media-s3");
     return deleteMediaS3(key);
   }

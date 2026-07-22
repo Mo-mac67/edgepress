@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/Icon";
 import { MediaLibrary } from "./MediaLibrary";
+import { CodeEditor } from "./CodeEditor";
 import { useAdminUI } from "./ui";
 import type { Locale } from "@/i18n/config";
 import type { NavItem, Page, Post, SiteSettings } from "@/lib/cms-types";
@@ -486,6 +487,20 @@ export function SitePanel() {
         <Text label="Tagline (FR)" value={s.footerTagline.fr} onChange={(v) => set({ footerTagline: { ...s.footerTagline, fr: v } })} />
         <Text label="License note (EN)" value={s.licenseNote.en} onChange={(v) => set({ licenseNote: { ...s.licenseNote, en: v } })} />
         <Text label="License note (FR)" value={s.licenseNote.fr} onChange={(v) => set({ licenseNote: { ...s.licenseNote, fr: v } })} />
+      </div>
+      <div className="card space-y-3 p-5">
+        <h3 className="font-display font-bold text-brand">Custom header &amp; footer (advanced)</h3>
+        <p className="text-xs text-ink-soft">
+          Raw HTML that <b>replaces</b> the built-in header/footer on every page. Leave empty to keep the standard ones (logo, menus, language switcher). Your Custom CSS applies here too.
+        </p>
+        <div>
+          <span className="mb-1 block text-sm font-medium text-ink">Header HTML</span>
+          <CodeEditor value={s.customHeaderHtml ?? ""} onChange={(v) => set({ customHeaderHtml: v })} minHeight={140} ariaLabel="Custom header HTML" placeholder={'<nav class="my-nav">…</nav>'} />
+        </div>
+        <div>
+          <span className="mb-1 block text-sm font-medium text-ink">Footer HTML</span>
+          <CodeEditor value={s.customFooterHtml ?? ""} onChange={(v) => set({ customFooterHtml: v })} minHeight={140} ariaLabel="Custom footer HTML" placeholder={"<div>© My company</div>"} />
+        </div>
       </div>
       <div className="card space-y-3 p-5">
         <h3 className="font-display font-bold text-brand">Social links</h3>

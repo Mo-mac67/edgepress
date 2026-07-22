@@ -105,7 +105,7 @@ function SetupWizard() {
       <form onSubmit={submit} className="card w-full max-w-md p-8">
         <BrandMark size={48} />
         <h1 className="mt-4 font-display text-2xl font-bold text-brand">Welcome to EdgePress</h1>
-        <p className="mt-1 text-sm text-ink-soft">Let's set up your site — this takes a few seconds.</p>
+        <p className="mt-1 text-sm text-ink-soft">Let&apos;s set up your site — this takes a few seconds.</p>
 
         <label className="mt-6 block">
           <span className="mb-1.5 block text-sm font-medium text-ink">Site name</span>

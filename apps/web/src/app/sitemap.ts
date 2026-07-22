@@ -22,8 +22,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       if (post.status !== "published") continue;
       entries.push({ url: `${SITE}/${locale}/blog/${post.slug}`, lastModified: post.date, changeFrequency: "monthly", priority: 0.6 });
     }
-    for (const p of ["/privacy", "/terms"]) {
-      entries.push({ url: `${SITE}/${locale}${p}`, changeFrequency: "yearly", priority: 0.3 });
+    // Built-in legal fallbacks — only when the site has no CMS page for them
+    // (new installs seed editable privacy/terms pages that appear above).
+    for (const p of ["privacy", "terms"]) {
+      if (!pages.some((pg) => pg.slug === p && pg.status === "published")) {
+        entries.push({ url: `${SITE}/${locale}/${p}`, changeFrequency: "yearly", priority: 0.3 });
+      }
     }
   }
   return entries;
