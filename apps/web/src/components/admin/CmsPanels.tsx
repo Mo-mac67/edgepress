@@ -312,6 +312,16 @@ export function BlogPanel({ locale }: { locale: Locale }) {
     }
   }
 
+  async function writeWithAI() {
+    const topic = await ui.prompt({ title: "Write an article with AI", message: "Give a topic — AI drafts a full article (title, summary, body, keywords) as a draft post.", label: "Topic", placeholder: "e.g. 5 ways to cut your energy bill this winter", confirmLabel: "Write" });
+    if (!topic) return;
+    ui.toast("Writing your article…");
+    const res = await fetch("/api/admin/ai/article", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ topic, locale }) });
+    const data = await res.json();
+    if (res.ok) { ui.toast("Draft article created", "success"); router.push(`/${locale}/admin/posts/${data.post.id}`); }
+    else ui.toast(data.error || "Couldn't write the article", "error");
+  }
+
   async function remove(id: string, title: string) {
     if (!(await ui.confirm({ title: "Delete post?", message: `“${title}” will be permanently removed.`, confirmLabel: "Delete", danger: true }))) return;
     setPosts((p) => p.filter((x) => x.id !== id));
@@ -321,9 +331,12 @@ export function BlogPanel({ locale }: { locale: Locale }) {
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm text-ink-soft">Publish news and articles at <code>/blog</code>.</p>
-        <button onClick={create} className="btn-primary py-2 text-sm"><Icon name="check" size={16} /> New post</button>
+        <div className="flex gap-2">
+          <button onClick={writeWithAI} className="btn-secondary py-2 text-sm"><Icon name="star" size={16} /> Write with AI</button>
+          <button onClick={create} className="btn-primary py-2 text-sm"><Icon name="check" size={16} /> New post</button>
+        </div>
       </div>
       {err && <p className="mb-3 text-sm text-red-600">{err}</p>}
       <div className="card divide-y divide-line">

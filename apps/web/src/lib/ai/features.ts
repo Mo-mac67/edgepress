@@ -161,6 +161,22 @@ Rules: 3-5 pages including a home (slug "") and a contact page. Choose colors th
   return plan;
 }
 
+/** Full blog article from a topic: title + excerpt + semantic-HTML body + meta. */
+export async function writeArticle(topic: string, locale: string): Promise<{ title: string; excerpt: string; body: string; keywords: string }> {
+  const cfg = await getAIConfig();
+  const lang = locale === "fr" ? "French" : locale === "en" ? "English" : locale;
+  const system = `You are an expert content writer. Write a complete, well-structured blog article on the given topic in ${lang}. Return ONLY JSON:
+{"title":"compelling title","excerpt":"1–2 sentence summary","body":"the full article as clean semantic HTML — <h2>/<h3>/<p>/<ul>/<li>/<blockquote> only, 500–900 words, NO <html>/<head>/<body> wrapper and NO <h1>","keywords":"comma,separated,seo,terms"}.${brandVoiceLine(cfg.brandVoice)}`;
+  const { text } = await aiComplete("articleWrite", { system, prompt: topic, json: true, maxTokens: 3500 });
+  const out = extractJson<{ title: string; excerpt: string; body: string; keywords: string }>(text);
+  return {
+    title: (out.title || topic).slice(0, 140),
+    excerpt: out.excerpt || "",
+    body: out.body || "",
+    keywords: out.keywords || "",
+  };
+}
+
 /** A/B headline variants for a topic or an existing title. */
 export async function titleIdeas(topic: string, locale: string): Promise<string[]> {
   const cfg = await getAIConfig();
