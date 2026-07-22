@@ -51,6 +51,29 @@ export function MediaLibrary({ onPick }: { onPick?: (url: string) => void }) {
     ui.toast("File deleted", "success");
   }
 
+  async function genImage() {
+    const prompt = await ui.prompt({
+      title: "Generate an image with AI",
+      message: "Describe the image — it's created and added to your library (free, on Workers AI).",
+      label: "Prompt",
+      placeholder: "e.g. a sunlit modern kitchen, wide angle, photorealistic",
+      confirmLabel: "Generate",
+    });
+    if (!prompt) return;
+    setUploading(true);
+    setError("");
+    try {
+      const r = await fetch("/api/admin/ai/image", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt }) });
+      const d = await r.json();
+      if (r.ok) {
+        setItems((prev) => [d.item, ...prev]);
+        ui.toast("Image generated", "success");
+      } else ui.toast(d.error || "Generation failed", "error");
+    } finally {
+      setUploading(false);
+    }
+  }
+
   async function genAlt(id: string) {
     setAltBusy(id);
     try {
@@ -77,9 +100,14 @@ export function MediaLibrary({ onPick }: { onPick?: (url: string) => void }) {
       >
         <Icon name="download" size={26} className="text-ink-soft" />
         <p className="mt-2 text-sm text-ink-soft">Drag &amp; drop images or videos here, or</p>
-        <button type="button" onClick={() => fileRef.current?.click()} className="btn-secondary mt-2 py-2 text-sm">
-          {uploading ? "Uploading…" : "Choose files"}
-        </button>
+        <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+          <button type="button" onClick={() => fileRef.current?.click()} className="btn-secondary py-2 text-sm">
+            {uploading ? "Working…" : "Choose files"}
+          </button>
+          <button type="button" onClick={genImage} disabled={uploading} className="btn-secondary py-2 text-sm">
+            <Icon name="star" size={14} /> Generate with AI
+          </button>
+        </div>
         <input ref={fileRef} type="file" accept="image/*,video/*" multiple hidden onChange={(e) => upload(e.target.files)} />
         <p className="mt-2 text-xs text-ink-soft">Images up to 8MB · videos (MP4/WebM) up to 90MB</p>
         {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
