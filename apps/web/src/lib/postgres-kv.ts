@@ -21,7 +21,11 @@ let cache: KVNamespace | null = null;
 export async function postgresKV(): Promise<KVNamespace> {
   if (cache) return cache;
 
-  const pg = (await import(/* webpackIgnore: true */ "pg")) as unknown as { Pool: new (c: { connectionString?: string }) => PgPool; default?: { Pool: new (c: { connectionString?: string }) => PgPool } };
+  // Variable specifier (not a string literal) so NEITHER webpack NOR esbuild
+  // (OpenNext's second pass) tries to resolve/bundle `pg` at build time — it
+  // stays a runtime import, needed only when Postgres mode is actually used.
+  const moduleName = process.env.EDGEPRESS_PG_MODULE || "pg";
+  const pg = (await import(moduleName)) as unknown as { Pool: new (c: { connectionString?: string }) => PgPool; default?: { Pool: new (c: { connectionString?: string }) => PgPool } };
   const Pool = pg.Pool ?? pg.default?.Pool;
   if (!Pool) throw new Error("pg driver not available");
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
