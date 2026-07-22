@@ -27,3 +27,12 @@ export function isLocale(value: string): boolean {
 export function otherLocale(locale: Locale): Locale {
   return locale === "en" ? "fr" : "en";
 }
+
+/** Right-to-left languages — the site renders with dir="rtl" for these. */
+export const RTL_LOCALES = new Set(["ar", "fa", "he", "ur", "ps", "sd", "dv", "ug", "yi"]);
+export function isRtl(locale: string): boolean {
+  return RTL_LOCALES.has((locale || "").slice(0, 2).toLowerCase());
+}
+export function dir(locale: string): "rtl" | "ltr" {
+  return isRtl(locale) ? "rtl" : "ltr";
+}

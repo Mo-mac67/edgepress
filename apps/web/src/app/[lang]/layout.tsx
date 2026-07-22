@@ -7,7 +7,7 @@ import { FloatingQuote } from "@/components/FloatingQuote";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ScrollFx } from "@/components/ScrollFx";
-import { isLocale } from "@/i18n/config";
+import { dir, isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { SeoTags } from "@/components/SeoTags";
 import { AssistantWidget } from "@/components/AssistantWidget";
@@ -97,7 +97,7 @@ export default async function LangLayout({
   const fonts = `${inter.variable} ${jakarta.variable} ${playfair.variable} ${lora.variable} ${grotesk.variable} ${manrope.variable} ${poppins.variable} ${fraunces.variable}`;
 
   return (
-    <html lang={lang} className={`${fonts} h-full`}>
+    <html lang={lang} dir={dir(lang)} className={`${fonts} h-full`}>
       <body className="flex min-h-full flex-col">
         {/* Live theme from the CMS Appearance panel — served by the dynamic
             /theme.css route so accent/fonts/radius edits apply without a
