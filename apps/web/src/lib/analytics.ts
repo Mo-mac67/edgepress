@@ -1,6 +1,32 @@
 import type { SiteEvent } from "./events-store";
 import type { Lead } from "./types";
 
+/** Week-over-week anomaly detection — flags significant drops in leads or
+ *  traffic so a problem surfaces on the dashboard without digging. */
+export function detectAnomalies(leads: Lead[], events: SiteEvent[]): { label: string; severity: "warn" }[] {
+  const DAY = 86_400_000;
+  const now = Date.now();
+  const inWindow = (iso: string, from: number, to: number) => {
+    const t = +new Date(iso);
+    return t >= now - to * DAY && t < now - from * DAY;
+  };
+  const out: { label: string; severity: "warn" }[] = [];
+
+  const leadsLast = leads.filter((l) => inWindow(l.createdAt, 0, 7)).length;
+  const leadsPrev = leads.filter((l) => inWindow(l.createdAt, 7, 14)).length;
+  if (leadsPrev >= 4 && leadsLast < leadsPrev * 0.5) {
+    out.push({ label: `Leads down ${Math.round((1 - leadsLast / leadsPrev) * 100)}% this week (${leadsPrev} → ${leadsLast})`, severity: "warn" });
+  }
+
+  const pv = (from: number, to: number) => events.filter((e) => e.type === "pageview" && inWindow(e.createdAt, from, to)).length;
+  const pvLast = pv(0, 7);
+  const pvPrev = pv(7, 14);
+  if (pvPrev >= 20 && pvLast < pvPrev * 0.5) {
+    out.push({ label: `Traffic down ${Math.round((1 - pvLast / pvPrev) * 100)}% this week (${pvPrev} → ${pvLast} views)`, severity: "warn" });
+  }
+  return out;
+}
+
 export interface KeyValue {
   key: string;
   value: number;
