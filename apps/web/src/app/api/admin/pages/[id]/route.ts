@@ -27,6 +27,11 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     // System pages keep their slug; custom pages may be re-slugged.
     slug: existing.system ? existing.slug : (body.slug ?? existing.slug),
   };
+  // A/B headline test config.
+  if (body.ab && Array.isArray(body.ab.headlines)) {
+    const headlines = body.ab.headlines.map((h: unknown) => String(h).slice(0, 200)).filter((h: string) => h.trim()).slice(0, 6);
+    merged.ab = headlines.length ? { headlines } : undefined;
+  }
   // Per-page SEO overrides (og image, keywords, noindex).
   if (body.seo && typeof body.seo === "object") {
     merged.seo = {

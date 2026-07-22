@@ -66,9 +66,27 @@ export async function POST(request: Request) {
     preferredTimes: Array.isArray(body.preferredTimes) ? body.preferredTimes.map(String).slice(0, 6) : [],
   });
 
+  // A/B: attribute this conversion to the headline variant the visitor saw.
+  const abConvert = (async () => {
+    try {
+      const { cookies } = await import("next/headers");
+      const raw = (await cookies()).get("ep_abv")?.value;
+      if (!raw) return;
+      const idx = raw.lastIndexOf(".");
+      const slug = decodeURIComponent(raw.slice(0, idx));
+      const variant = Number(raw.slice(idx + 1));
+      if (Number.isInteger(variant)) {
+        const { recordConversion } = await import("@/lib/ab-store");
+        await recordConversion(slug, variant);
+      }
+    } catch {
+      /* best effort */
+    }
+  })();
+
   // Notify the business and send the submitter an acknowledgement, in parallel.
   // Both are best-effort — a delivery hiccup must never fail the submission.
-  await Promise.allSettled([notifyLead(lead), sendLeadConfirmation(lead), dispatchWebhook("lead.created", lead)]);
+  await Promise.allSettled([notifyLead(lead), sendLeadConfirmation(lead), dispatchWebhook("lead.created", lead), abConvert]);
   return NextResponse.json({ id: lead.id }, { status: 201 });
 }
 

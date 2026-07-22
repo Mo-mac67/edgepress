@@ -1,8 +1,9 @@
 import { BlockRenderer } from "./BlockRenderer";
+import { AbTrack } from "@/components/AbTrack";
 import { getSettings } from "@/lib/cms-store";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries";
-import type { Page } from "@/lib/cms-types";
+import type { Block, Page } from "@/lib/cms-types";
 
 /**
  * Renders a CMS page in either mode:
@@ -33,5 +34,27 @@ export async function PageView({ page, locale, dict }: { page: Page; locale: Loc
     );
   }
   const settings = await getSettings();
-  return <BlockRenderer blocks={page.blocks} locale={locale} dict={dict} settings={settings} first pageDate={page.updatedAt} />;
+
+  // A/B headline test: pick a variant, override the first hero/header title.
+  let blocks = page.blocks;
+  let ab: { variant: number } | null = null;
+  const headlines = page.ab?.headlines?.filter((h) => h.trim());
+  if (headlines && headlines.length >= 2) {
+    const variant = Math.floor(Math.random() * headlines.length);
+    ab = { variant };
+    let done = false;
+    blocks = page.blocks.map((b: Block) => {
+      if (done || (b.type !== "hero" && b.type !== "header")) return b;
+      done = true;
+      const title = { ...(b.data.title as Record<string, string> | undefined), [locale]: headlines[variant] };
+      return { ...b, data: { ...b.data, title } };
+    });
+  }
+
+  return (
+    <>
+      {ab && <AbTrack slug={page.slug} variant={ab.variant} />}
+      <BlockRenderer blocks={blocks} locale={locale} dict={dict} settings={settings} first pageDate={page.updatedAt} />
+    </>
+  );
 }
