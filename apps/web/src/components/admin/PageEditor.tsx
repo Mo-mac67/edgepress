@@ -23,7 +23,7 @@ import { BLOCKS, BLOCK_ORDER, newBlock, type Block, type BlockType, type Page } 
 import type { Locale } from "@/i18n/config";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
-const serialize = (p: Page) => JSON.stringify({ t: p.title, d: p.description, s: p.slug, st: p.status, b: p.blocks, m: p.mode, r: p.rawHtml, h: p.hideChrome, seo: p.seo });
+const serialize = (p: Page) => JSON.stringify({ t: p.title, d: p.description, s: p.slug, st: p.status, b: p.blocks, m: p.mode, r: p.rawHtml, h: p.hideChrome, seo: p.seo, ab: p.ab });
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 
@@ -96,6 +96,7 @@ export function PageEditor({ initial, uiLocale, contentLocales = ["en", "fr"], s
           rawHtml: page.rawHtml ?? "",
           hideChrome: !!page.hideChrome,
           seo: page.seo ?? {},
+          ab: page.ab ?? { headlines: [] },
         }),
       });
       if (res.ok) {
@@ -270,6 +271,18 @@ export function PageEditor({ initial, uiLocale, contentLocales = ["en", "fr"], s
                   <label className="flex items-center gap-2 sm:col-span-2">
                     <input type="checkbox" checked={!!page.hideChrome} onChange={(e) => patch({ hideChrome: e.target.checked })} />
                     <span className="text-sm text-ink">Standalone page (hide the site header &amp; footer)</span>
+                  </label>
+                )}
+                {!isHtml && (
+                  <label className="block sm:col-span-2">
+                    <span className="mb-1 block text-sm font-medium text-ink">A/B headline test</span>
+                    <textarea
+                      className="field min-h-[70px] text-sm"
+                      placeholder={"One headline per line (2+ to run a test).\nEach visitor sees one at random; conversions are tracked per variant."}
+                      value={(page.ab?.headlines ?? []).join("\n")}
+                      onChange={(e) => patch({ ab: { headlines: e.target.value.split("\n").map((h) => h.trim()).filter(Boolean) } })}
+                    />
+                    <span className="mt-1 block text-xs text-ink-soft">Replaces the first hero/header headline. Results in the dashboard report.</span>
                   </label>
                 )}
               </div>
