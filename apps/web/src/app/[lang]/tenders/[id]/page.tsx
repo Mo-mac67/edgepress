@@ -10,7 +10,7 @@ import { currentUser } from "@/lib/user-auth";
 
 export const dynamic = "force-dynamic";
 
-export default async function TenderDetailPage({ params }: PageProps<"/[lang]/tenders/[id]">) {
+export default async function TenderDetailPage({ params }: { params: Promise<{ lang: string; id: string }> }) {
   const { lang, id } = await params;
   if (!isLocale(lang)) notFound();
   const m = marketDict(lang).market;

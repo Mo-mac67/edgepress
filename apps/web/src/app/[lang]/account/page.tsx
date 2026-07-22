@@ -9,7 +9,7 @@ import { currentUser } from "@/lib/user-auth";
 
 export const dynamic = "force-dynamic";
 
-export default async function AccountPage({ params }: PageProps<"/[lang]/account">) {
+export default async function AccountPage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params;
   if (!isLocale(lang)) notFound();
   const d = marketDict(lang);

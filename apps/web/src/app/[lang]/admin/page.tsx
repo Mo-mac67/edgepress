@@ -11,7 +11,7 @@ import { notificationChannels } from "@/lib/notify";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminPage({ params }: PageProps<"/[lang]/admin">) {
+export default async function AdminPage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params;
   if (!isLocale(lang)) notFound();
 

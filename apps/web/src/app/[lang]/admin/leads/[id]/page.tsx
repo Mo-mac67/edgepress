@@ -8,7 +8,7 @@ import { getLead, updateLead } from "@/lib/leads-store";
 
 export const dynamic = "force-dynamic";
 
-export default async function LeadDetailPage({ params }: PageProps<"/[lang]/admin/leads/[id]">) {
+export default async function LeadDetailPage({ params }: { params: Promise<{ lang: string; id: string }> }) {
   const { lang, id } = await params;
   if (!isLocale(lang)) notFound();
 
