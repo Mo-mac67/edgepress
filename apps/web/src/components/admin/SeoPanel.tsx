@@ -17,6 +17,7 @@ export function SeoPanel() {
   const [auditLocale, setAuditLocale] = useState<Locale>("en");
   const [auditing, setAuditing] = useState(false);
   const [openAudit, setOpenAudit] = useState<string | null>(null);
+  const [diag, setDiag] = useState<Record<string, { loading?: boolean; summary?: string; findings?: { issue: string; fix: string }[] }>>({});
   const [generating, setGenerating] = useState<string | null>(null);
   const [indexNowMsg, setIndexNowMsg] = useState("");
 
@@ -40,6 +41,15 @@ export function SeoPanel() {
     runAudit("en");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  async function diagnose(pageId: string) {
+    setDiag((d) => ({ ...d, [pageId]: { loading: true } }));
+    setOpenAudit(pageId);
+    const r = await fetch("/api/admin/ai/seo-diagnose", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ pageId, locale: auditLocale }) });
+    const data = await r.json();
+    if (r.ok) setDiag((d) => ({ ...d, [pageId]: { summary: data.summary, findings: data.findings } }));
+    else { setDiag((d) => ({ ...d, [pageId]: {} })); ui.toast(data.error || "Diagnosis failed", "error"); }
+  }
 
   if (!seo) return <p className="text-sm text-ink-soft">Loading…</p>;
   const set = (patch: Partial<SeoSettings>) => setSeo({ ...seo, ...patch });
@@ -133,22 +143,47 @@ export function SeoPanel() {
                   <Icon name="star" size={13} />
                   {generating === a.pageId ? "Writing…" : "AI meta"}
                 </button>
+                <button
+                  onClick={() => diagnose(a.pageId)}
+                  disabled={diag[a.pageId]?.loading}
+                  title="AI: why won't this page rank, and how to fix it"
+                  className="btn-secondary py-1.5 text-xs disabled:opacity-40"
+                >
+                  <Icon name="chart" size={13} />
+                  {diag[a.pageId]?.loading ? "Analyzing…" : "Diagnose"}
+                </button>
                 <button onClick={() => setOpenAudit(openAudit === a.pageId ? null : a.pageId)} className="rounded p-2 hover:bg-sand">
                   <Icon name="chevron-down" size={16} className={openAudit === a.pageId ? "rotate-180" : ""} />
                 </button>
               </div>
               {openAudit === a.pageId && (
-                <ul className="mt-3 grid gap-1.5 sm:grid-cols-2">
-                  {a.checks.map((c) => (
-                    <li key={c.id} className="flex items-start gap-2 text-sm">
-                      <Icon name={c.pass ? "check" : "x"} size={16} className={`mt-0.5 shrink-0 ${c.pass ? "text-green-600" : "text-red-500"}`} />
-                      <span>
-                        {c.label}
-                        <span className="ml-1 text-xs text-ink-soft">({c.detail})</span>
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+                <>
+                  <ul className="mt-3 grid gap-1.5 sm:grid-cols-2">
+                    {a.checks.map((c) => (
+                      <li key={c.id} className="flex items-start gap-2 text-sm">
+                        <Icon name={c.pass ? "check" : "x"} size={16} className={`mt-0.5 shrink-0 ${c.pass ? "text-green-600" : "text-red-500"}`} />
+                        <span>
+                          {c.label}
+                          <span className="ml-1 text-xs text-ink-soft">({c.detail})</span>
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  {diag[a.pageId]?.findings && (
+                    <div className="mt-3 rounded-lg border border-accent/40 bg-accent/5 p-3">
+                      <p className="text-sm font-semibold text-brand"><Icon name="star" size={13} className="mr-1 inline" />AI diagnosis</p>
+                      {diag[a.pageId]!.summary && <p className="mt-1 text-sm text-ink-soft">{diag[a.pageId]!.summary}</p>}
+                      <ul className="mt-2 space-y-2">
+                        {diag[a.pageId]!.findings!.map((f, i) => (
+                          <li key={i} className="text-sm">
+                            <span className="font-medium text-ink">{f.issue}</span>
+                            <span className="mt-0.5 block text-ink-soft">→ {f.fix}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           ))}
