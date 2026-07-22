@@ -62,17 +62,29 @@ npx create-edgepress my-site
 ## What's inside
 
 - **Block CMS** — page builder, Tiptap rich text, revisions, autosave, themes,
-  media library, blog, menus.
+  media library, blog, menus — plus a **code editor** for page HTML and
+  site-wide **Custom CSS** (the "Edit HTML" experience).
 - **Custom Content Types** — model anything (products, team, events…) with typed
-  fields, served through a headless **Content API** (`/api/content/<type>`).
-- **Forms builder** — design forms, collect submissions, export CSV, embed
-  anywhere with a copy-paste snippet.
+  fields + CSV import/export, served through a headless **Content API**
+  (`/api/content/<type>`).
+- **Forms builder** — design forms, collect submissions (auto spam-flagging),
+  export CSV, embed anywhere with a copy-paste snippet.
 - **AI, provider-agnostic + BYOK** — free Cloudflare Workers AI by default, or
-  your own Anthropic/OpenAI/Google/Ollama key. Generate pages, translate,
-  rewrite, build a whole site, score leads, answer visitors.
-- **CRM + SEO** — lead inbox with AI replies; automated audits, sitemaps,
-  instant indexing, structured data.
-- **Auth** — Owner + team roles with per-tab permissions, optional TOTP 2FA.
+  your own Anthropic/OpenAI/Google/Ollama key, with per-feature routing and a
+  call budget. Generate pages, whole sites, and full articles (single or bulk
+  from CSV); rewrite; translate; score leads; answer visitors; **generate
+  images**; **transcribe audio** (Whisper); A/B title ideas; internal-link
+  suggestions; search-intent optimizer; SEO diagnosis.
+- **Any language + RTL** — configurable locales with default-language fallback,
+  one-click whole-site translation, a brand glossary, outdated-translation
+  flags, and automatic right-to-left rendering (Arabic, Persian, Hebrew…).
+- **CRM + SEO + analytics** — lead inbox with AI replies and follow-ups;
+  audits, sitemaps, instant indexing, structured data, content-freshness;
+  natural-language analytics, anomaly alerts, a printable **PDF report**, and
+  built-in **A/B headline testing** with conversion tracking.
+- **Semantic media search** — find media by meaning, no external vector DB.
+- **Auth** — Owner + team roles with per-tab permissions, optional TOTP 2FA,
+  and a full audit log.
 - **API keys + Webhooks** — HMAC-signed delivery on content/lead/form events.
 - **Backup/restore** — one-click export/import of the whole site as JSON.
 - **MCP server** — manage the site from Claude or any MCP agent.
