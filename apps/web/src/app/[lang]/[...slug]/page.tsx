@@ -46,8 +46,20 @@ export default async function CmsPage({ params }: PageProps<"/[lang]/[...slug]">
     if (slug.length === 1) return <BlogIndex lang={lang} />;
     const post = await getPost(slug[1]);
     if (!post || post.status !== "published") notFound();
+    const site = process.env.SITE_URL ?? "";
+    const postLd = {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      headline: tx(post.title, lang),
+      description: tx(post.excerpt, lang) || undefined,
+      datePublished: post.date,
+      author: { "@type": "Person", name: post.author },
+      ...(post.cover ? { image: `${site}${post.cover}` } : {}),
+      mainEntityOfPage: `${site}/${lang}/blog/${post.slug}`,
+    };
     return (
       <article className="bg-white">
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(postLd) }} />
         {post.cover && (
           <div className="relative aspect-[21/9] w-full">
             <Image src={post.cover} alt={tx(post.title, lang)} fill sizes="100vw" className="object-cover" priority />
