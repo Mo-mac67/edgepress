@@ -105,6 +105,9 @@ export interface AIConfig {
   /** AI-generated content always lands as a draft — never auto-published. */
   approveFirst: boolean;
   brandVoice: string;
+  /** Translation glossary — brand terms to keep consistent or leave untranslated
+   *  (fed into every translation prompt). */
+  glossary?: string;
   /** Public visitor assistant chat widget on the live site. */
   assistantEnabled: boolean;
   /** Safety cap on total AI calls (0 / unset = unlimited). Refuses further
@@ -120,6 +123,7 @@ export const DEFAULT_AI_CONFIG: AIConfig = {
   routing: {},
   approveFirst: true,
   brandVoice: "",
+  glossary: "",
   assistantEnabled: false,
   callBudget: 0,
 };

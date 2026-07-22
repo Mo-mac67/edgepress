@@ -120,6 +120,17 @@ export function AiPanel() {
           <input type="checkbox" checked={cfg.approveFirst} onChange={(e) => set({ approveFirst: e.target.checked })} />
           <span className="text-ink">Always create AI content as drafts (recommended)</span>
         </label>
+
+        <div className="mt-5 border-t border-line pt-4">
+          <p className="text-sm font-semibold text-ink">Translation glossary</p>
+          <p className="mt-1 text-xs text-ink-soft">Brand terms to keep consistent across languages — one per line (e.g. <code>EdgePress → EdgePress (do not translate)</code>). Applied to every translation.</p>
+          <textarea
+            className="field mt-2 min-h-[80px] font-mono text-xs"
+            value={cfg.glossary ?? ""}
+            placeholder={"EdgePress → keep as-is\nEdge → «Edge» (garder en anglais)"}
+            onChange={(e) => set({ glossary: e.target.value })}
+          />
+        </div>
       </section>
 
       <section className="card p-5">

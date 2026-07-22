@@ -51,6 +51,9 @@ const GEN_BLOCKS: { type: BlockType; fields: string }[] = [
 function brandVoiceLine(voice: string): string {
   return voice ? `\nBrand voice to match: ${voice}\n` : "";
 }
+function glossaryLine(glossary?: string): string {
+  return glossary?.trim() ? `\nBrand glossary — keep these terms consistent (translate exactly as given, or leave untranslated where shown):\n${glossary.trim()}\n` : "";
+}
 
 /** Wrap plain generated strings into Localized values under the given locale. */
 function wrapLocalized(data: Record<string, unknown>, locale: string): Record<string, unknown> {
@@ -130,7 +133,7 @@ export async function writeText(mode: WriteMode, text: string, locale: string): 
 export async function translateBatch(strings: string[], from: string, to: string): Promise<string[]> {
   if (strings.length === 0) return [];
   const cfg = await getAIConfig();
-  const system = `You are a professional website translator. Translate each string from ${from} to ${to}. Adapt naturally for the target culture — do not translate literally. Preserve any HTML tags and {placeholders}. Return ONLY a JSON array of translated strings in the same order and length as the input.${brandVoiceLine(cfg.brandVoice)}`;
+  const system = `You are a professional website translator. Translate each string from ${from} to ${to}. Adapt naturally for the target culture — do not translate literally. Preserve any HTML tags and {placeholders}. Return ONLY a JSON array of translated strings in the same order and length as the input.${brandVoiceLine(cfg.brandVoice)}${glossaryLine(cfg.glossary)}`;
   const { text } = await aiComplete("translate", { system, prompt: JSON.stringify(strings), json: true, maxTokens: 3000 });
   const arr = extractJson<string[]>(text);
   if (!Array.isArray(arr) || arr.length !== strings.length) return strings;
