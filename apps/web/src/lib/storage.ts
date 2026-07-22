@@ -9,7 +9,9 @@ import "server-only";
 
 export type KVNamespace = {
   get(key: string): Promise<string | null>;
-  put(key: string, value: string): Promise<void>;
+  /** `expirationTtl` (seconds) is honored by Cloudflare KV; the sqlite/postgres
+   *  adapters ignore it (single-node deployments use the in-memory limiter). */
+  put(key: string, value: string, opts?: { expirationTtl?: number }): Promise<void>;
   delete(key: string): Promise<void>;
   list(options?: { prefix?: string; cursor?: string }): Promise<{ keys: { name: string }[]; list_complete: boolean; cursor?: string }>;
 };
@@ -84,4 +86,44 @@ export async function writeJsonDoc(key: string, data: unknown): Promise<void> {
   const dir = process.env.DATA_DIR || path.join(process.cwd(), "data");
   await mkdir(dir, { recursive: true });
   await writeFile(path.join(dir, key), JSON.stringify(data, null, 2), "utf8");
+}
+
+/** Keys of stored documents starting with `prefix` — works on every adapter
+ *  (KV/sqlite/postgres list; filesystem readdir). Used by append-log stores. */
+export async function listJsonDocs(prefix: string): Promise<string[]> {
+  const store = await kv();
+  if (store) {
+    const out: string[] = [];
+    let cursor: string | undefined;
+    do {
+      const res = await store.list({ prefix, cursor });
+      out.push(...res.keys.map((k) => k.name));
+      cursor = res.list_complete ? undefined : res.cursor;
+    } while (cursor);
+    return out;
+  }
+  try {
+    const path = (await import("node:path")).default;
+    const { readdir } = await import("node:fs/promises");
+    const dir = process.env.DATA_DIR || path.join(process.cwd(), "data");
+    return (await readdir(dir)).filter((f) => f.startsWith(prefix));
+  } catch {
+    return [];
+  }
+}
+
+export async function deleteJsonDoc(key: string): Promise<void> {
+  const store = await kv();
+  if (store) {
+    await store.delete(key);
+    return;
+  }
+  try {
+    const path = (await import("node:path")).default;
+    const { unlink } = await import("node:fs/promises");
+    const dir = process.env.DATA_DIR || path.join(process.cwd(), "data");
+    await unlink(path.join(dir, key));
+  } catch {
+    /* already gone */
+  }
 }
