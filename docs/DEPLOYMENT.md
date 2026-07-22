@@ -164,7 +164,25 @@ leads, settings…) as one JSON file; restore it on any other EdgePress instance
 including one on a *different* storage backend (KV → Postgres, fs → KV…).
 Media binaries (R2/S3/files) are not inside the JSON — copy those separately.
 
-## 9. Troubleshooting
+## 9. Upgrading EdgePress
+
+```bash
+cd my-site
+npx create-edgepress upgrade    # then: npm install && npm run cf:deploy
+```
+
+- **Your content is never touched** — it lives in KV/SQLite/Postgres/files, not
+  in the code, and redeploys don't write to it.
+- **Preserved automatically:** `wrangler.jsonc`, every `.env*`, `data/`,
+  `backups/`, your package name, and any dependencies you added yourself.
+- **Overwritten:** core `src/` code. Keep customizations in Custom HTML pages,
+  Custom CSS, and Custom code (which all live in your content store) — or run
+  the project as a git clone and `git pull` instead.
+- The admin sidebar shows your current version (`EdgePress vX.Y.Z`).
+- Take a backup (Security → Backup) before upgrading — good practice, though
+  upgrades don't touch content.
+
+## 10. Troubleshooting
 
 | Symptom | Fix |
 | --- | --- |

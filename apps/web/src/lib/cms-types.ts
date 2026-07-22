@@ -95,6 +95,10 @@ export interface SiteSettings {
   social: { facebook: string; instagram: string; linkedin: string; youtube: string };
   /** Active content locales (codes). Defaults to ["en","fr"] when unset. */
   locales?: string[];
+  /** Advanced: raw HTML that REPLACES the built-in header/footer site-wide.
+   *  Empty = use the built-in components (nav, language switcher, theme). */
+  customHeaderHtml?: string;
+  customFooterHtml?: string;
 }
 
 export function tx(v: unknown, locale: Locale): string {
@@ -631,6 +635,9 @@ export interface ThemeSettings {
   /** Site-wide custom CSS (the "Additional CSS" / Blogger template analog),
    *  appended to the live theme stylesheet. */
   customCss?: string;
+  /** Site-wide custom code (scripts, chat widgets, embeds…) injected before
+   *  </body> on every public page. Owner-provided raw HTML. */
+  customBodyHtml?: string;
 }
 
 export const FONT_PAIRS: Record<FontPair, { label: string; display: string; body: string }> = {

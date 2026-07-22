@@ -1,0 +1,17 @@
+# Keep dependencies patched — especially the Next→postcss moderate chain noted
+# in docs/LAUNCH-CHECKLIST.md, which clears when Next ships a patched postcss.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /apps/web
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+  - package-ecosystem: npm
+    directory: /packages/create-edgepress
+    schedule:
+      interval: weekly
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

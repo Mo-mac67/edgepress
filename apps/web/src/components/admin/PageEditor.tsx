@@ -17,6 +17,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { Icon } from "@/components/Icon";
 import { BlockEditor } from "./BlockEditor";
 import { CodeEditor } from "./CodeEditor";
+import { blocksToHtml } from "@/lib/blocks-html";
 import { MediaField } from "./MediaField";
 import { Modal, useAdminUI } from "./ui";
 import { BLOCKS, BLOCK_ORDER, newBlock, type Block, type BlockType, type Page } from "@/lib/cms-types";
@@ -262,7 +263,22 @@ export function PageEditor({ initial, uiLocale, contentLocales = ["en", "fr"], s
                 </label>
                 <label className="block">
                   <span className="mb-1 block text-sm font-medium text-ink">Page type</span>
-                  <select className="field" value={page.mode ?? "blocks"} onChange={(e) => patch({ mode: e.target.value as Page["mode"] })}>
+                  <select
+                    className="field"
+                    value={page.mode ?? "blocks"}
+                    onChange={(e) => {
+                      const mode = e.target.value as Page["mode"];
+                      // Blogger/WP-style "edit as HTML": converting a block page
+                      // pre-fills the source from the blocks. Blocks are kept, so
+                      // switching back restores the visual builder untouched.
+                      if (mode === "html" && !(page.rawHtml ?? "").trim() && page.blocks.length > 0) {
+                        patch({ mode, rawHtml: blocksToHtml(page.blocks, locale) });
+                        ui.toast("Converted your blocks to editable HTML — switch back anytime, the blocks are kept.", "success");
+                      } else {
+                        patch({ mode });
+                      }
+                    }}
+                  >
                     <option value="blocks">Block builder</option>
                     <option value="html">Custom HTML</option>
                   </select>

@@ -11,7 +11,7 @@ import { dir, isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { SeoTags } from "@/components/SeoTags";
 import { AssistantWidget } from "@/components/AssistantWidget";
-import { getActiveLocales, getNav, getSeo, getSettings } from "@/lib/cms-store";
+import { getActiveLocales, getNav, getSeo, getSettings, getTheme } from "@/lib/cms-store";
 import { getAIConfig } from "@/lib/ai/engine";
 
 const inter = Inter({
@@ -96,7 +96,7 @@ export default async function LangLayout({
   if (!isLocale(lang) || !(await getActiveLocales()).includes(lang)) notFound();
 
   const dict = getDictionary(lang);
-  const [nav, settings, seo, aiCfg] = await Promise.all([getNav(), getSettings(), getSeo(), getAIConfig()]);
+  const [nav, settings, seo, aiCfg, theme] = await Promise.all([getNav(), getSettings(), getSeo(), getAIConfig(), getTheme()]);
   const fonts = `${inter.variable} ${jakarta.variable} ${playfair.variable} ${lora.variable} ${grotesk.variable} ${manrope.variable} ${poppins.variable} ${fraunces.variable}`;
 
   return (
@@ -109,9 +109,20 @@ export default async function LangLayout({
         <SeoTags seo={seo} settings={settings} />
         <Analytics />
         <ScrollFx />
-        <Header locale={lang} dict={dict} nav={nav} settings={settings} />
+        {/* Advanced override (Site info → Custom header/footer): raw HTML fully
+            replaces the built-in components. Rendered as <header>/<footer> so
+            admin/hide-chrome selectors keep working. */}
+        {settings.customHeaderHtml?.trim() ? (
+          <header dangerouslySetInnerHTML={{ __html: settings.customHeaderHtml }} />
+        ) : (
+          <Header locale={lang} dict={dict} nav={nav} settings={settings} />
+        )}
         <main className="flex-1">{children}</main>
-        <Footer locale={lang} dict={dict} nav={nav} settings={settings} />
+        {settings.customFooterHtml?.trim() ? (
+          <footer dangerouslySetInnerHTML={{ __html: settings.customFooterHtml }} />
+        ) : (
+          <Footer locale={lang} dict={dict} nav={nav} settings={settings} />
+        )}
         <FloatingQuote
           locale={lang}
           phone={settings.phone}
@@ -119,6 +130,9 @@ export default async function LangLayout({
           callLabel={lang === "fr" ? "Appeler" : "Call"}
         />
         {aiCfg.enabled && aiCfg.assistantEnabled && <AssistantWidget locale={lang} brandName={settings.brandName} />}
+        {/* Site-wide custom code (Appearance → Custom code). Server-rendered
+            into the document, so <script> tags execute normally on load. */}
+        {theme.customBodyHtml?.trim() && <div id="ep-custom-code" dangerouslySetInnerHTML={{ __html: theme.customBodyHtml }} />}
       </body>
     </html>
   );

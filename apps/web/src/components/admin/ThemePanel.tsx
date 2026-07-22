@@ -186,6 +186,22 @@ export function ThemePanel() {
               placeholder={"/* e.g. */\n.btn-primary { letter-spacing: .02em; }"}
             />
           </div>
+
+          <div className="mt-5 border-t border-line pt-4">
+            <h4 className="text-sm font-semibold text-ink">Custom code</h4>
+            <p className="mt-1 text-sm text-ink-soft">
+              Raw HTML injected before <code>&lt;/body&gt;</code> on every page — analytics snippets, chat widgets, third-party embeds. Scripts run normally.
+            </p>
+            <div className="mt-2">
+              <CodeEditor
+                value={theme.customBodyHtml ?? ""}
+                onChange={(v) => setTheme({ ...theme, customBodyHtml: v })}
+                minHeight={160}
+                ariaLabel="Custom code (before </body>)"
+                placeholder={'<script>\n  // e.g. a chat widget loader\n</script>'}
+              />
+            </div>
+          </div>
         </section>
 
         <button onClick={save} disabled={saving} className="btn-primary">

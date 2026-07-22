@@ -24,13 +24,65 @@ const log = (s = "") => process.stdout.write(s + "\n");
 
 function usage() {
   log(`${c.bold}create-edgepress${c.reset} — scaffold a new EdgePress site\n`);
-  log(`  ${c.cyan}npx create-edgepress <project-name>${c.reset}\n`);
+  log(`  ${c.cyan}npx create-edgepress <project-name>${c.reset}`);
+  log(`  ${c.cyan}npx create-edgepress upgrade${c.reset}   ${c.dim}(inside an existing project — pulls the latest code, keeps your config + content)${c.reset}\n`);
   log(`Options:`);
   log(`  --template <dir>   Copy from a local EdgePress checkout instead of downloading`);
   log(`  --cloudflare       Full deploy wizard: creates KV + R2, writes the config, deploys`);
   log(`  --domain <domain>  Custom domain for --cloudflare (must already be on your CF account)`);
   log(`  --no-deploy        With --cloudflare: create resources + config, skip install/deploy`);
   log(`  EDGEPRESS_REPO     Override the GitHub repo (default ${REPO})`);
+}
+
+/**
+ * In-place upgrade: overlays the latest EdgePress code onto the current
+ * project. SAFE BY DESIGN: content lives in KV/data (never in the code), and
+ * the template never ships wrangler.jsonc / .env* — so your deploy config,
+ * content and secrets are untouched. Your package name and any extra
+ * dependencies you added are re-applied. Direct edits to core src files ARE
+ * overwritten (keep customizations in Custom HTML/CSS, or manage via git).
+ */
+async function upgrade(args) {
+  const dest = process.cwd();
+  if (!existsSync(join(dest, "package.json")) || !existsSync(join(dest, "src", "lib", "storage.ts"))) {
+    log(`${c.red}✖ Run this inside an EdgePress project (package.json + src/lib/storage.ts expected).${c.reset}`);
+    process.exit(1);
+  }
+  const oldPkg = JSON.parse(await readFile(join(dest, "package.json"), "utf8"));
+  log(`\n${c.bold}Upgrading EdgePress in ${c.cyan}${dest}${c.reset}`);
+  log(`${c.dim}Preserved: wrangler.jsonc, .env*, data/, backups/, your package name + extra deps.${c.reset}`);
+
+  const tIdx = args.indexOf("--template");
+  if (tIdx !== -1 && args[tIdx + 1]) await copyLocalTemplate(resolve(args[tIdx + 1]), dest);
+  else if (process.env.EDGEPRESS_TEMPLATE) await copyLocalTemplate(resolve(process.env.EDGEPRESS_TEMPLATE), dest);
+  else await downloadTemplate(dest);
+
+  // Re-apply the project identity + any dependencies the user added themselves.
+  const pkgPath = join(dest, "package.json");
+  const newPkg = JSON.parse(await readFile(pkgPath, "utf8"));
+  const fromVersion = oldPkg.version;
+  newPkg.name = oldPkg.name;
+  for (const field of ["dependencies", "devDependencies"]) {
+    for (const [dep, ver] of Object.entries(oldPkg[field] ?? {})) {
+      newPkg[field] = newPkg[field] ?? {};
+      if (!newPkg[field][dep]) newPkg[field][dep] = ver;
+    }
+  }
+  await writeFile(pkgPath, JSON.stringify(newPkg, null, 2) + "\n");
+
+  // Seed any NEW config templates that appeared in this version.
+  for (const [example, real] of [["wrangler.jsonc.example", "wrangler.jsonc"], [".env.production.example", ".env.production"]]) {
+    const src = join(dest, example);
+    const dst = join(dest, real);
+    if (existsSync(src) && !existsSync(dst)) await cp(src, dst);
+  }
+
+  log(`${c.green}✔ Upgraded${c.reset} ${c.dim}${fromVersion} → ${newPkg.version}${c.reset}\n`);
+  log(`Finish with:`);
+  log(`  ${c.cyan}npm install${c.reset}`);
+  log(`  ${c.cyan}npm run cf:deploy${c.reset}   ${c.dim}(or docker compose up -d --build / npm run build && npm start)${c.reset}`);
+  log(`${c.dim}Note: direct edits to core src files are overwritten by upgrades — keep customizations`);
+  log(`in Custom HTML pages / Custom CSS / Custom code, or manage the project with git.${c.reset}\n`);
 }
 
 function sh(cmd, args, cwd) {
@@ -171,6 +223,7 @@ async function main() {
     usage();
     process.exit(1);
   }
+  if (name === "upgrade") return upgrade(args);
   const dest = resolve(process.cwd(), name);
   if (existsSync(dest) && (await readdir(dest)).length > 0) {
     log(`${c.red}✖ ${name} already exists and is not empty.${c.reset}`);

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Icon } from "@/components/Icon";
 import { MediaField } from "./MediaField";
 import { RichText } from "./RichText";
+import { CodeEditor } from "./CodeEditor";
 import type { Post } from "@/lib/cms-types";
 import type { Locale } from "@/i18n/config";
 
@@ -15,6 +16,7 @@ export function PostEditor({ initial, uiLocale, contentLocales = ["en", "fr"] }:
   const [locale, setLocale] = useState<Locale>("en");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [sourceView, setSourceView] = useState(false);
   const patch = (p: Partial<Post>) => setPost({ ...post, ...p });
 
   async function save() {
@@ -66,8 +68,25 @@ export function PostEditor({ initial, uiLocale, contentLocales = ["en", "fr"] }:
           <label className="block"><span className="mb-1 block text-sm font-medium text-ink">Excerpt ({locale.toUpperCase()})</span><textarea className="field min-h-[70px]" value={post.excerpt[locale]} onChange={(e) => patch({ excerpt: { ...post.excerpt, [locale]: e.target.value } })} /></label>
         </div>
         <div className="card p-5">
-          <span className="mb-2 block text-sm font-medium text-ink">Body ({locale.toUpperCase()})</span>
-          <RichText key={locale} value={post.body[locale]} onChange={(html) => patch({ body: { ...post.body, [locale]: html } })} locale={locale} />
+          <div className="mb-2 flex items-center justify-between">
+            <span className="block text-sm font-medium text-ink">Body ({locale.toUpperCase()})</span>
+            {/* Blogger/WP-style source toggle: edit the exact HTML of the post. */}
+            <div className="flex items-center gap-1 rounded-full border border-line p-0.5 text-xs">
+              <button type="button" onClick={() => setSourceView(false)} className={`rounded-full px-2.5 py-1 ${!sourceView ? "bg-accent-soft font-semibold text-accent-dark" : "text-ink-soft"}`}>Visual</button>
+              <button type="button" onClick={() => setSourceView(true)} className={`rounded-full px-2.5 py-1 ${sourceView ? "bg-accent-soft font-semibold text-accent-dark" : "text-ink-soft"}`}>HTML</button>
+            </div>
+          </div>
+          {sourceView ? (
+            <CodeEditor
+              value={post.body[locale] ?? ""}
+              onChange={(html) => patch({ body: { ...post.body, [locale]: html } })}
+              minHeight={320}
+              ariaLabel={`Post body HTML (${locale})`}
+              placeholder="<p>Write the post body as HTML…</p>"
+            />
+          ) : (
+            <RichText key={locale} value={post.body[locale]} onChange={(html) => patch({ body: { ...post.body, [locale]: html } })} locale={locale} />
+          )}
         </div>
       </div>
     </div>

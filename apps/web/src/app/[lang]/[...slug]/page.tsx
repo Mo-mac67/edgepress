@@ -8,6 +8,7 @@ import { getDictionary } from "@/i18n/dictionaries";
 import { isAuthed } from "@/lib/admin-auth";
 import { getPage, getPost, getPosts } from "@/lib/cms-store";
 import { tx } from "@/lib/cms-types";
+import { LEGAL } from "@/lib/legal-content";
 
 // Dynamic: CMS pages render per-request from KV so anything created or edited in
 // the admin is live immediately — no redeploy. This is core to EdgePress as a
@@ -78,10 +79,32 @@ export default async function CmsPage({ params }: { params: Promise<{ lang: stri
   }
 
   const page = await getPage(path);
-  if (!page) notFound();
+  if (!page) {
+    // Built-in legal fallback: installs created before privacy/terms became
+    // seeded CMS pages still get the default copy. Creating a CMS page with
+    // the same slug takes over automatically.
+    if (path === "privacy" || path === "terms") return <LegalFallback kind={path} lang={lang} />;
+    notFound();
+  }
   // Drafts stay hidden from visitors but render for signed-in admins (live preview).
   if (page.status !== "published" && !(await isAuthed())) notFound();
   return <PageView page={page} locale={lang} dict={dict} />;
+}
+
+function LegalFallback({ kind, lang }: { kind: "privacy" | "terms"; lang: string }) {
+  const doc = LEGAL[kind][lang === "fr" ? "fr" : "en"];
+  return (
+    <article className="container-page max-w-3xl pt-32 pb-12">
+      <h1 className="text-3xl font-bold">{doc.title}</h1>
+      <p className="mt-2 text-sm text-ink-soft">{doc.updated}</p>
+      {doc.sections.map(([h, body]) => (
+        <section key={h} className="mt-8">
+          <h2 className="text-xl font-semibold">{h}</h2>
+          <p className="mt-2 leading-relaxed text-ink-soft">{body}</p>
+        </section>
+      ))}
+    </article>
+  );
 }
 
 async function BlogIndex({ lang }: { lang: string }) {

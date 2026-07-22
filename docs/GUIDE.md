@@ -53,8 +53,10 @@ In the editor:
   block types (hero, cards, FAQ, gallery, contact form, custom HTML…).
 - **Custom HTML mode**: switch *Page type* to **Custom HTML** and edit the
   page's full source in a **code editor** (line numbers, tab support) — the
-  Blogger/WordPress "Edit HTML" experience. Full documents render isolated
-  (own CSS/JS); *Standalone page* hides the site header/footer.
+  Blogger/WordPress "Edit HTML" experience. Switching a **block page** to HTML
+  auto-converts its blocks to clean semantic HTML (the blocks are kept — switch
+  back anytime). Full documents render isolated (own CSS/JS); *Standalone page*
+  hides the site header/footer.
 - **Autosave** + dirty tracking; **History** restores any earlier version.
 - **Translate** fills another language with AI (source text untouched).
 - **A/B headline test**: in *Page settings*, enter 2+ headlines (one per
@@ -62,9 +64,14 @@ In the editor:
   tracked per variant and the **winner** appears in the Report.
 - Per-page **SEO**: share image, keywords, noindex.
 
+Legal pages (**/privacy**, **/terms**) are seeded as editable system pages —
+review and adapt the default copy to your business.
+
 ## 5. Blog
 
-- **New post** — write in the rich-text editor, per language.
+- **New post** — write in the rich-text editor, per language. A **Visual/HTML**
+  toggle above the body switches to a code editor for editing the post's exact
+  HTML (Blogger-style source view).
 - **Write with AI** — give a topic; AI drafts the full article (title,
   excerpt, body, keywords) as a draft post.
 - **Bulk from CSV** — upload a CSV/text file of topics (one per line); AI
@@ -136,6 +143,12 @@ Build forms (contact, signup, survey…) in the **Forms** tab:
   radius, light/dark header — applied live, no redeploy.
 - **Custom CSS**: site-wide CSS in a code editor, loaded on every page
   after the theme (override anything).
+- **Custom code**: raw HTML injected before `</body>` on every page —
+  analytics snippets, chat widgets, third-party embeds (scripts run
+  normally). Site-verification metas live under **SEO**.
+- **Custom header & footer** (Site info, advanced): raw HTML that fully
+  replaces the built-in header/footer — total control of the site chrome.
+  Leave empty to keep the standard nav + language switcher.
 
 ## 11. AI
 
@@ -220,7 +233,14 @@ or on another EdgePress instance — works across storage backends (KV,
 fs, SQLite, Postgres). Media binaries aren't included — copy those
 separately if you migrate hosts.
 
-## 17. Storage & hosting
+## 17. Upgrading
+
+Run `npx create-edgepress upgrade` inside your project, then reinstall and
+redeploy. Your content, deploy config (`wrangler.jsonc`, `.env*`), data and
+extra dependencies are preserved; core code is refreshed. The admin sidebar
+shows your current version. Details: [DEPLOYMENT.md](DEPLOYMENT.md) §9.
+
+## 18. Storage & hosting
 
 The same app runs on:
 

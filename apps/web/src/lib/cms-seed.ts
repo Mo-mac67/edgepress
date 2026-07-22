@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { Block, BlockType, Localized, NavItem, Page, SiteSettings } from "@/lib/cms-types";
+import { LEGAL, legalHtml } from "@/lib/legal-content";
 
 const uid = () => randomUUID().slice(0, 8);
 const b = (type: BlockType, data: Record<string, unknown>): Block => ({ id: uid(), type, data });
@@ -154,5 +155,25 @@ export function seedPages(): Page[] {
     ],
   );
 
-  return [home, features, about, contact];
+  // Editable legal pages (system: undeletable, but fully editable content).
+  const privacy = page(
+    "privacy",
+    L(LEGAL.privacy.en.title, LEGAL.privacy.fr.title),
+    L("How this site collects and uses your information.", "Comment ce site recueille et utilise vos renseignements."),
+    [
+      b("header", { title: L(LEGAL.privacy.en.title, LEGAL.privacy.fr.title), subtitle: L(LEGAL.privacy.en.updated, LEGAL.privacy.fr.updated), align: "left" }),
+      b("richtext", { html: L(legalHtml("privacy", "en"), legalHtml("privacy", "fr")) }),
+    ],
+  );
+  const terms = page(
+    "terms",
+    L(LEGAL.terms.en.title, LEGAL.terms.fr.title),
+    L("The terms that apply when you use this site.", "Les conditions applicables à l'utilisation de ce site."),
+    [
+      b("header", { title: L(LEGAL.terms.en.title, LEGAL.terms.fr.title), subtitle: L(LEGAL.terms.en.updated, LEGAL.terms.fr.updated), align: "left" }),
+      b("richtext", { html: L(legalHtml("terms", "en"), legalHtml("terms", "fr")) }),
+    ],
+  );
+
+  return [home, features, about, contact, privacy, terms];
 }
