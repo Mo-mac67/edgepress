@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { completeSetup, isSetupDone, signIn } from "@/lib/admin-auth";
 import { getSettings, saveSettings } from "@/lib/cms-store";
-import { clientIp, rateLimit } from "@/lib/rate-limit";
+import { clientIp, rateLimitDurable } from "@/lib/rate-limit";
 
 export async function GET() {
   return NextResponse.json({ done: await isSetupDone() });
@@ -10,7 +10,7 @@ export async function GET() {
 /** First-run setup: set the admin password + site name, then sign in. Refuses
  *  once setup is already done (so it can't be used to reset the password). */
 export async function POST(request: Request) {
-  if (!rateLimit(`setup:${clientIp(request)}`, 5, 60_000)) {
+  if (!(await rateLimitDurable(`setup:${clientIp(request)}`, 5, 60))) {
     return NextResponse.json({ error: "Too many attempts" }, { status: 429 });
   }
   if (await isSetupDone()) return NextResponse.json({ error: "Setup already completed" }, { status: 409 });

@@ -1,17 +1,21 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
-import { readJsonDoc, writeJsonDoc } from "./storage";
+import { writeJsonDoc } from "./storage";
+import { appendLogItem, readWithCompaction } from "./append-log";
 import type { Lead } from "./types";
 export { LEAD_STATUSES } from "./types";
 
 /**
- * Lead store behind a small repository interface. Persistence (Cloudflare KV in
- * production, JSON file in local dev) is handled by storage.ts.
+ * Lead store behind a small repository interface. New leads are written via the
+ * race-safe append-log (each lead gets its own key — two simultaneous
+ * submissions can never lose one), then folded into `leads.json` on admin
+ * reads. Persistence backend (KV/file/SQL) is handled by storage.ts.
  */
 const KEY = "leads.json";
+const ITEM_PREFIX = "lead-item-";
 
 async function readAll(): Promise<Lead[]> {
-  return readJsonDoc<Lead[]>(KEY, []);
+  return readWithCompaction<Lead>(KEY, ITEM_PREFIX);
 }
 
 async function writeAll(leads: Lead[]): Promise<void> {
@@ -31,7 +35,6 @@ export async function getLead(id: string): Promise<Lead | null> {
 export async function createLead(
   input: Omit<Lead, "id" | "createdAt" | "status">,
 ): Promise<Lead> {
-  const leads = await readAll();
   const lead: Lead = {
     ...input,
     id: randomUUID(),
@@ -39,8 +42,9 @@ export async function createLead(
     status: "new",
     read: false,
   };
-  leads.push(lead);
-  await writeAll(leads);
+  // Atomic per-lead write — concurrent submissions can never overwrite each
+  // other (the old read-modify-write on leads.json could lose one).
+  await appendLogItem(ITEM_PREFIX, lead.id, lead);
   return lead;
 }
 
