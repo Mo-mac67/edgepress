@@ -322,6 +322,20 @@ export function BlogPanel({ locale }: { locale: Locale }) {
     else ui.toast(data.error || "Couldn't write the article", "error");
   }
 
+  async function bulkFromCsv(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    const csv = await file.text();
+    ui.toast("Writing articles… (up to 3 per run)");
+    const res = await fetch("/api/admin/ai/bulk-articles", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ csv, locale }) });
+    const data = await res.json();
+    if (res.ok) {
+      setPosts((await (await fetch("/api/admin/posts")).json()).posts);
+      ui.toast(`Created ${data.created} draft(s)${data.capped ? " — run again for more" : ""}`, "success");
+    } else ui.toast(data.error || "Bulk generation failed", "error");
+  }
+
   async function remove(id: string, title: string) {
     if (!(await ui.confirm({ title: "Delete post?", message: `“${title}” will be permanently removed.`, confirmLabel: "Delete", danger: true }))) return;
     setPosts((p) => p.filter((x) => x.id !== id));
@@ -334,6 +348,10 @@ export function BlogPanel({ locale }: { locale: Locale }) {
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm text-ink-soft">Publish news and articles at <code>/blog</code>.</p>
         <div className="flex gap-2">
+          <label className="btn-secondary cursor-pointer py-2 text-sm" title="Bulk-generate drafts from a CSV/list of topics (one per line)">
+            <Icon name="download" size={16} /> Bulk from CSV
+            <input type="file" accept=".csv,.txt,text/csv,text/plain" className="hidden" onChange={bulkFromCsv} />
+          </label>
           <button onClick={writeWithAI} className="btn-secondary py-2 text-sm"><Icon name="star" size={16} /> Write with AI</button>
           <button onClick={create} className="btn-primary py-2 text-sm"><Icon name="check" size={16} /> New post</button>
         </div>
