@@ -101,7 +101,11 @@ Everything reads/writes through one adapter, so the same code runs anywhere:
 | Cloudflare | `EDGEPRESS_STORAGE=kv` | KV | R2 |
 
 - **SQLite** uses Node's built-in `node:sqlite` (Node 22.5+) — no native dependency.
-- **Postgres** needs `npm install pg` + `DATABASE_URL` (optional peer dependency; never bundled into the Worker).
+- **Postgres** needs `npm install pg` + `DATABASE_URL` (optional peer dependency; never
+  bundled into the Worker). Pool size/idle are tunable via `PG_POOL_MAX` /
+  `PG_IDLE_TIMEOUT_MS`. To try it without installing Postgres:
+  `node scripts/pg-test-server.mjs` starts a real wire-protocol server backed by
+  PGlite (WASM) on `127.0.0.1:5433`.
 - **Media** defaults to the filesystem (self-host) or R2 (Cloudflare). Set `EDGEPRESS_MEDIA=s3` with `S3_ENDPOINT` / `S3_BUCKET` / `S3_REGION` / `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY` to use any S3-compatible store (AWS S3, MinIO, Backblaze…).
 
 ## Configuration
