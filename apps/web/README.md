@@ -85,9 +85,12 @@ Everything reads/writes through one adapter, so the same code runs anywhere:
 | --- | --- | --- | --- |
 | Filesystem (default self-host) | `EDGEPRESS_STORAGE=fs` | `data/*.json` | `data/` files |
 | SQLite (self-host) | `EDGEPRESS_STORAGE=sqlite` | `data/edgepress.sqlite` | `data/` files |
+| PostgreSQL (self-host) | `EDGEPRESS_STORAGE=postgres` | Postgres | (media adapter of choice) |
 | Cloudflare | `EDGEPRESS_STORAGE=kv` | KV | R2 |
 
-SQLite mode uses Node's built-in `node:sqlite` (Node 22.5+) — no native dependency to compile.
+- **SQLite** uses Node's built-in `node:sqlite` (Node 22.5+) — no native dependency.
+- **Postgres** needs `npm install pg` + `DATABASE_URL` (optional peer dependency; never bundled into the Worker).
+- **Media** defaults to the filesystem (self-host) or R2 (Cloudflare). Set `EDGEPRESS_MEDIA=s3` with `S3_ENDPOINT` / `S3_BUCKET` / `S3_REGION` / `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY` to use any S3-compatible store (AWS S3, MinIO, Backblaze…).
 
 ## Configuration
 
