@@ -27,7 +27,109 @@ function usage() {
   log(`  ${c.cyan}npx create-edgepress <project-name>${c.reset}\n`);
   log(`Options:`);
   log(`  --template <dir>   Copy from a local EdgePress checkout instead of downloading`);
+  log(`  --cloudflare       Full deploy wizard: creates KV + R2, writes the config, deploys`);
+  log(`  --domain <domain>  Custom domain for --cloudflare (must already be on your CF account)`);
+  log(`  --no-deploy        With --cloudflare: create resources + config, skip install/deploy`);
   log(`  EDGEPRESS_REPO     Override the GitHub repo (default ${REPO})`);
+}
+
+function sh(cmd, args, cwd) {
+  // stdin closed + CI=1 so wrangler/npm never wait on an interactive prompt.
+  const r = spawnSync(cmd, args, {
+    cwd,
+    shell: process.platform === "win32",
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+    env: { ...process.env, CI: "1", WRANGLER_SEND_METRICS: "false" },
+  });
+  return { ok: r.status === 0, out: `${r.stdout ?? ""}${r.stderr ?? ""}` };
+}
+
+/**
+ * The --cloudflare deploy wizard: provisions a KV namespace + R2 bucket on the
+ * user's own account (wrangler must be logged in, or CLOUDFLARE_API_TOKEN +
+ * CLOUDFLARE_ACCOUNT_ID set), writes them into wrangler.jsonc, then installs
+ * and deploys. Everything lands on the USER's account — nothing is shared.
+ */
+async function cloudflareWizard(destApp, name, { domain, noDeploy }) {
+  const wr = (args) => sh("npx", ["--yes", "wrangler", ...args], destApp);
+
+  log(`\n${c.bold}Cloudflare deploy wizard${c.reset}`);
+  const who = wr(["whoami"]);
+  if (!who.ok || /not authenticated|Please run.*login/i.test(who.out)) {
+    log(`${c.red}✖ wrangler isn't authenticated.${c.reset}`);
+    log(`  Run ${c.cyan}npx wrangler login${c.reset} (or set CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID) and re-run:`);
+    log(`  ${c.cyan}cd ${name} && npx create-edgepress --cloudflare${c.reset}\n`);
+    return false;
+  }
+
+  // 1) KV namespace
+  const kvTitle = `${name.replace(/-/g, "_")}_kv`;
+  log(`${c.dim}Creating KV namespace ${kvTitle}…${c.reset}`);
+  const kv = wr(["kv", "namespace", "create", kvTitle]);
+  // Output formats vary by wrangler version: `id = "…"` (TOML) or `"id": "…"` (JSONC).
+  const kvId = kv.out.match(/"?id"?\s*[=:]\s*"?([0-9a-f]{32})"?/i)?.[1];
+  if (!kvId) {
+    log(`${c.red}✖ Couldn't create the KV namespace:${c.reset}\n${kv.out.slice(0, 400)}`);
+    return false;
+  }
+  log(`${c.green}✔ KV namespace ${kvId}${c.reset}`);
+
+  // 2) R2 bucket
+  const bucket = `${name}-media`;
+  log(`${c.dim}Creating R2 bucket ${bucket}…${c.reset}`);
+  const r2 = wr(["r2", "bucket", "create", bucket]);
+  if (!r2.ok && !/already exists/i.test(r2.out)) {
+    log(`${c.red}✖ Couldn't create the R2 bucket:${c.reset}\n${r2.out.slice(0, 400)}`);
+    log(`${c.dim}(R2 needs to be enabled once in the Cloudflare dashboard → R2.)${c.reset}`);
+    return false;
+  }
+  log(`${c.green}✔ R2 bucket ${bucket}${c.reset}`);
+
+  // 3) Patch wrangler.jsonc + .env.production
+  const wranglerPath = join(destApp, "wrangler.jsonc");
+  let cfgText = await readFile(wranglerPath, "utf8");
+  cfgText = cfgText
+    .replace(/"name":\s*"[^"]*"/, `"name": "${name}"`)
+    .replace(/"id":\s*"[^"]*"/, `"id": "${kvId}"`)
+    .replace(/"bucket_name":\s*"[^"]*"/, `"bucket_name": "${bucket}"`);
+  if (domain) {
+    cfgText = cfgText
+      .replace(/"SITE_URL":\s*"[^"]*"/, `"SITE_URL": "https://${domain}"`)
+      .replace(/"workers_dev":\s*true,?/, `"workers_dev": false,\n  "routes": [{ "pattern": "${domain}", "custom_domain": true }],`);
+  }
+  await writeFile(wranglerPath, cfgText);
+  if (domain) await writeFile(join(destApp, ".env.production"), `SITE_URL=https://${domain}\n`);
+  log(`${c.green}✔ wrangler.jsonc configured${c.reset}${domain ? ` ${c.dim}(custom domain ${domain})${c.reset}` : ""}`);
+
+  if (noDeploy) {
+    log(`${c.dim}--no-deploy: resources + config are ready. Deploy with: npm install && npm run cf:deploy${c.reset}`);
+    return true;
+  }
+
+  // 4) Install + deploy
+  log(`${c.dim}Installing dependencies (a few minutes)…${c.reset}`);
+  if (!sh("npm", ["install", "--no-audit", "--no-fund"], destApp).ok) {
+    log(`${c.red}✖ npm install failed — run it manually, then npm run cf:deploy${c.reset}`);
+    return false;
+  }
+  log(`${c.dim}Building + deploying…${c.reset}`);
+  const dep = sh("npm", ["run", "cf:deploy"], destApp);
+  if (!dep.ok) {
+    log(`${c.red}✖ Deploy failed:${c.reset}\n${dep.out.slice(-600)}`);
+    return false;
+  }
+  const liveUrl = dep.out.match(/https:\/\/[^\s]+\.workers\.dev/)?.[0];
+  log(`\n${c.green}${c.bold}✔ Deployed!${c.reset} ${liveUrl ? c.cyan + liveUrl + c.reset : ""}`);
+  if (!domain && liveUrl) {
+    await writeFile(join(destApp, ".env.production"), `SITE_URL=${liveUrl}\n`);
+    log(`${c.dim}SITE_URL saved (${liveUrl}) — run npm run cf:deploy once more so sitemaps/OG bake the final URL.${c.reset}`);
+  }
+  log(`\nNext:`);
+  log(`  1. Open ${c.cyan}${domain ? `https://${domain}` : liveUrl || "your site"}/en/admin${c.reset} → the setup wizard creates your Owner account.`);
+  if (domain) log(`  2. The custom domain is routed via wrangler — DNS/SSL provision automatically (domain must be on this Cloudflare account).`);
+  else log(`  2. To attach a domain later: Cloudflare dashboard → Workers & Pages → ${name} → Settings → Domains & Routes.`);
+  return true;
 }
 
 async function copyLocalTemplate(src, destApp) {
@@ -110,12 +212,26 @@ async function main() {
     if (existsSync(src) && !existsSync(dst)) await cp(src, dst);
   }
 
-  log(`${c.green}✔ Done!${c.reset}\n`);
-  log(`Next steps:\n`);
+  log(`${c.green}✔ Scaffolded!${c.reset}`);
+
+  // Optional: full Cloudflare provisioning + deploy.
+  if (args.includes("--cloudflare")) {
+    const dIdx = args.indexOf("--domain");
+    const domain = dIdx !== -1 ? String(args[dIdx + 1] ?? "").replace(/^https?:\/\//, "").replace(/\/.*$/, "") : "";
+    const ok = await cloudflareWizard(destApp, name.replace(/[^a-z0-9-]/gi, "-").toLowerCase(), {
+      domain,
+      noDeploy: args.includes("--no-deploy"),
+    });
+    if (ok) return;
+    log(`${c.dim}The scaffold itself is fine — fix the issue above and re-run the deploy steps manually.${c.reset}\n`);
+  }
+
+  log(`\nNext steps:\n`);
   log(`  ${c.cyan}cd ${name}${c.reset}`);
   log(`  ${c.cyan}npm install${c.reset}`);
   log(`  ${c.cyan}npm run dev${c.reset}   ${c.dim}# http://localhost:3000 — the setup wizard runs on first visit to /admin${c.reset}\n`);
-  log(`Deploy free to Cloudflare: ${c.cyan}npm run cf:deploy${c.reset} (after creating a KV namespace + R2 bucket).`);
+  log(`Deploy free to Cloudflare in one go: ${c.cyan}npx create-edgepress <name> --cloudflare [--domain your.com]${c.reset}`);
+  log(`Or manually: ${c.cyan}npm run cf:deploy${c.reset} (after creating a KV namespace + R2 bucket).`);
   log(`Or run anywhere with Docker: ${c.cyan}docker compose up -d${c.reset}\n`);
 }
 

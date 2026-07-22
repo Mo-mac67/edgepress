@@ -42,7 +42,10 @@ Create from the **Pages** tab:
 
 - **New page** — start blank. **Generate with AI** — describe it, get a full
   draft. **Import URL** — AI rebuilds any web page as editable blocks.
-  **Import HTML** — drop a `.html` file.
+  **Import whole site** — enter a site's URL and EdgePress reads its
+  `sitemap.xml` and rebuilds *every* page as a draft (batched + resumable;
+  localized sitemaps are deduped). **Import screenshot** — rebuild from an
+  image of a page. **Import HTML** — drop a `.html` file.
 
 In the editor:
 
@@ -226,5 +229,9 @@ The same app runs on:
 | Cloudflare Workers (free tier) | KV | R2 |
 | Any Node server / Docker | JSON files, SQLite, or Postgres | files or any S3-compatible store |
 
-Switch with `EDGEPRESS_STORAGE` / `EDGEPRESS_MEDIA` — see the README for
-setup. Backup/restore moves content between any of them.
+Switch with `EDGEPRESS_STORAGE` / `EDGEPRESS_MEDIA`. Backup/restore moves
+content between any of them.
+
+📖 Full deployment walkthroughs — one-command Cloudflare wizard, custom
+domains, several sites on one account, quotas, migration, self-host storage and
+troubleshooting — live in [DEPLOYMENT.md](DEPLOYMENT.md).
