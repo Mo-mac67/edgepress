@@ -1,6 +1,7 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
 import { readJsonDoc, writeJsonDoc } from "./storage";
+import { appendLogItem, readWithCompaction } from "./append-log";
 import { slugify } from "./content-store";
 
 /**
@@ -102,22 +103,27 @@ export async function deleteForm(slug: string): Promise<boolean> {
   if (next.length === forms.length) return false;
   await writeJsonDoc(FORMS_KEY, next);
   await writeJsonDoc(subsKey(slug), []);
+  // Clear any not-yet-compacted submission items too.
+  const { listJsonDocs, deleteJsonDoc } = await import("./storage");
+  await Promise.all((await listJsonDocs(subItemPrefix(slug))).map((k) => deleteJsonDoc(k)));
   return true;
 }
 
-// ─── Submissions ────────────────────────────────────────
+// ─── Submissions (race-safe append-log; see lib/append-log.ts) ──────
+const subItemPrefix = (slug: string) => `form-sub-${slug}-item-`;
+
 export async function getSubmissions(slug: string): Promise<Submission[]> {
-  return (await readJsonDoc<Submission[]>(subsKey(slug), [])).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const subs = await readWithCompaction<Submission>(subsKey(slug), subItemPrefix(slug));
+  return [...subs].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 export async function addSubmission(slug: string, data: Record<string, unknown>, spam = false): Promise<Submission> {
-  const subs = await readJsonDoc<Submission[]>(subsKey(slug), []);
   const sub: Submission = { id: uid(), data, createdAt: new Date().toISOString(), ...(spam ? { spam: true } : {}) };
-  subs.push(sub);
-  await writeJsonDoc(subsKey(slug), subs.slice(-5000));
+  // Atomic per-submission write — concurrent submits can never lose one.
+  await appendLogItem(subItemPrefix(slug), sub.id, sub);
   return sub;
 }
 export async function deleteSubmission(slug: string, id: string): Promise<boolean> {
-  const subs = await readJsonDoc<Submission[]>(subsKey(slug), []);
+  const subs = await readWithCompaction<Submission>(subsKey(slug), subItemPrefix(slug));
   const next = subs.filter((s) => s.id !== id);
   if (next.length === subs.length) return false;
   await writeJsonDoc(subsKey(slug), next);

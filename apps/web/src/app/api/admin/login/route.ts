@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { hashPassword, isTotpEnabled, setAuthCookie, verifyOwnerTotp, verifyPassword } from "@/lib/admin-auth";
 import { logAudit } from "@/lib/audit-store";
-import { clientIp, rateLimit } from "@/lib/rate-limit";
+import { clientIp, rateLimitDurable } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
-  if (!rateLimit(`login:${clientIp(request)}`, 10, 60_000)) {
+  if (!(await rateLimitDurable(`login:${clientIp(request)}`, 10, 60))) {
     return NextResponse.json({ error: "Too many attempts" }, { status: 429 });
   }
   const { password, code } = await request.json().catch(() => ({}));
