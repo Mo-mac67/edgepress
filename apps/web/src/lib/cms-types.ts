@@ -72,8 +72,8 @@ export interface MediaItem {
   url: string; // public path (/api/media/<key>)
   filename: string;
   size: number;
-  /** "image" (default) or "video" — drives previews and pickers. */
-  kind?: "image" | "video";
+  /** "image" (default), "video", or "audio" — drives previews and pickers. */
+  kind?: "image" | "video" | "audio";
   /** AI-generated (or hand-written) alt text. */
   alt?: string;
   /** Semantic-search embedding of alt/filename (Workers AI bge-base). */

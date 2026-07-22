@@ -91,6 +91,20 @@ export function MediaLibrary({ onPick }: { onPick?: (url: string) => void }) {
     }
   }
 
+  async function transcribeItem(id: string) {
+    setAltBusy(id);
+    try {
+      const r = await fetch("/api/admin/ai/transcribe", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) });
+      const d = await r.json();
+      if (r.ok) {
+        setItems((prev) => prev.map((i) => (i.id === id ? { ...i, alt: d.text } : i)));
+        ui.toast(d.text ? "Transcribed" : "No speech detected", d.text ? "success" : "info");
+      } else ui.toast(d.error || "Transcription failed", "error");
+    } finally {
+      setAltBusy(null);
+    }
+  }
+
   async function genAlt(id: string) {
     setAltBusy(id);
     try {
@@ -125,7 +139,7 @@ export function MediaLibrary({ onPick }: { onPick?: (url: string) => void }) {
             <Icon name="star" size={14} /> Generate with AI
           </button>
         </div>
-        <input ref={fileRef} type="file" accept="image/*,video/*" multiple hidden onChange={(e) => upload(e.target.files)} />
+        <input ref={fileRef} type="file" accept="image/*,video/*,audio/*" multiple hidden onChange={(e) => upload(e.target.files)} />
         <p className="mt-2 text-xs text-ink-soft">Images up to 8MB · videos (MP4/WebM) up to 90MB</p>
         {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
       </div>
@@ -153,29 +167,39 @@ export function MediaLibrary({ onPick }: { onPick?: (url: string) => void }) {
             <div key={m.id} className="group relative overflow-hidden rounded-lg border border-line bg-white">
               {m.kind === "video" ? (
                 <video src={m.url} muted playsInline preload="metadata" className="aspect-square w-full bg-brand-dark object-cover" />
+              ) : m.kind === "audio" ? (
+                <div className="flex aspect-square w-full flex-col items-center justify-center gap-2 bg-brand-dark p-3">
+                  <Icon name="star" size={22} className="text-accent" />
+                  <audio src={m.url} controls className="w-full" />
+                </div>
               ) : (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={m.url} alt={m.filename} className="aspect-square w-full object-cover" />
               )}
-              {m.kind === "video" && (
-                <span className="absolute left-1.5 top-1.5 rounded bg-brand-dark/80 px-1.5 py-0.5 text-[10px] font-bold text-white">VIDEO</span>
+              {(m.kind === "video" || m.kind === "audio") && (
+                <span className="absolute left-1.5 top-1.5 rounded bg-brand-dark/80 px-1.5 py-0.5 text-[10px] font-bold uppercase text-white">{m.kind}</span>
               )}
-              <div className="absolute inset-0 flex items-center justify-center gap-2 bg-brand-dark/70 opacity-0 transition group-hover:opacity-100">
-                {onPick && (
+              <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-end gap-2 p-2 opacity-0 transition group-hover:opacity-100 group-hover:pointer-events-auto">
+                {onPick && m.kind === "image" && (
                   <button type="button" onClick={() => onPick(m.url)} className="rounded-lg bg-accent px-3 py-1.5 text-xs font-bold text-brand-dark">
                     Use
                   </button>
                 )}
-                {m.kind !== "video" && (
+                {m.kind === "image" && (
                   <button type="button" onClick={() => genAlt(m.id)} disabled={altBusy === m.id} className="rounded-lg bg-white/90 p-1.5 text-brand" title="Generate alt text with AI">
                     <Icon name="star" size={15} />
+                  </button>
+                )}
+                {(m.kind === "audio" || m.kind === "video") && (
+                  <button type="button" onClick={() => transcribeItem(m.id)} disabled={altBusy === m.id} className="rounded-lg bg-white/90 px-2 py-1.5 text-xs font-semibold text-brand" title="Transcribe with AI (Whisper)">
+                    {altBusy === m.id ? "…" : "Transcribe"}
                   </button>
                 )}
                 <button type="button" onClick={() => remove(m.id)} className="rounded-lg bg-white/90 p-1.5 text-red-600" title="Delete">
                   <Icon name="trash" size={15} />
                 </button>
               </div>
-              {m.alt && <p className="truncate px-2 py-1 text-[10px] text-ink-soft" title={m.alt}>alt: {m.alt}</p>}
+              {m.alt && <p className="truncate px-2 py-1 text-[10px] text-ink-soft" title={m.alt}>{m.kind === "image" ? "alt" : "transcript"}: {m.alt}</p>}
             </div>
           ))}
           {(results ?? items).length === 0 && <p className="col-span-full text-center text-sm text-ink-soft">{results !== null ? "No matches." : "No media yet."}</p>}
