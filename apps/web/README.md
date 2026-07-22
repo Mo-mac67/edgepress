@@ -41,10 +41,20 @@ npm run build && npm start
 
 ### 2. Cloudflare Workers — the free edge deploy
 
+**One command** (provisions KV + R2 on *your* account, configures, deploys):
+
 ```bash
-cp wrangler.jsonc.example wrangler.jsonc
-npx wrangler kv namespace create edgepress_kv   # paste the id into wrangler.jsonc
-npx wrangler r2 bucket create edgepress-media
+npx create-edgepress my-site --cloudflare
+# already have the domain on your Cloudflare account?
+npx create-edgepress my-site --cloudflare --domain my-site.com
+```
+
+Or manually:
+
+```bash
+cp wrangler.jsonc.example wrangler.jsonc          # set a unique "name"
+npx wrangler kv namespace create my_site_kv       # paste the id into wrangler.jsonc
+npx wrangler r2 bucket create my-site-media
 cp .env.production.example .env.production        # set SITE_URL to your URL
 npm run cf:deploy
 ```
@@ -53,17 +63,29 @@ Documents live in Cloudflare **KV**, media in **R2**, and AI runs on **Workers
 AI** — all on the free tier. `wrangler.jsonc` points at *your* account; the repo
 only ships the `.example` template, so nothing here is wired to anyone else.
 
-### Scaffold a fresh project
+**Your own domain:** dashboard → Workers & Pages → your worker → Settings →
+**Domains & Routes** → Add Custom Domain (the domain just needs to be on your
+Cloudflare account — DNS/SSL are automatic).
 
-```bash
-npx create-edgepress my-site
-```
+**Several sites on one account:** repeat per site with unique names — each site
+gets its own worker + KV + R2 + Owner password, fully isolated. Free-tier quotas
+(100k requests/day, KV 100k reads / 1k writes/day, 10 GB R2) are shared
+account-wide and comfortably fit several small sites.
+
+**Migrating an existing site?** Deploy to the staging URL first, then
+**Pages → Import whole site** rebuilds every page from the old site's
+`sitemap.xml` as editable drafts; switch the domain only when it matches.
+
+📖 Full walkthroughs (domains, multi-site, quotas, migration, self-host
+storage, troubleshooting): [docs/DEPLOYMENT.md](../../docs/DEPLOYMENT.md)
 
 ## What's inside
 
 - **Block CMS** — page builder, Tiptap rich text, revisions, autosave, themes,
   media library, blog, menus — plus a **code editor** for page HTML and
   site-wide **Custom CSS** (the "Edit HTML" experience).
+- **Site importers** — rebuild any page from a URL, a screenshot, or an entire
+  site at once from its `sitemap.xml` (AI turns them into editable drafts).
 - **Custom Content Types** — model anything (products, team, events…) with typed
   fields + CSV import/export, served through a headless **Content API**
   (`/api/content/<type>`).

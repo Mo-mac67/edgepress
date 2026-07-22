@@ -17,14 +17,20 @@ path.
 For a site that already has its own design/pages you must preserve:
 
 1. **Stand up EdgePress on a staging URL** (separate KV/R2 or a separate `data/`
-   dir). Never point it at the live domain yet.
+   dir) — `npx create-edgepress my-site --cloudflare` does it in one command.
+   Never point it at the live domain yet.
 2. **Bring the content in** without recreating the design by hand:
-   `Pages → Import URL` on each live page → the AI rebuilds it as editable blocks
-   (draft).
-3. **Match the theme** in Appearance.
+   `Pages → Import whole site` — enter the live site's URL and every page from
+   its `sitemap.xml` is rebuilt as an editable draft (batched, resumable).
+   Odd pages can be redone individually with `Import URL` or
+   `Import screenshot`.
+3. **Match the theme** in Appearance (presets + Custom CSS).
 4. **Review every page as a draft**, fix content, translate, then publish on the
    staging instance.
 5. **Compare staging vs live** side by side. Only when it matches (or is a
-   deliberate, approved redesign) do you switch the domain — one site at a time.
-6. Keep the old deployment recoverable (`wrangler rollback`, or a fresh backup
-   via Settings → Backup) until the new one is confirmed live and correct.
+   deliberate, approved redesign) do you switch the domain — one site at a time:
+   move the custom domain from the old worker to the EdgePress worker
+   (dashboard → Workers & Pages → Settings → Domains & Routes).
+6. Keep the old worker deployed — pointing the domain back to it is the instant
+   rollback. Take a fresh backup (Settings → Backup) once the new site is
+   confirmed live and correct. Full details: [DEPLOYMENT.md](DEPLOYMENT.md) §7.
