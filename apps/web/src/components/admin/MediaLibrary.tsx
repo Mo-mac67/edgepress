@@ -91,6 +91,21 @@ export function MediaLibrary({ onPick }: { onPick?: (url: string) => void }) {
     }
   }
 
+  async function imageOp(id: string, op: "remove-bg" | "upscale") {
+    setAltBusy(id);
+    ui.toast(op === "remove-bg" ? "Removing background…" : "Upscaling…");
+    try {
+      const r = await fetch("/api/admin/ai/image-ops", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, op }) });
+      const d = await r.json();
+      if (r.ok) {
+        setItems((prev) => [d.item, ...prev]);
+        ui.toast("Done — added as a new image", "success");
+      } else ui.toast(d.error || "Image operation failed", "error");
+    } finally {
+      setAltBusy(null);
+    }
+  }
+
   async function transcribeItem(id: string) {
     setAltBusy(id);
     try {
@@ -186,9 +201,17 @@ export function MediaLibrary({ onPick }: { onPick?: (url: string) => void }) {
                   </button>
                 )}
                 {m.kind === "image" && (
-                  <button type="button" onClick={() => genAlt(m.id)} disabled={altBusy === m.id} className="rounded-lg bg-white/90 p-1.5 text-brand" title="Generate alt text with AI">
-                    <Icon name="star" size={15} />
-                  </button>
+                  <>
+                    <button type="button" onClick={() => genAlt(m.id)} disabled={altBusy === m.id} className="rounded-lg bg-white/90 p-1.5 text-brand" title="Generate alt text with AI">
+                      <Icon name="star" size={15} />
+                    </button>
+                    <button type="button" onClick={() => imageOp(m.id, "remove-bg")} disabled={altBusy === m.id} className="rounded-lg bg-white/90 px-2 py-1.5 text-[10px] font-bold text-brand" title="Remove background (needs a Replicate key in the AI panel)">
+                      BG
+                    </button>
+                    <button type="button" onClick={() => imageOp(m.id, "upscale")} disabled={altBusy === m.id} className="rounded-lg bg-white/90 px-2 py-1.5 text-[10px] font-bold text-brand" title="Upscale 2× (needs a Replicate key in the AI panel)">
+                      2×
+                    </button>
+                  </>
                 )}
                 {(m.kind === "audio" || m.kind === "video") && (
                   <button type="button" onClick={() => transcribeItem(m.id)} disabled={altBusy === m.id} className="rounded-lg bg-white/90 px-2 py-1.5 text-xs font-semibold text-brand" title="Transcribe with AI (Whisper)">
