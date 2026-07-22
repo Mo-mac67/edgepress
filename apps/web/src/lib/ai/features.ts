@@ -203,6 +203,16 @@ export async function internalLinkIdeas(text: string, pages: { slug: string; tit
     .slice(0, 8);
 }
 
+/** Diagnose why a page might not rank and how to fix it. */
+export async function diagnoseSeo(input: { title: string; description: string; keywords: string; slug: string; text: string; locale: string }): Promise<{ summary: string; findings: { issue: string; fix: string }[] }> {
+  const lang = input.locale === "fr" ? "French" : input.locale === "en" ? "English" : input.locale;
+  const system = `You are a technical SEO consultant. In ${lang}, explain why this page may not rank well and how to fix it. Weigh: title quality & length, meta description, keyword focus & search intent, content depth, heading structure, internal linking, and clarity. Return ONLY JSON {"summary":"1-2 sentence verdict","findings":[{"issue":"specific problem","fix":"concrete action"}]} — 3 to 6 findings, most important first.`;
+  const prompt = `SLUG: /${input.slug}\nTITLE: ${input.title}\nMETA DESCRIPTION: ${input.description}\nTARGET KEYWORDS: ${input.keywords}\nPAGE CONTENT (excerpt):\n${input.text.slice(0, 3000)}`;
+  const { text } = await aiComplete("seoKeywords", { system, prompt, json: true, maxTokens: 900 });
+  const out = extractJson<{ summary: string; findings: { issue: string; fix: string }[] }>(text);
+  return { summary: out.summary || "", findings: (out.findings ?? []).filter((f) => f && f.issue).slice(0, 8) };
+}
+
 /** SEO keyword & content-gap ideas for a topic. */
 export async function keywordIdeas(topic: string): Promise<{ keywords: string[]; gaps: string[] }> {
   const system = `You are an SEO strategist. For the given topic, return JSON {"keywords":[...10 realistic search keywords...],"gaps":[...5 content ideas/pages the site is likely missing...]}. Return ONLY JSON.`;
