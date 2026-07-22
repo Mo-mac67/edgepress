@@ -207,7 +207,7 @@ export function AdminDashboard({
         </header>
 
         <div className="p-4 sm:p-6">
-          {tab === "overview" && <Overview analytics={analytics} anomalies={anomalies} />}
+          {tab === "overview" && <Overview analytics={analytics} anomalies={anomalies} base={base} />}
           {tab === "leads" && <LeadsTable leads={leads} setLeads={setLeads} base={base} locale={locale} />}
           {tab === "marketplace" && <MarketplacePanel locale={locale} />}
           {tab === "pages" && <PagesPanel locale={locale} />}
@@ -241,7 +241,7 @@ function Kpi({ label, value }: { label: string; value: string | number }) {
   );
 }
 
-function Overview({ analytics: a, anomalies = [] }: { analytics: ReturnType<typeof computeAnalytics>; anomalies?: { label: string; severity: "warn" }[] }) {
+function Overview({ analytics: a, anomalies = [], base = "" }: { analytics: ReturnType<typeof computeAnalytics>; anomalies?: { label: string; severity: "warn" }[]; base?: string }) {
   const pct = (n: number) => `${(n * 100).toFixed(1)}%`;
   const [q, setQ] = useState("");
   const [answer, setAnswer] = useState("");
@@ -268,6 +268,9 @@ function Overview({ analytics: a, anomalies = [] }: { analytics: ReturnType<type
           </ul>
         </div>
       )}
+      <div className="flex justify-end">
+        <Link href={`${base}/admin/report`} className="btn-secondary py-1.5 text-sm"><Icon name="download" size={14} /> Report (PDF)</Link>
+      </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Kpi label="Leads" value={a.kpis.leads} />
         <Kpi label="Sessions" value={a.kpis.sessions} />
