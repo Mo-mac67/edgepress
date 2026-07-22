@@ -182,6 +182,10 @@ function AiTools({ ready }: { ready: boolean }) {
   const [linkText, setLinkText] = useState("");
   const [links, setLinks] = useState<{ slug: string; anchor: string }[]>([]);
   const [linking, setLinking] = useState(false);
+  const [intentText, setIntentText] = useState("");
+  const [intent, setIntent] = useState("");
+  const [intentBusy, setIntentBusy] = useState(false);
+  const [intentRes, setIntentRes] = useState<{ summary?: string; findings?: { issue: string; fix: string }[] } | null>(null);
 
   async function genTitles() {
     if (!topic.trim()) return ui.toast("Enter a topic or draft headline", "error");
@@ -201,6 +205,16 @@ function AiTools({ ready }: { ready: boolean }) {
     setLinking(false);
     if (res.ok) { setLinks(data.links ?? []); if (!data.links?.length) ui.toast("No internal links suggested", "info"); }
     else ui.toast(data.error || "Couldn't suggest links", "error");
+  }
+
+  async function runIntent() {
+    if (!intentText.trim() || !intent.trim()) return ui.toast("Add content and a target intent", "error");
+    setIntentBusy(true); setIntentRes(null);
+    const res = await fetch("/api/admin/ai/intent", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: intentText, intent }) });
+    const data = await res.json();
+    setIntentBusy(false);
+    if (res.ok) setIntentRes(data);
+    else ui.toast(data.error || "Couldn't analyze", "error");
   }
 
   async function translateSite(to: string) {
@@ -250,6 +264,24 @@ function AiTools({ ready }: { ready: boolean }) {
               </li>
             ))}
           </ul>
+        )}
+      </div>
+
+      <div className="mt-6 border-t border-line pt-4">
+        <p className="text-sm font-medium text-ink">Search-intent optimizer</p>
+        <p className="mt-1 text-xs text-ink-soft">Paste content + the intent you want it to satisfy — get gaps and fixes.</p>
+        <input className="field mt-2" placeholder="Target intent — e.g. 'compare tankless vs tank water heaters'" value={intent} onChange={(e) => setIntent(e.target.value)} />
+        <textarea className="field mt-2 min-h-[80px]" placeholder="Paste the page content…" value={intentText} onChange={(e) => setIntentText(e.target.value)} />
+        <button onClick={runIntent} disabled={intentBusy} className="btn-secondary mt-2">{intentBusy ? "Analyzing…" : "Optimize for intent"}</button>
+        {intentRes && (
+          <div className="mt-3 rounded-lg border border-line p-3 text-sm">
+            {intentRes.summary && <p className="text-ink-soft">{intentRes.summary}</p>}
+            <ul className="mt-2 space-y-2">
+              {(intentRes.findings ?? []).map((f, i) => (
+                <li key={i}><span className="font-medium text-ink">{f.issue}</span><span className="mt-0.5 block text-ink-soft">→ {f.fix}</span></li>
+              ))}
+            </ul>
+          </div>
         )}
       </div>
 
