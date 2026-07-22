@@ -18,7 +18,7 @@ import { AiPanel } from "./AiPanel";
 import { CopilotPanel } from "./CopilotPanel";
 import { ThemePanel } from "./ThemePanel";
 import { useAdminUI } from "./ui";
-import { computeAnalytics } from "@/lib/analytics";
+import { computeAnalytics, detectAnomalies } from "@/lib/analytics";
 import type { SiteEvent } from "@/lib/events-store";
 import type { AuditEntry } from "@/lib/audit-store";
 import type { AdminUser, Role } from "@/lib/admin-auth";
@@ -65,6 +65,7 @@ export function AdminDashboard({
 
   const isSuper = role === "super";
   const analytics = useMemo(() => computeAnalytics(leads, events, days), [leads, events, days]);
+  const anomalies = useMemo(() => detectAnomalies(leads, events), [leads, events]);
   const unread = leads.filter((l) => !l.read).length;
 
   async function signOut() {
@@ -206,7 +207,7 @@ export function AdminDashboard({
         </header>
 
         <div className="p-4 sm:p-6">
-          {tab === "overview" && <Overview analytics={analytics} />}
+          {tab === "overview" && <Overview analytics={analytics} anomalies={anomalies} />}
           {tab === "leads" && <LeadsTable leads={leads} setLeads={setLeads} base={base} locale={locale} />}
           {tab === "marketplace" && <MarketplacePanel locale={locale} />}
           {tab === "pages" && <PagesPanel locale={locale} />}
@@ -240,7 +241,7 @@ function Kpi({ label, value }: { label: string; value: string | number }) {
   );
 }
 
-function Overview({ analytics: a }: { analytics: ReturnType<typeof computeAnalytics> }) {
+function Overview({ analytics: a, anomalies = [] }: { analytics: ReturnType<typeof computeAnalytics>; anomalies?: { label: string; severity: "warn" }[] }) {
   const pct = (n: number) => `${(n * 100).toFixed(1)}%`;
   const [q, setQ] = useState("");
   const [answer, setAnswer] = useState("");
@@ -259,6 +260,14 @@ function Overview({ analytics: a }: { analytics: ReturnType<typeof computeAnalyt
   }
   return (
     <div className="space-y-6">
+      {anomalies.length > 0 && (
+        <div className="rounded-xl border border-amber-300 bg-amber-50 p-4">
+          <p className="flex items-center gap-2 text-sm font-semibold text-amber-800"><Icon name="shield" size={16} /> Heads up</p>
+          <ul className="mt-1.5 space-y-1 text-sm text-amber-900">
+            {anomalies.map((an, i) => <li key={i}>• {an.label}</li>)}
+          </ul>
+        </div>
+      )}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Kpi label="Leads" value={a.kpis.leads} />
         <Kpi label="Sessions" value={a.kpis.sessions} />

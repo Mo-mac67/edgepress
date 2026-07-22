@@ -196,6 +196,8 @@ export function SeoPanel() {
         )}
       </section>
 
+      <FreshnessCard />
+
       {/* Instant indexing */}
       <section className="card p-5">
         <h3 className="font-display font-bold text-brand">Instant indexing (IndexNow)</h3>
@@ -253,5 +255,49 @@ export function SeoPanel() {
 
       <button onClick={save} className="btn-primary">{saved ? "Saved — live on the site ✓" : "Save SEO settings"}</button>
     </div>
+  );
+}
+
+/** Content freshness — lists published pages not updated in a while, so stale
+ *  content is easy to find and refresh. */
+function FreshnessCard() {
+  const STALE_DAYS = 120;
+  const [stale, setStale] = useState<{ id: string; slug: string; title: string; days: number }[]>([]);
+  const loc = (typeof window !== "undefined" && window.location.pathname.split("/")[1]) || "en";
+
+  useEffect(() => {
+    fetch("/api/admin/pages").then(async (r) => {
+      if (!r.ok) return;
+      const { pages } = await r.json();
+      const now = Date.now();
+      const rows = (pages as { id: string; slug: string; status: string; title: Record<string, string>; updatedAt?: string }[])
+        .filter((p) => p.status === "published" && p.updatedAt)
+        .map((p) => ({ id: p.id, slug: p.slug, title: p.title?.en || p.slug || "Home", days: Math.floor((now - +new Date(p.updatedAt!)) / 86_400_000) }))
+        .filter((p) => p.days >= STALE_DAYS)
+        .sort((a, b) => b.days - a.days);
+      setStale(rows);
+    });
+  }, []);
+
+  return (
+    <section className="card p-5">
+      <h3 className="font-display font-bold text-brand">Content freshness</h3>
+      <p className="mt-1 text-sm text-ink-soft">Published pages not updated in over {STALE_DAYS} days — refreshing old content helps rankings.</p>
+      {stale.length === 0 ? (
+        <p className="mt-3 text-sm text-green-700">✓ All published pages are reasonably fresh.</p>
+      ) : (
+        <ul className="mt-3 divide-y divide-line">
+          {stale.map((p) => (
+            <li key={p.id} className="flex items-center justify-between gap-3 py-2 text-sm">
+              <span className="min-w-0 truncate"><span className="font-medium text-brand">{p.title}</span> <span className="text-ink-soft">/{p.slug || "(home)"}</span></span>
+              <span className="flex shrink-0 items-center gap-3">
+                <span className="text-ink-soft">{p.days}d old</span>
+                <a href={`/${loc}/admin/pages/${p.id}`} className="font-semibold text-accent-dark">Update →</a>
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }
