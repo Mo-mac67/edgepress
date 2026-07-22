@@ -1,9 +1,11 @@
 import "server-only";
+import { createHash } from "node:crypto";
 import { readJsonDoc, writeJsonDoc } from "@/lib/storage";
 import { AI_PROVIDERS, DEFAULT_AI_CONFIG, type AIConfig, type AIFeature, type AIProviderId } from "./types";
 
 const AI_CONFIG_KEY = "cms-ai.json";
 const AI_USAGE_KEY = "cms-ai-usage.json";
+const AI_CACHE_KEY = "cms-ai-cache.json";
 
 // ─── Config ─────────────────────────────────────────────
 export async function getAIConfig(): Promise<AIConfig> {
@@ -154,32 +156,81 @@ export async function totalAiCalls(): Promise<number> {
   return (await getUsage()).reduce((sum, r) => sum + r.calls, 0);
 }
 
+// ─── Response cache ─────────────────────────────────────
+// Identical requests (same feature/model/prompt) within the TTL return the
+// stored result instead of a new provider call — saves tokens on repeated
+// generations (meta, translations, titles). Best-effort; capped LRU-ish.
+type CacheEntry = { text: string; at: number };
+const CACHE_TTL_MS = 7 * 24 * 3600_000;
+const CACHE_MAX = 150;
+
+async function cacheGet(key: string): Promise<CacheEntry | null> {
+  try {
+    const map = await readJsonDoc<Record<string, CacheEntry>>(AI_CACHE_KEY, {});
+    const hit = map[key];
+    return hit && Date.now() - hit.at < CACHE_TTL_MS ? hit : null;
+  } catch {
+    return null;
+  }
+}
+async function cachePut(key: string, text: string): Promise<void> {
+  try {
+    const map = await readJsonDoc<Record<string, CacheEntry>>(AI_CACHE_KEY, {});
+    map[key] = { text, at: Date.now() };
+    const keys = Object.keys(map);
+    if (keys.length > CACHE_MAX) {
+      keys.sort((a, b) => map[a].at - map[b].at);
+      for (const k of keys.slice(0, keys.length - CACHE_MAX)) delete map[k];
+    }
+    await writeJsonDoc(AI_CACHE_KEY, map);
+  } catch {
+    /* best effort */
+  }
+}
+
 /** High-level entry point used by every AI feature. */
 export async function aiComplete(feature: AIFeature, req: AIRequest): Promise<AIResult> {
   const cfg = await getAIConfig();
   if (!cfg.enabled) throw new AIDisabledError("AI features are turned off");
+
+  const { provider, model } = resolve(cfg, feature);
+  const useCache = cfg.cacheEnabled !== false; // default on
+  const cacheKey = useCache
+    ? createHash("sha256").update([feature, provider, model, req.system ?? "", req.prompt, String(req.json ?? false), String(req.maxTokens ?? "")].join(" ")).digest("hex").slice(0, 32)
+    : "";
+  if (useCache) {
+    const hit = await cacheGet(cacheKey);
+    if (hit) return { text: hit.text, inTokens: 0, outTokens: 0 };
+  }
+
   // Safety budget: refuse once the configured call cap is reached.
   if (cfg.callBudget && cfg.callBudget > 0 && (await totalAiCalls()) >= cfg.callBudget) {
     throw new AIBudgetError("AI call budget reached — raise it in the AI settings to continue.");
   }
-  const { provider, model } = resolve(cfg, feature);
   const result = await callProvider(provider, model, cfg, req);
   await recordUsage(feature, provider, result.inTokens, result.outTokens);
+  if (useCache) await cachePut(cacheKey, result.text);
   return result;
 }
 
-/** Vision: describe an image for alt text (Workers AI LLaVA, free, ungated). */
-export async function describeImage(bytes: Uint8Array): Promise<string> {
+/** Vision: describe an image (Workers AI LLaVA, free, ungated). Default prompt
+ *  produces alt text; pass a custom prompt/maxTokens for richer extraction
+ *  (e.g. the screenshot importer). */
+export async function describeImage(
+  bytes: Uint8Array,
+  prompt = "Write a short, factual alt-text description of this image in one sentence, with no preamble.",
+  maxTokens = 100,
+): Promise<string> {
   const ai = await workersAiEnv();
   if (!ai) throw new Error("Workers AI binding not available");
   const res = (await ai.run("@cf/llava-hf/llava-1.5-7b-hf", {
     image: Array.from(bytes),
-    prompt: "Write a short, factual alt-text description of this image in one sentence, with no preamble.",
-    max_tokens: 100,
+    prompt,
+    max_tokens: maxTokens,
   })) as { description?: unknown; response?: unknown };
   const r = res.description ?? res.response;
   const text = typeof r === "string" ? r : r == null ? "" : JSON.stringify(r);
-  return text.trim().replace(/^["']|["']$/g, "").slice(0, 200);
+  return text.trim().replace(/^["']|["']$/g, "").slice(0, maxTokens <= 100 ? 200 : 4000);
 }
 
 /** Transcribe audio bytes to text (Workers AI Whisper, free). */

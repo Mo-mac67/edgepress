@@ -113,6 +113,9 @@ export interface AIConfig {
   /** Safety cap on total AI calls (0 / unset = unlimited). Refuses further
    *  calls once reached, so a runaway loop or abuse can't rack up usage. */
   callBudget?: number;
+  /** Response cache: identical prompts within 7 days reuse the stored result
+   *  (saves tokens on repeated generations). Default on. */
+  cacheEnabled?: boolean;
 }
 
 export const DEFAULT_AI_CONFIG: AIConfig = {
@@ -126,6 +129,7 @@ export const DEFAULT_AI_CONFIG: AIConfig = {
   glossary: "",
   assistantEnabled: false,
   callBudget: 0,
+  cacheEnabled: true,
 };
 
 /** Which providers are usable given the current config (key present / free). */

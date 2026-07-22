@@ -116,6 +116,20 @@ export function AiPanel() {
           placeholder="e.g. Warm, confident, plain-spoken. We avoid jargon and hype."
           onChange={(e) => set({ brandVoice: e.target.value })}
         />
+        <button
+          type="button"
+          onClick={async () => {
+            ui.toast("Reading your published content…");
+            const r = await fetch("/api/admin/ai/learn-voice", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+            const d = await r.json().catch(() => ({}));
+            if (r.ok && d.voice) { set({ brandVoice: d.voice }); ui.toast("Voice drafted from your content — review and Save", "success"); }
+            else ui.toast(d.error || "Couldn't learn the voice", "error");
+          }}
+          className="btn-secondary mt-2 py-1.5 text-xs"
+          title="AI reads your published pages/posts and drafts a voice description"
+        >
+          Learn from my content
+        </button>
         <label className="mt-4 flex items-center gap-2 text-sm">
           <input type="checkbox" checked={cfg.approveFirst} onChange={(e) => set({ approveFirst: e.target.checked })} />
           <span className="text-ink">Always create AI content as drafts (recommended)</span>
@@ -135,7 +149,7 @@ export function AiPanel() {
 
       <section className="card p-5">
         <h3 className="font-display font-bold text-brand">Visitor assistant</h3>
-        <p className="mt-1 text-sm text-ink-soft">A chat bubble on your live site that answers visitors' questions from your own pages.</p>
+        <p className="mt-1 text-sm text-ink-soft">A chat bubble on your live site that answers visitors&apos; questions from your own pages.</p>
         <label className="mt-3 flex items-center gap-2 text-sm">
           <input type="checkbox" checked={cfg.assistantEnabled} onChange={(e) => set({ assistantEnabled: e.target.checked })} />
           <span className="text-ink">Show the assistant on my site</span>
@@ -146,6 +160,10 @@ export function AiPanel() {
         <h3 className="font-display font-bold text-brand">AI call budget</h3>
         <p className="mt-1 text-sm text-ink-soft">Safety cap on total AI calls — 0 means unlimited. Once reached, AI features stop until you raise it (guards against runaway loops or abuse).</p>
         <input type="number" min={0} className="field mt-3 max-w-[220px]" value={cfg.callBudget ?? 0} onChange={(e) => set({ callBudget: Math.max(0, Number(e.target.value) || 0) })} />
+        <label className="mt-3 flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={cfg.cacheEnabled !== false} onChange={(e) => set({ cacheEnabled: e.target.checked })} />
+          <span className="text-ink">Cache identical AI responses for 7 days (saves tokens)</span>
+        </label>
       </section>
 
       {usage.length > 0 && (
