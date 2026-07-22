@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  typecheck:
+    name: Typecheck
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - run: npm ci
+      - run: npx tsc --noEmit
+
+  docker:
+    name: Docker build + smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build -t edgepress:ci apps/web
+
+      - name: Run container
+        run: |
+          docker run -d --name edgepress -p 3000:3000 -v edgepress-ci-data:/data edgepress:ci
+          # Wait for the server to answer (up to ~90s)
+          for i in $(seq 1 45); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/api/setup || true)
+            [ "$code" = "200" ] && break
+            sleep 2
+          done
+          curl -sf http://localhost:3000/api/setup | grep -q '"done":false'
+
+      - name: Smoke test (setup → login → page live)
+        run: |
+          set -e
+          JAR=$(mktemp)
+          # First-run setup creates the Owner account
+          curl -sf -c "$JAR" -X POST http://localhost:3000/api/setup \
+            -H 'Content-Type: application/json' \
+            -d '{"siteName":"CI Smoke","password":"ci-password-1"}' | grep -q '"ok":true'
+          # Login works
+          curl -sf -b "$JAR" -c "$JAR" -X POST http://localhost:3000/api/admin/login \
+            -H 'Content-Type: application/json' \
+            -d '{"password":"ci-password-1"}' | grep -q '"role":"super"'
+          # Public pages render
+          curl -sf -o /dev/null http://localhost:3000/en
+          curl -sf -o /dev/null http://localhost:3000/sitemap.xml
+          # Content API 404s an unknown type (route wired)
+          code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/api/content/nope)
+          [ "$code" = "404" ]
+          echo "Docker smoke test passed"
+
+      - name: Container logs (on failure)
+        if: failure()
+        run: docker logs edgepress
