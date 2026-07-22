@@ -10,7 +10,7 @@ export async function GET() {
   // Never leak raw keys to the browser — send only presence flags.
   const safe = {
     ...cfg,
-    keys: { anthropic: cfg.keys.anthropic ? "set" : "", openai: cfg.keys.openai ? "set" : "", google: cfg.keys.google ? "set" : "" },
+    keys: { anthropic: cfg.keys.anthropic ? "set" : "", openai: cfg.keys.openai ? "set" : "", google: cfg.keys.google ? "set" : "", replicate: cfg.keys.replicate ? "set" : "" },
   };
   return NextResponse.json({ config: safe, providers: AI_PROVIDERS, ready: await aiReady(), usage: await getUsage() });
 }
@@ -23,7 +23,7 @@ export async function POST(request: Request) {
   const current = await getAIConfig();
   const incoming = body.config;
   // Keep existing key when the client sends the "set" sentinel (unchanged).
-  const mergeKey = (k: "anthropic" | "openai" | "google") => {
+  const mergeKey = (k: "anthropic" | "openai" | "google" | "replicate") => {
     const v = incoming.keys?.[k];
     if (v === undefined || v === "set") return current.keys[k];
     return v;
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     ...DEFAULT_AI_CONFIG,
     ...current,
     ...incoming,
-    keys: { anthropic: mergeKey("anthropic"), openai: mergeKey("openai"), google: mergeKey("google") },
+    keys: { anthropic: mergeKey("anthropic"), openai: mergeKey("openai"), google: mergeKey("google"), replicate: mergeKey("replicate") },
     routing: incoming.routing ?? current.routing,
   };
   await saveAIConfig(merged);
