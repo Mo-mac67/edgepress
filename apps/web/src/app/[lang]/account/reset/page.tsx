@@ -5,7 +5,7 @@ import { marketDict } from "@/lib/marketplace-i18n";
 
 export const dynamic = "force-dynamic";
 
-export default async function ResetPage({ params, searchParams }: PageProps<"/[lang]/account/reset">) {
+export default async function ResetPage({ params, searchParams }: { params: Promise<{ lang: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { lang } = await params;
   if (!isLocale(lang)) notFound();
   const sp = await searchParams;

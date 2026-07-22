@@ -88,7 +88,10 @@ export async function generateStaticParams() {
 export default async function LangLayout({
   children,
   params,
-}: LayoutProps<"/[lang]">) {
+}: {
+  children: React.ReactNode;
+  params: Promise<{ lang: string }>;
+}) {
   const { lang } = await params;
   if (!isLocale(lang) || !(await getActiveLocales()).includes(lang)) notFound();
 

@@ -10,7 +10,7 @@ import { tx } from "@/lib/cms-types";
 // go live immediately (core to EdgePress as a CMS).
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata({ params }: PageProps<"/[lang]">): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params;
   if (!isLocale(lang)) return {};
   const page = await getPage("");
@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: PageProps<"/[lang]">): Promis
   };
 }
 
-export default async function HomePage({ params }: PageProps<"/[lang]">) {
+export default async function HomePage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params;
   if (!isLocale(lang)) notFound();
   const dict = getDictionary(lang);

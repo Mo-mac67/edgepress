@@ -9,7 +9,7 @@ import { staleLocales } from "@/lib/ai/features";
 
 export const dynamic = "force-dynamic";
 
-export default async function EditPage({ params }: PageProps<"/[lang]/admin/pages/[id]">) {
+export default async function EditPage({ params }: { params: Promise<{ lang: string; id: string }> }) {
   const { lang, id } = await params;
   if (!isLocale(lang)) notFound();
   if (!(await isAuthed())) return <AdminLogin />;

@@ -8,7 +8,7 @@ import { getActiveLocales, getPosts } from "@/lib/cms-store";
 
 export const dynamic = "force-dynamic";
 
-export default async function EditPost({ params }: PageProps<"/[lang]/admin/posts/[id]">) {
+export default async function EditPost({ params }: { params: Promise<{ lang: string; id: string }> }) {
   const { lang, id } = await params;
   if (!isLocale(lang)) notFound();
   if (!(await isAuthed())) return <AdminLogin />;

@@ -6,7 +6,7 @@ import { currentUser } from "@/lib/user-auth";
 
 export const dynamic = "force-dynamic";
 
-export default async function NewTenderPage({ params }: PageProps<"/[lang]/tenders/new">) {
+export default async function NewTenderPage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params;
   if (!isLocale(lang)) notFound();
   const m = marketDict(lang).market;

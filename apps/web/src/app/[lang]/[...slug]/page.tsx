@@ -15,7 +15,7 @@ import { tx } from "@/lib/cms-types";
 // short edge cache (see the fetch cache headers) if you need extra headroom.
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata({ params }: PageProps<"/[lang]/[...slug]">): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<{ lang: string; slug: string[] }> }): Promise<Metadata> {
   const { lang, slug } = await params;
   if (!isLocale(lang)) return {};
   const path = slug.join("/");
@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: PageProps<"/[lang]/[...slug]"
   return {};
 }
 
-export default async function CmsPage({ params }: PageProps<"/[lang]/[...slug]">) {
+export default async function CmsPage({ params }: { params: Promise<{ lang: string; slug: string[] }> }) {
   const { lang, slug } = await params;
   if (!isLocale(lang)) notFound();
   const dict = getDictionary(lang);

@@ -7,7 +7,7 @@ import { bidCount, listTenders } from "@/lib/tenders-store";
 
 export const dynamic = "force-dynamic";
 
-export default async function TendersPage({ params }: PageProps<"/[lang]/tenders">) {
+export default async function TendersPage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params;
   if (!isLocale(lang)) notFound();
   const m = marketDict(lang).market;

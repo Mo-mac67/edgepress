@@ -28,7 +28,7 @@ const CONTENT = {
   },
 } as const;
 
-export default async function TermsPage({ params }: PageProps<"/[lang]/terms">) {
+export default async function TermsPage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params;
   if (!isLocale(lang)) notFound();
   const c = CONTENT[lang as keyof typeof CONTENT] ?? CONTENT.en;

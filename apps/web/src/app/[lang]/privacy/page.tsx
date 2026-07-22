@@ -28,7 +28,7 @@ const CONTENT = {
   },
 } as const;
 
-export default async function PrivacyPage({ params }: PageProps<"/[lang]/privacy">) {
+export default async function PrivacyPage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params;
   if (!isLocale(lang)) notFound();
   const c = CONTENT[lang as keyof typeof CONTENT] ?? CONTENT.en;
