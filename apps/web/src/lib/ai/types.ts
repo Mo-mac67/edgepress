@@ -98,7 +98,7 @@ export interface AIConfig {
   enabled: boolean;
   defaultProvider: AIProviderId;
   /** BYOK keys (stored in KV; never sent to the browser after saving). */
-  keys: { anthropic: string; openai: string; google: string };
+  keys: { anthropic: string; openai: string; google: string; replicate: string };
   ollamaUrl: string;
   /** Optional per-feature provider+model overrides. */
   routing: Partial<Record<AIFeature, { provider: AIProviderId; model: string }>>;
@@ -121,7 +121,7 @@ export interface AIConfig {
 export const DEFAULT_AI_CONFIG: AIConfig = {
   enabled: true,
   defaultProvider: "workers-ai",
-  keys: { anthropic: "", openai: "", google: "" },
+  keys: { anthropic: "", openai: "", google: "", replicate: "" },
   ollamaUrl: "http://localhost:11434",
   routing: {},
   approveFirst: true,

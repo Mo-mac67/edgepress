@@ -30,7 +30,7 @@ export function AiPanel() {
 
   if (!cfg) return <p className="text-sm text-ink-soft">Loading…</p>;
   const set = (patch: Partial<AIConfig>) => setCfg({ ...cfg, ...patch });
-  const setKey = (k: "anthropic" | "openai" | "google", v: string) => setCfg({ ...cfg, keys: { ...cfg.keys, [k]: v } });
+  const setKey = (k: "anthropic" | "openai" | "google" | "replicate", v: string) => setCfg({ ...cfg, keys: { ...cfg.keys, [k]: v } });
 
   async function save() {
     const r = await fetch("/api/admin/ai", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ config: cfg }) });
@@ -88,7 +88,7 @@ export function AiPanel() {
         <h3 className="font-display font-bold text-brand">Your API keys (optional)</h3>
         <p className="mt-1 text-sm text-ink-soft">Bring your own keys for premium models. Keys are stored on your site and never shown again.</p>
         <div className="mt-4 space-y-3">
-          {(["anthropic", "openai", "google"] as const).map((k) => (
+          {(["anthropic", "openai", "google", "replicate"] as const).map((k) => (
             <label key={k} className="block">
               <span className="mb-1 block text-sm font-medium capitalize text-ink">{k} API key</span>
               <input

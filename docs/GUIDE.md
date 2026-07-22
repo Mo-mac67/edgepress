@@ -104,6 +104,11 @@ Build forms (contact, signup, survey…) in the **Forms** tab:
 - **Semantic search** — search by meaning ("bright kitchen"), not just
   filename. Click **Build search index** once to embed existing media;
   new AI-captioned items are indexed automatically.
+- **Background removal & 2× upscale** (BYOK, optional) — paste a
+  [Replicate](https://replicate.com) API key under **AI → Your API keys**
+  and every image gets **BG** / **2×** buttons; results are saved as new
+  images. These two have no free on-edge model, so they're the only
+  pay-per-use tools — everything else stays free.
 
 ## 9. Languages
 
