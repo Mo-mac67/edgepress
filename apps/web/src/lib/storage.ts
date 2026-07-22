@@ -32,15 +32,12 @@ async function kv(): Promise<KVNamespace | null> {
       return null;
     }
   }
-  // PostgreSQL self-host mode (needs `npm install pg` + DATABASE_URL). Falls
-  // back to fs if the driver/connection isn't available.
+  // PostgreSQL self-host mode (needs `npm install pg` + DATABASE_URL).
+  // Deliberately NO silent fs fallback: if the DB is unreachable we surface the
+  // error — silently writing to the filesystem instead would split the data.
   if (process.env.EDGEPRESS_STORAGE === "postgres") {
-    try {
-      const { postgresKV } = await import("./postgres-kv");
-      return await postgresKV();
-    } catch {
-      return null;
-    }
+    const { postgresKV } = await import("./postgres-kv");
+    return await postgresKV();
   }
   try {
     const mod = await import("@opennextjs/cloudflare");

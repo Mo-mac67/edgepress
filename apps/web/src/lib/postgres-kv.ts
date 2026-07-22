@@ -15,6 +15,7 @@ import type { KVNamespace } from "./storage";
 interface PgPool {
   query(text: string, params?: unknown[]): Promise<{ rows: Array<Record<string, string>> }>;
 }
+type PoolConfig = { connectionString?: string; max?: number; idleTimeoutMillis?: number };
 
 let cache: KVNamespace | null = null;
 
@@ -25,11 +26,18 @@ export async function postgresKV(): Promise<KVNamespace> {
   // prod, and OpenNext's esbuild pass all leave it alone) — it stays a pure
   // runtime import, needed only when Postgres mode is actually used. `pg` is an
   // optional peer dependency; this whole module only loads in postgres mode.
-  const importDynamic = new Function("m", "return import(m)") as (m: string) => Promise<{ Pool?: new (c: { connectionString?: string }) => PgPool; default?: { Pool: new (c: { connectionString?: string }) => PgPool } }>;
+  const importDynamic = new Function("m", "return import(m)") as (m: string) => Promise<{ Pool?: new (c: PoolConfig) => PgPool; default?: { Pool: new (c: PoolConfig) => PgPool } }>;
   const pg = await importDynamic("pg");
   const Pool = pg.Pool ?? pg.default?.Pool;
   if (!Pool) throw new Error("pg driver not available");
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  // Small pool + quick idle release: a CMS does short KV-style queries, and in
+  // dev each route bundle gets its own module instance (= its own pool), so
+  // holding idle connections would starve small/single-connection servers.
+  const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    max: Number(process.env.PG_POOL_MAX || 3),
+    idleTimeoutMillis: Number(process.env.PG_IDLE_TIMEOUT_MS || 1000),
+  });
   await pool.query("CREATE TABLE IF NOT EXISTS edgepress_docs (key text PRIMARY KEY, value text NOT NULL)");
 
   cache = {
