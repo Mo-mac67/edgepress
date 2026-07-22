@@ -182,6 +182,27 @@ export async function describeImage(bytes: Uint8Array): Promise<string> {
   return text.trim().replace(/^["']|["']$/g, "").slice(0, 200);
 }
 
+/** Embed one or more texts (Workers AI bge-base, free) → 768-dim vectors, used
+ *  for semantic media search (in-memory cosine — no external vector DB). */
+export async function embed(texts: string[]): Promise<number[][]> {
+  const cfg = await getAIConfig();
+  if (!cfg.enabled) throw new AIDisabledError("AI features are turned off");
+  const ai = await workersAiEnv();
+  if (!ai) throw new AIUnavailableError("Workers AI binding not available");
+  const clean = texts.map((t) => (t || "").slice(0, 512));
+  const res = (await ai.run("@cf/baai/bge-base-en-v1.5", { text: clean })) as { data?: number[][] };
+  await recordUsage("embed", "workers-ai", 0, 0);
+  return res?.data ?? [];
+}
+
+/** Cosine similarity between two equal-length vectors. */
+export function cosine(a: number[], b: number[]): number {
+  let dot = 0, na = 0, nb = 0;
+  const n = Math.min(a.length, b.length);
+  for (let i = 0; i < n; i++) { dot += a[i] * b[i]; na += a[i] * a[i]; nb += b[i] * b[i]; }
+  return na && nb ? dot / (Math.sqrt(na) * Math.sqrt(nb)) : 0;
+}
+
 /** Text-to-image via Workers AI (flux-1-schnell, free). Returns JPEG bytes.
  *  Respects the AI enable flag + call budget and records usage. */
 export async function generateImage(prompt: string): Promise<Uint8Array> {
