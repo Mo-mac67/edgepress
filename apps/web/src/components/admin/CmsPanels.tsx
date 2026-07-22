@@ -69,6 +69,27 @@ export function PagesPanel({ locale }: { locale: Locale }) {
     }
   }
 
+  async function importScreenshot(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setImporting(true);
+    ui.toast("Reading the screenshot and rebuilding it…");
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("locale", locale);
+      const res = await fetch("/api/admin/ai/import-screenshot", { method: "POST", body: fd });
+      const d = await res.json();
+      if (res.ok) {
+        ui.toast("Imported as a draft — review and edit", "success");
+        router.push(`/${locale}/admin/pages/${d.page.id}`);
+      } else setErr(d.error || "Screenshot import failed");
+    } finally {
+      setImporting(false);
+    }
+  }
+
   async function generateWithAI() {
     const prompt = await ui.prompt({
       title: "Generate a page with AI",
@@ -174,6 +195,10 @@ export function PagesPanel({ locale }: { locale: Locale }) {
           <button onClick={importFromUrl} className="btn-secondary py-2 text-sm" title="Import a page from a URL with AI">
             <Icon name="download" size={16} /> Import URL
           </button>
+          <label className="btn-secondary cursor-pointer py-2 text-sm" title="Rebuild a page from a screenshot with AI (approximate)">
+            <Icon name="image" size={16} /> Import screenshot
+            <input type="file" accept="image/*" hidden onChange={importScreenshot} />
+          </label>
           <button onClick={generateWithAI} className="btn-secondary py-2 text-sm" title="Generate a page with AI">
             <Icon name="star" size={16} /> Generate with AI
           </button>
