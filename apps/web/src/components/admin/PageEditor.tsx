@@ -27,7 +27,7 @@ const serialize = (p: Page) => JSON.stringify({ t: p.title, d: p.description, s:
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 
-export function PageEditor({ initial, uiLocale, contentLocales = ["en", "fr"] }: { initial: Page; uiLocale: Locale; contentLocales?: string[] }) {
+export function PageEditor({ initial, uiLocale, contentLocales = ["en", "fr"], staleLocales = [] }: { initial: Page; uiLocale: Locale; contentLocales?: string[]; staleLocales?: string[] }) {
   const router = useRouter();
   const ui = useAdminUI();
   const [page, setPage] = useState<Page>({ mode: "blocks", ...initial });
@@ -204,8 +204,9 @@ export function PageEditor({ initial, uiLocale, contentLocales = ["en", "fr"] }:
             </label>
             <div className="flex items-center gap-1 rounded-full border border-line p-0.5 text-sm">
               {contentLocales.map((l) => (
-                <button key={l} onClick={() => setLocale(l)} className={`rounded-full px-3 py-1 ${locale === l ? "bg-accent-soft font-semibold text-accent-dark" : "text-ink-soft"}`}>
+                <button key={l} onClick={() => setLocale(l)} title={staleLocales.includes(l) ? "Translation may be outdated — the source changed. Re-translate to refresh." : undefined} className={`rounded-full px-3 py-1 ${locale === l ? "bg-accent-soft font-semibold text-accent-dark" : "text-ink-soft"}`}>
                   {l.toUpperCase()}
+                  {staleLocales.includes(l) && <span className="ml-1 inline-block h-1.5 w-1.5 rounded-full bg-amber-500 align-middle" title="Outdated translation" />}
                 </button>
               ))}
             </div>
