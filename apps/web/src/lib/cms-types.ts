@@ -34,6 +34,9 @@ export interface Page {
   /** Per-locale signature of the SOURCE content at translation time — used to
    *  flag a translation as outdated when the source changes since. */
   i18n?: Record<string, string>;
+  /** A/B headline test: candidate hero headlines. When 2+ are set, each visit
+   *  gets a random one and impressions/conversions are tracked per variant. */
+  ab?: { headlines: string[] };
   /** Per-page SEO overrides (managed in the editor + SEO tab). */
   seo?: {
     ogImage?: string;

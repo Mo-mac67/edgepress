@@ -4,7 +4,8 @@ import { PrintButton } from "@/components/admin/PrintButton";
 import { isLocale } from "@/i18n/config";
 import { isAuthed } from "@/lib/admin-auth";
 import { computeAnalytics } from "@/lib/analytics";
-import { getSettings } from "@/lib/cms-store";
+import { getAbResults } from "@/lib/ab-store";
+import { getPages, getSettings } from "@/lib/cms-store";
 import { getEvents } from "@/lib/events-store";
 import { getLeads } from "@/lib/leads-store";
 
@@ -34,10 +35,11 @@ export default async function ReportPage({ params }: { params: Promise<{ lang: s
   if (!isLocale(lang)) return null;
   if (!(await isAuthed())) return <AdminLogin />;
 
-  const [leads, events, settings] = await Promise.all([getLeads(), getEvents(), getSettings()]);
+  const [leads, events, settings, pages] = await Promise.all([getLeads(), getEvents(), getSettings(), getPages()]);
   const days = 30;
   const a = computeAnalytics(leads, events, days);
   const recent = [...leads].sort((x, y) => y.createdAt.localeCompare(x.createdAt)).slice(0, 20);
+  const abResults = await getAbResults(pages);
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-10 print:py-0">
@@ -72,6 +74,30 @@ export default async function ReportPage({ params }: { params: Promise<{ lang: s
       <Table title="Leads by status" rows={a.leadsByStatus} />
       <Table title="Leads by project type" rows={a.leadsByProjectType} />
       <Table title="Top pages" rows={a.topPages} />
+
+      {abResults.length > 0 && (
+        <div style={{ breakInside: "avoid" }}>
+          <h2 className="mt-6 mb-2 text-sm font-bold uppercase tracking-wide text-ink-soft">A/B headline tests</h2>
+          {abResults.map((r) => (
+            <div key={r.slug} className="mb-4">
+              <p className="text-sm font-semibold text-brand">/{r.slug || "(home)"}</p>
+              <table className="mt-1 w-full text-sm">
+                <thead><tr className="border-b border-line text-left text-xs uppercase text-ink-soft"><th className="py-1">Headline</th><th className="text-right">Views</th><th className="text-right">Conv.</th><th className="text-right">Rate</th></tr></thead>
+                <tbody>
+                  {r.variants.map((v, i) => (
+                    <tr key={i} className="border-b border-line">
+                      <td className="py-1.5">{v.headline}{r.winner === i && <span className="ml-1.5 rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-bold text-green-700">WINNER</span>}</td>
+                      <td className="text-right">{v.impressions}</td>
+                      <td className="text-right">{v.conversions}</td>
+                      <td className="text-right font-semibold">{(v.rate * 100).toFixed(1)}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div style={{ breakInside: "avoid" }}>
         <h2 className="mt-6 mb-2 text-sm font-bold uppercase tracking-wide text-ink-soft">Recent leads</h2>
