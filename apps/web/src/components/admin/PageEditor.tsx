@@ -16,6 +16,7 @@ import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrate
 import { CSS } from "@dnd-kit/utilities";
 import { Icon } from "@/components/Icon";
 import { BlockEditor } from "./BlockEditor";
+import { CodeEditor } from "./CodeEditor";
 import { MediaField } from "./MediaField";
 import { Modal, useAdminUI } from "./ui";
 import { BLOCKS, BLOCK_ORDER, newBlock, type Block, type BlockType, type Page } from "@/lib/cms-types";
@@ -319,12 +320,12 @@ export function PageEditor({ initial, uiLocale, contentLocales = ["en", "fr"] }:
                     />
                   </label>
                 </div>
-                <textarea
-                  className="field min-h-[480px] font-mono text-xs leading-relaxed"
-                  spellCheck={false}
+                <CodeEditor
                   value={page.rawHtml ?? ""}
-                  onChange={(e) => patch({ rawHtml: e.target.value })}
-                  placeholder="<!doctype html>… paste or drop your HTML here"
+                  onChange={(v) => patch({ rawHtml: v })}
+                  minHeight={480}
+                  ariaLabel="Page HTML source"
+                  placeholder="<!doctype html>… paste or write your HTML here"
                 />
                 <p className="mt-2 text-xs text-ink-soft">
                   Full documents keep their own CSS/JS and render isolated. Fragments are styled by the site theme.

@@ -620,6 +620,9 @@ export interface ThemeSettings {
   fontPair: FontPair;
   radius: ThemeRadius;
   headerStyle: HeaderStyle;
+  /** Site-wide custom CSS (the "Additional CSS" / Blogger template analog),
+   *  appended to the live theme stylesheet. */
+  customCss?: string;
 }
 
 export const FONT_PAIRS: Record<FontPair, { label: string; display: string; body: string }> = {

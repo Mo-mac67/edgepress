@@ -13,7 +13,11 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   let css = "";
   try {
-    css = themeCss(await getTheme());
+    const theme = await getTheme();
+    css = themeCss(theme);
+    // Site-wide custom CSS from Appearance → Custom CSS, appended last so it can
+    // override the theme variables.
+    if (theme.customCss?.trim()) css += `\n\n/* --- custom css --- */\n${theme.customCss}`;
   } catch {
     css = "";
   }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/Icon";
+import { CodeEditor } from "./CodeEditor";
 import {
   FONT_PAIRS,
   RADII,
@@ -167,6 +168,23 @@ export function ThemePanel() {
                 </label>
               ))}
             </div>
+          </div>
+        </section>
+
+        {/* Custom CSS (Additional CSS / Blogger "Edit HTML" analog) */}
+        <section className="card p-5">
+          <h3 className="font-display font-bold text-brand">Custom CSS</h3>
+          <p className="mt-1 text-sm text-ink-soft">
+            Site-wide CSS, applied on top of the theme — override anything, add your own classes. Loaded on every page via the live stylesheet.
+          </p>
+          <div className="mt-3">
+            <CodeEditor
+              value={theme.customCss ?? ""}
+              onChange={(v) => setTheme({ ...theme, customCss: v })}
+              minHeight={220}
+              ariaLabel="Custom CSS"
+              placeholder={"/* e.g. */\n.btn-primary { letter-spacing: .02em; }"}
+            />
           </div>
         </section>
 
