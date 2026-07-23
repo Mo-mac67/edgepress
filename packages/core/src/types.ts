@@ -187,6 +187,7 @@ export type BlockType =
   | "youtubeFeed"
   | "newsletter"
   | "payment"
+  | "booking"
   | "html"
   | "spacer";
 
@@ -422,6 +423,15 @@ export const BLOCKS: Record<BlockType, BlockDef> = {
     ],
     defaults: () => ({ title: L("Stay in the loop"), subtitle: L(), placeholder: L(), buttonLabel: L("Subscribe") }),
   },
+  booking: {
+    label: "Appointment booking",
+    icon: "check",
+    fields: [
+      { key: "title", label: "Title", type: "text", localized: true },
+      { key: "subtitle", label: "Subtitle", type: "textarea", localized: true },
+    ],
+    defaults: () => ({ title: L("Book an appointment"), subtitle: L() }),
+  },
   payment: {
     label: "Payment button (Stripe)",
     icon: "lock",
@@ -591,7 +601,7 @@ export const BLOCKS: Record<BlockType, BlockDef> = {
 
 export const BLOCK_ORDER: BlockType[] = [
   "slideshow", "hero", "header", "richtext", "imageText", "cards", "stats", "steps",
-  "featuredProject", "gallery", "beforeAfter", "testimonials", "youtubeFeed", "faq", "cta", "contactForm", "newsletter", "payment", "image", "video", "embed", "html", "spacer",
+  "featuredProject", "gallery", "beforeAfter", "testimonials", "youtubeFeed", "faq", "cta", "contactForm", "newsletter", "payment", "booking", "image", "video", "embed", "html", "spacer",
 ];
 
 /**

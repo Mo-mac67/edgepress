@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
+import { BookingWidget } from "@/components/BookingWidget";
 import { BusinessHours } from "@/components/BusinessHours";
 import { Slideshow } from "@/components/Slideshow";
 import { YouTubeFeed } from "@/components/YouTubeFeed";
@@ -740,6 +741,17 @@ function BlockView({
         </section>
       );
     }
+
+    case "booking":
+      return (
+        <section className="bg-sand">
+          <div className="container-page py-14 text-center md:py-16">
+            {t("title") && <h2 className="section-title text-brand">{t("title")}</h2>}
+            {t("subtitle") && <p className="mx-auto mt-3 max-w-xl text-ink-soft">{t("subtitle")}</p>}
+            <BookingWidget locale={locale} />
+          </div>
+        </section>
+      );
 
     case "newsletter":
       return (

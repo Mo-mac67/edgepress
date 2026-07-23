@@ -16,6 +16,7 @@ import { DeveloperPanel } from "./DeveloperPanel";
 import { TabPermissionsCard } from "./TabPermissionsCard";
 import { SeoPanel } from "./SeoPanel";
 import { NewsletterPanel } from "./NewsletterPanel";
+import { BookingCard } from "./BookingCard";
 import { AiPanel } from "./AiPanel";
 import { CopilotPanel } from "./CopilotPanel";
 import { ThemePanel } from "./ThemePanel";
@@ -212,7 +213,7 @@ export function AdminDashboard({
 
         <div className="p-4 sm:p-6">
           {tab === "overview" && <Overview analytics={analytics} anomalies={anomalies} base={base} />}
-          {tab === "leads" && <LeadsTable leads={leads} setLeads={setLeads} base={base} locale={locale} />}
+          {tab === "leads" && (<><LeadsTable leads={leads} setLeads={setLeads} base={base} locale={locale} /><BookingCard /></>)}
           {tab === "marketplace" && <MarketplacePanel locale={locale} />}
           {tab === "pages" && <PagesPanel locale={locale} />}
           {tab === "menu" && <MenuPanel locale={locale} />}

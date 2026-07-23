@@ -202,6 +202,7 @@ export function ThemePanel() {
               />
             </div>
           </div>
+          <SnippetsCard />
         </section>
 
         <button onClick={save} disabled={saving} className="btn-primary">
@@ -245,6 +246,71 @@ export function ThemePanel() {
           Changes apply to the whole site (all pages, header, footer, buttons) after you save.
         </p>
       </aside>
+    </div>
+  );
+}
+
+/** Reusable snippets — define once, use `[snippet name]` in any Custom HTML
+ *  or rich-text content; editing here updates every page that uses it. */
+function SnippetsCard() {
+  interface Snippet { id: string; name: string; html: string; updatedAt: string }
+  const [snippets, setSnippets] = useState<Snippet[]>([]);
+  const [name, setName] = useState("");
+  const [html, setHtml] = useState("");
+  const [err, setErr] = useState("");
+  const [savedMsg, setSavedMsg] = useState("");
+
+  async function load() {
+    const res = await fetch("/api/admin/snippets");
+    if (res.ok) setSnippets((await res.json()).snippets ?? []);
+  }
+  useEffect(() => { load(); }, []);
+
+  async function save() {
+    setErr("");
+    const res = await fetch("/api/admin/snippets", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, html }) });
+    const d = await res.json().catch(() => ({}));
+    if (res.ok) {
+      setSavedMsg(`Saved — use [snippet ${d.snippet.name}] anywhere`);
+      setTimeout(() => setSavedMsg(""), 3500);
+      setName(""); setHtml("");
+      load();
+    } else setErr(d.error || "Couldn't save the snippet");
+  }
+
+  async function del(id: string) {
+    await fetch(`/api/admin/snippets?id=${id}`, { method: "DELETE" });
+    load();
+  }
+
+  return (
+    <div className="mt-5 border-t border-line pt-4">
+      <h4 className="text-sm font-semibold text-ink">Reusable snippets</h4>
+      <p className="mt-1 text-sm text-ink-soft">
+        Define a piece of HTML once and drop <code className="rounded bg-surface-soft px-1">[snippet name]</code> into any Custom HTML block, rich text, or HTML page. Edit it here — every page that uses it updates.
+      </p>
+      <div className="mt-2 grid gap-2">
+        <input className="field max-w-xs" placeholder="Name (e.g. opening-hours)" value={name} onChange={(e) => setName(e.target.value)} />
+        <CodeEditor value={html} onChange={setHtml} minHeight={110} ariaLabel="Snippet HTML" placeholder={'<div class="banner">We\'re open 7 days a week!</div>'} />
+        <div><button onClick={save} className="btn-secondary text-sm">Save snippet</button></div>
+        {err && <p className="text-sm text-red-600">{err}</p>}
+        {savedMsg && <p className="text-sm font-medium text-accent-dark">{savedMsg}</p>}
+      </div>
+      {snippets.length > 0 && (
+        <ul className="mt-3 divide-y divide-line">
+          {snippets.map((s) => (
+            <li key={s.id} className="flex items-center justify-between gap-3 py-2 text-sm">
+              <button onClick={() => { setName(s.name); setHtml(s.html); }} className="min-w-0 truncate text-left font-medium text-brand hover:underline" title="Load into the editor">
+                [snippet {s.name}]
+              </button>
+              <span className="flex shrink-0 items-center gap-3 text-xs text-ink-soft">
+                {new Date(s.updatedAt).toLocaleDateString()}
+                <button onClick={() => del(s.id)} className="font-semibold text-red-600">Delete</button>
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

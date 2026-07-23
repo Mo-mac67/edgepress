@@ -193,6 +193,10 @@ Build forms (contact, signup, survey…) in the **Forms** tab:
 - **Custom code**: raw HTML injected before `</body>` on every page —
   analytics snippets, chat widgets, third-party embeds (scripts run
   normally). Site-verification metas live under **SEO**.
+- **Reusable snippets**: define a piece of HTML once and drop
+  `[snippet name]` into any Custom HTML block, rich text, or imported HTML
+  page — edit centrally, it updates everywhere (WordPress "reusable
+  blocks"). Non-recursive by design, so a snippet can't loop.
 - **Custom header & footer** (Site info, advanced): raw HTML that fully
   replaces the built-in header/footer — total control of the site chrome.
   Leave empty to keep the standard nav + language switcher.
@@ -336,3 +340,15 @@ login: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and
 `OAUTH_ALLOWED_EMAILS` (comma-separated). Only allowlisted, verified Google
 accounts get in (as the owner); every attempt is audit-logged. Password +
 2FA keep working alongside.
+
+## 22. Appointments (booking)
+
+- Set weekly opening hours + slot length under **Leads → Appointments** and
+  turn booking on.
+- Add the **Appointment booking** block to any page: visitors pick a date,
+  see the free slots, and book with name + email (rate-limited + honeypot).
+- Double-booking is impossible: concurrent grabs of one slot resolve
+  deterministically to a single winner; the other visitor is asked to pick
+  another time. Cancelling from the panel frees the slot instantly.
+- Each booking emails `LEAD_NOTIFY_TO` (logged when no Resend key). Times
+  are your business's local wall time — one business, one timezone.
