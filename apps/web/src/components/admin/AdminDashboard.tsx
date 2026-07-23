@@ -141,19 +141,21 @@ export function AdminDashboard({
         <nav className="flex-1 overflow-y-auto px-3 py-4">
           {groups.map((g) => (
             <div key={g.title} className="mb-5">
-              <p className="mb-1.5 px-2 text-[10px] font-bold uppercase tracking-[0.14em] text-white/40">{g.title}</p>
+              {/* WCAG AA: white/60 keeps ~6.6:1 on the dark rail (white/40 fell to ~3.9). */}
+              <p className="mb-1.5 px-2 text-[10px] font-bold uppercase tracking-[0.14em] text-white/60">{g.title}</p>
               {g.items.map((item) => (
                 <button
                   key={item.id}
                   onClick={() => setTab(item.id)}
-                  className={`mb-0.5 flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition ${
-                    tab === item.id ? "bg-accent text-brand-dark" : "text-white/75 hover:bg-white/10 hover:text-white"
+                  aria-current={tab === item.id ? "page" : undefined}
+                  className={`mb-0.5 flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition ${
+                    tab === item.id ? "bg-accent-dark font-semibold text-white" : "font-medium text-white/75 hover:bg-white/10 hover:text-white"
                   }`}
                 >
                   <Icon name={item.icon} size={17} />
                   {item.label}
                   {item.badge ? (
-                    <span className={`ml-auto rounded-full px-1.5 py-0.5 text-[10px] font-bold ${tab === item.id ? "bg-brand-dark text-accent" : "bg-accent text-brand-dark"}`}>
+                    <span className={`ml-auto rounded-full px-1.5 py-0.5 text-[10px] font-bold ${tab === item.id ? "bg-white/20 text-white" : "bg-accent-dark text-white"}`}>
                       {item.badge}
                     </span>
                   ) : null}
@@ -427,12 +429,12 @@ function LeadsTable({
         <table className="w-full text-sm">
           <thead className="border-b border-line text-left text-xs uppercase text-ink-soft">
             <tr>
-              <th className="px-4 py-3">Name</th>
-              <th className="px-4 py-3">Project</th>
-              <th className="px-4 py-3">City</th>
-              <th className="px-4 py-3">Received</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3"></th>
+              <th scope="col" className="px-4 py-3">Name</th>
+              <th scope="col" className="px-4 py-3">Project</th>
+              <th scope="col" className="px-4 py-3">City</th>
+              <th scope="col" className="px-4 py-3">Received</th>
+              <th scope="col" className="px-4 py-3">Status</th>
+              <th scope="col" className="px-4 py-3"></th>
             </tr>
           </thead>
           <tbody>
@@ -490,10 +492,10 @@ function Activity({ events }: { events: SiteEvent[] }) {
       <table className="w-full text-sm">
         <thead className="border-b border-line text-left text-xs uppercase text-ink-soft">
           <tr>
-            <th className="px-4 py-3">Type</th>
-            <th className="px-4 py-3">Path</th>
-            <th className="px-4 py-3">Locale</th>
-            <th className="px-4 py-3">When</th>
+            <th scope="col" className="px-4 py-3">Type</th>
+            <th scope="col" className="px-4 py-3">Path</th>
+            <th scope="col" className="px-4 py-3">Locale</th>
+            <th scope="col" className="px-4 py-3">When</th>
           </tr>
         </thead>
         <tbody>
@@ -773,10 +775,10 @@ function AuditTab({ audit }: { audit: AuditEntry[] }) {
       <table className="w-full text-sm">
         <thead className="border-b border-line text-left text-xs uppercase text-ink-soft">
           <tr>
-            <th className="px-4 py-3">Action</th>
-            <th className="px-4 py-3">Role</th>
-            <th className="px-4 py-3">Detail</th>
-            <th className="px-4 py-3">When</th>
+            <th scope="col" className="px-4 py-3">Action</th>
+            <th scope="col" className="px-4 py-3">Role</th>
+            <th scope="col" className="px-4 py-3">Detail</th>
+            <th scope="col" className="px-4 py-3">When</th>
           </tr>
         </thead>
         <tbody>

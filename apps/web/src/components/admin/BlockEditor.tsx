@@ -158,10 +158,10 @@ export function BlockEditor({
         <button type="button" onClick={() => onMove(1)} disabled={index === total - 1} className="rounded p-1 hover:bg-sand disabled:opacity-30" title="Move down">
           <Icon name="arrow-right" size={16} className="rotate-90" />
         </button>
-        <button type="button" onClick={onDuplicate} className="rounded p-1 hover:bg-sand" title="Duplicate block">
+        <button type="button" onClick={onDuplicate} className="rounded p-1 hover:bg-sand" title="Duplicate block" aria-label="Duplicate block">
           <Icon name="edit" size={16} />
         </button>
-        <button type="button" onClick={onDelete} className="rounded p-1 text-red-600 hover:bg-sand" title="Delete block">
+        <button type="button" onClick={onDelete} className="rounded p-1 text-red-600 hover:bg-sand" title="Delete block" aria-label="Delete block">
           <Icon name="trash" size={16} />
         </button>
         <button type="button" onClick={() => setOpen((o) => !o)} className="rounded p-1 hover:bg-sand">

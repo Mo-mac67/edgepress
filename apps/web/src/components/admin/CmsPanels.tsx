@@ -248,17 +248,17 @@ export function PagesPanel({ locale }: { locale: Locale }) {
             <Icon name="download" size={16} /> {importing ? "Importing…" : "Import HTML"}
             <input type="file" accept=".html,.htm" hidden onChange={(e) => importHtml(e.target.files)} />
           </label>
-          <button onClick={importFromUrl} className="btn-secondary py-2 text-sm" title="Import a page from a URL with AI">
+          <button onClick={importFromUrl} className="btn-secondary py-2 text-sm" title="Import a page from a URL with AI" aria-label="Import a page from a URL with AI">
             <Icon name="download" size={16} /> Import URL
           </button>
-          <button onClick={importWholeSite} disabled={importing} className="btn-secondary py-2 text-sm" title="Import every page of a site from its sitemap.xml">
+          <button onClick={importWholeSite} disabled={importing} className="btn-secondary py-2 text-sm" title="Import every page of a site from its sitemap.xml" aria-label="Import every page of a site from its sitemap.xml">
             <Icon name="refresh" size={16} /> {importing ? "Importing…" : "Import whole site"}
           </button>
           <label className="btn-secondary cursor-pointer py-2 text-sm" title="Rebuild a page from a screenshot with AI (approximate)">
             <Icon name="image" size={16} /> Import screenshot
             <input type="file" accept="image/*" hidden onChange={importScreenshot} />
           </label>
-          <button onClick={generateWithAI} className="btn-secondary py-2 text-sm" title="Generate a page with AI">
+          <button onClick={generateWithAI} className="btn-secondary py-2 text-sm" title="Generate a page with AI" aria-label="Generate a page with AI">
             <Icon name="star" size={16} /> Generate with AI
           </button>
           <button onClick={create} className="btn-primary py-2 text-sm">

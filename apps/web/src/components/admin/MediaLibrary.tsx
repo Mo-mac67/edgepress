@@ -171,7 +171,7 @@ export function MediaLibrary({ onPick }: { onPick?: (url: string) => void }) {
           <button type="button" onClick={search} disabled={searching} className="btn-secondary shrink-0">{searching ? "Searching…" : "Search"}</button>
           {results !== null && <button type="button" onClick={() => { setQ(""); setResults(null); }} className="btn-secondary shrink-0">Clear</button>}
         </div>
-        <button type="button" onClick={reindex} className="btn-secondary shrink-0" title="Embed all media for semantic search">Build search index</button>
+        <button type="button" onClick={reindex} className="btn-secondary shrink-0" title="Embed all media for semantic search" aria-label="Embed all media for semantic search">Build search index</button>
       </div>
 
       {loading ? (

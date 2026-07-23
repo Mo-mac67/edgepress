@@ -220,7 +220,7 @@ export function PageEditor({ initial, uiLocale, contentLocales = ["en", "fr"], s
                 </button>
               ))}
             </div>
-            <button onClick={translate} className="btn-secondary hidden py-2 text-sm lg:inline-flex" title="Translate this page with AI">
+            <button onClick={translate} className="btn-secondary hidden py-2 text-sm lg:inline-flex" title="Translate this page with AI" aria-label="Translate this page with AI">
               <Icon name="star" size={15} /> Translate
             </button>
             {page.status === "draft" && (
@@ -239,7 +239,7 @@ export function PageEditor({ initial, uiLocale, contentLocales = ["en", "fr"], s
                 <Icon name="arrow-up-right" size={15} /> Preview link
               </button>
             )}
-            <button onClick={openHistory} className="btn-secondary hidden py-2 text-sm lg:inline-flex" title="Version history">
+            <button onClick={openHistory} className="btn-secondary hidden py-2 text-sm lg:inline-flex" title="Version history" aria-label="Version history">
               <Icon name="refresh" size={15} /> History
             </button>
             <button onClick={() => setPreview((p) => !p)} className={`hidden py-2 text-sm lg:inline-flex ${preview ? "btn-dark" : "btn-secondary"}`}>
