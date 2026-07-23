@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { isLocale } from "@/i18n/config";
 import { getSettings } from "@/lib/cms-store";
 import { getApprovedThreads } from "@/lib/forum-store";
 import { ForumForms } from "@/components/ForumForms";
@@ -14,6 +15,7 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
 
 export default async function ForumPage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params;
+  if (!isLocale(lang)) notFound(); // format-invalid first segment (layout is lenient)
   if ((await getSettings()).forumEnabled !== true) notFound();
   const fr = lang === "fr";
   const threads = await getApprovedThreads();

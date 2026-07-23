@@ -1,6 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
+import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { isLocale } from "@/i18n/config";
 import { getPublishedCourses } from "@/lib/courses-store";
 import { tx } from "@/lib/cms-types";
 
@@ -13,6 +15,7 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
 
 export default async function LearnIndex({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params;
+  if (!isLocale(lang)) notFound(); // format-invalid first segment (layout is lenient)
   const fr = lang === "fr";
   const courses = await getPublishedCourses();
 

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { isLocale } from "@/i18n/config";
 import { getCourse } from "@/lib/courses-store";
 import { embedSrc, tx } from "@/lib/cms-types";
 import { MarkComplete } from "@/components/CourseProgress";
@@ -16,6 +17,7 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
 
 export default async function LessonPage({ params }: { params: Promise<{ lang: string; course: string; lesson: string }> }) {
   const { lang, course, lesson } = await params;
+  if (!isLocale(lang)) notFound(); // format-invalid first segment (layout is lenient)
   const c = await getCourse(course);
   if (!c || c.status !== "published") notFound();
   const idx = c.lessons.findIndex((x) => x.slug === lesson);

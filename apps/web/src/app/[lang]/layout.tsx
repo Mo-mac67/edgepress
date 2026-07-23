@@ -14,6 +14,7 @@ import { SeoTags } from "@/components/SeoTags";
 import { AssistantWidget } from "@/components/AssistantWidget";
 import { getActiveLocales, getNav, getSeo, getSettings, getTheme } from "@/lib/cms-store";
 import { getAIConfig } from "@/lib/ai/engine";
+import { getSnippets, hasSnippetTokens, renderSnippets } from "@/lib/snippets-store";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -94,12 +95,33 @@ export default async function LangLayout({
   params: Promise<{ lang: string }>;
 }) {
   const { lang } = await params;
-  // Non-locale first segments (e.g. /old-page.html from a migrated site) land
-  // here — give the redirect rules a chance before 404ing.
-  if (!isLocale(lang) || !(await getActiveLocales()).includes(lang)) await redirectOrNotFound(`/${lang}`);
+  // Format-invalid first segments (e.g. /old-page.html or /legacy/deep/post
+  // from a migrated site): only the PAGE below knows the full path, so it —
+  // not this layout — consults the redirect rules. A redirect thrown here
+  // would see just the first segment and lose a wildcard rule's tail.
+  if (!isLocale(lang)) {
+    return (
+      <html lang="en">
+        <body>{children}</body>
+      </html>
+    );
+  }
+  // Well-formed but inactive locales (e.g. /de) 404 — after a redirect check.
+  if (!(await getActiveLocales()).includes(lang)) await redirectOrNotFound(`/${lang}`);
 
   const dict = getDictionary(lang);
-  const [nav, settings, seo, aiCfg, theme] = await Promise.all([getNav(), getSettings(), getSeo(), getAIConfig(), getTheme()]);
+  const [nav, rawSettings, seo, aiCfg, theme] = await Promise.all([getNav(), getSettings(), getSeo(), getAIConfig(), getTheme()]);
+  // Reusable snippets also work inside the custom header/footer overrides
+  // (loaded only when a token is actually present).
+  let settings = rawSettings;
+  if (hasSnippetTokens(rawSettings.customHeaderHtml ?? "") || hasSnippetTokens(rawSettings.customFooterHtml ?? "")) {
+    const snippets = await getSnippets();
+    settings = {
+      ...rawSettings,
+      customHeaderHtml: rawSettings.customHeaderHtml ? renderSnippets(rawSettings.customHeaderHtml, snippets) : rawSettings.customHeaderHtml,
+      customFooterHtml: rawSettings.customFooterHtml ? renderSnippets(rawSettings.customFooterHtml, snippets) : rawSettings.customFooterHtml,
+    };
+  }
   const fonts = `${inter.variable} ${jakarta.variable} ${playfair.variable} ${lora.variable} ${grotesk.variable} ${manrope.variable} ${poppins.variable} ${fraunces.variable}`;
 
   return (

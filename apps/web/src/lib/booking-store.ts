@@ -120,8 +120,11 @@ export async function createBooking(input: { date: string; time: string; name: s
   const weekday = new Date(`${input.date}T00:00:00`).getDay();
   if (!slotGrid(cfg, weekday).includes(input.time)) return { error: "That time isn't available" };
   const slot = `${input.date}T${input.time}`;
-  const today = new Date().toISOString().slice(0, 10);
-  if (input.date < today) return { error: "That date is in the past" };
+  // Workers run on UTC, whose "today" can be AHEAD of the visitor's local
+  // date (western timezones after UTC midnight) — accept yesterday-UTC so
+  // same-day evening slots stay bookable everywhere.
+  const minDate = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
+  if (input.date < minDate) return { error: "That date is in the past" };
   if ((await getBookings()).some((b) => b.slot === slot && b.status === "confirmed")) return { error: "That slot was just taken — pick another" };
 
   const booking: Booking = {

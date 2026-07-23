@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { isLocale } from "@/i18n/config";
 import { searchContent } from "@/lib/search";
 
 export const dynamic = "force-dynamic";
@@ -11,6 +13,7 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
 
 export default async function SearchPage({ params, searchParams }: { params: Promise<{ lang: string }>; searchParams: Promise<{ q?: string }> }) {
   const { lang } = await params;
+  if (!isLocale(lang)) notFound(); // format-invalid first segment (layout is lenient)
   const { q = "" } = await searchParams;
   const fr = lang === "fr";
   const query = q.slice(0, 100);
