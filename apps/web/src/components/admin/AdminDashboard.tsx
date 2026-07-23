@@ -218,6 +218,7 @@ export function AdminDashboard({
         </header>
 
         <div className="p-4 sm:p-6">
+          {isSuper && <UpdateBanner />}
           {tab === "overview" && <Overview analytics={analytics} anomalies={anomalies} base={base} />}
           {tab === "leads" && (<><LeadsTable leads={leads} setLeads={setLeads} base={base} locale={locale} /><BookingCard /></>)}
           {tab === "marketplace" && <MarketplacePanel locale={locale} />}
@@ -801,6 +802,39 @@ function AuditTab({ audit }: { audit: AuditEntry[] }) {
           )}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+/** Quiet owner-only banner when a newer EdgePress release exists (daily-
+ *  cached check against the upstream repo — see lib/update-check.ts). */
+function UpdateBanner() {
+  const [info, setInfo] = useState<{ current: string; latest: string | null; url: string | null; updateAvailable: boolean } | null>(null);
+  const [dismissed, setDismissed] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/admin/update").then(async (r) => r.ok && setInfo(await r.json())).catch(() => {});
+    setDismissed(sessionStorage.getItem("ep-update-dismissed") === "1");
+  }, []);
+
+  if (!info?.updateAvailable || dismissed) return null;
+  return (
+    <div className="mb-5 flex flex-wrap items-center gap-3 rounded-lg border border-accent/30 bg-accent-soft px-4 py-2.5 text-sm">
+      <span className="font-semibold text-accent-dark">EdgePress {info.latest} is available</span>
+      <span className="text-ink-soft">— you&apos;re on v{info.current}.</span>
+      {info.url && (
+        <a href={info.url} target="_blank" rel="noopener noreferrer" className="font-semibold text-accent-dark underline underline-offset-2">
+          See what&apos;s new
+        </a>
+      )}
+      <span className="text-xs text-ink-soft">Upgrade: <code className="rounded bg-white/70 px-1">npx create-edgepress upgrade</code></span>
+      <button
+        onClick={() => { sessionStorage.setItem("ep-update-dismissed", "1"); setDismissed(true); }}
+        className="ml-auto text-xs font-semibold text-ink-soft hover:text-ink"
+        aria-label="Dismiss update notice"
+      >
+        Dismiss
+      </button>
     </div>
   );
 }
