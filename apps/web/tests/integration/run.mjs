@@ -69,11 +69,24 @@ async function waitReady(timeoutMs = 180_000) {
 }
 
 async function main() {
-  console.log(`▸ booting app (fs storage) on :${PORT}…`);
-  const server = spawn("npx", ["next", "dev", "-p", String(PORT)], {
-    cwd: join(import.meta.dirname, "..", ".."),
+  const appDir = join(import.meta.dirname, "..", "..");
+  const env = { ...process.env, EDGEPRESS_STORAGE: "fs", DATA_DIR, ADMIN_SECRET: "integration-secret", NEXT_TELEMETRY_DISABLED: "1" };
+
+  // CI runners are slow at dev-mode per-route compilation (each API route
+  // compiles on first hit — 40+ routes made the suite crawl). There we build
+  // once and run the production server; locally dev mode keeps iteration fast.
+  const prod = !!process.env.CI || process.argv.includes("--prod");
+  if (prod) {
+    console.log("▸ production build for the test server…");
+    const { execSync } = await import("node:child_process");
+    execSync("npm run build", { cwd: appDir, env, stdio: "inherit" });
+  }
+
+  console.log(`▸ booting app (fs storage, ${prod ? "next start" : "next dev"}) on :${PORT}…`);
+  const server = spawn("npx", ["next", prod ? "start" : "dev", "-p", String(PORT)], {
+    cwd: appDir,
     shell: process.platform === "win32",
-    env: { ...process.env, EDGEPRESS_STORAGE: "fs", DATA_DIR, ADMIN_SECRET: "integration-secret", NEXT_TELEMETRY_DISABLED: "1" },
+    env,
     stdio: ["ignore", "pipe", "pipe"],
   });
   let serverLog = "";
