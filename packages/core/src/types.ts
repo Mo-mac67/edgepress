@@ -128,6 +128,8 @@ export interface SiteSettings {
   customFooterHtml?: string;
   /** Blog comments (moderated — nothing shows before approval). Default on. */
   commentsEnabled?: boolean;
+  /** Community forum at /forum (moderated threads + replies). Default OFF. */
+  forumEnabled?: boolean;
 }
 
 export function tx(v: unknown, locale: Locale): string {

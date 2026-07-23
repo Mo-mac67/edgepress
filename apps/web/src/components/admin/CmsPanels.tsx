@@ -565,6 +565,68 @@ export function BlogPanel({ locale }: { locale: Locale }) {
       </div>
 
       <CommentsQueue />
+      <ForumQueue />
+    </div>
+  );
+}
+
+/** Forum moderation — pending topics & replies (feature is opt-in). */
+function ForumQueue() {
+  const ui = useAdminUI();
+  type T = { id: string; title: string; body: string; author: string; createdAt: string; status: string; spam?: boolean };
+  type R = { id: string; threadId: string; body: string; author: string; createdAt: string; status: string; spam?: boolean };
+  const [threads, setThreads] = useState<T[]>([]);
+  const [replies, setReplies] = useState<R[]>([]);
+
+  async function load() {
+    const res = await fetch("/api/admin/forum");
+    if (!res.ok) return;
+    const d = await res.json();
+    setThreads(d.threads ?? []);
+    setReplies(d.replies ?? []);
+  }
+  useEffect(() => { load(); }, []);
+
+  async function moderate(kind: "thread" | "reply", id: string, status: "approved" | "pending") {
+    await fetch("/api/admin/forum", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind, id, status }) });
+    ui.toast(status === "approved" ? "Approved" : "Unapproved", "success");
+    load();
+  }
+  async function del(kind: "thread" | "reply", id: string) {
+    await fetch(`/api/admin/forum?kind=${kind}&id=${id}`, { method: "DELETE" });
+    load();
+  }
+
+  const pending: ({ kind: "thread" | "reply" } & (T | R))[] = [
+    ...threads.filter((t) => t.status === "pending").map((t) => ({ kind: "thread" as const, ...t })),
+    ...replies.filter((r) => r.status === "pending").map((r) => ({ kind: "reply" as const, ...r })),
+  ];
+  if (threads.length === 0 && replies.length === 0) return null;
+
+  return (
+    <div className="mt-8">
+      <h3 className="mb-3 font-display font-bold text-brand">Forum{pending.length > 0 && <span className="ml-2 rounded-full bg-brand px-2.5 py-0.5 text-xs font-semibold text-white">{pending.length} awaiting review</span>}</h3>
+      <div className="card divide-y divide-line">
+        {pending.map((p) => (
+          <div key={`${p.kind}-${p.id}`} className="flex items-start justify-between gap-3 p-4">
+            <div className="min-w-0">
+              <p className="text-sm">
+                <span className="rounded bg-surface-soft px-1.5 py-0.5 text-[10px] font-bold uppercase text-ink-soft">{p.kind}</span>
+                <span className="ml-2 font-semibold text-brand">{p.author}</span>
+                <span className="ml-2 text-xs text-ink-soft">{new Date(p.createdAt).toLocaleString()}</span>
+                {p.spam && <span className="ml-2 rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-bold uppercase text-red-700">spam?</span>}
+              </p>
+              {"title" in p && p.title && <p className="mt-1 text-sm font-semibold">{p.title}</p>}
+              <p className="mt-1 line-clamp-3 whitespace-pre-wrap text-sm text-ink">{p.body}</p>
+            </div>
+            <div className="flex shrink-0 gap-2">
+              <button onClick={() => moderate(p.kind, p.id, "approved")} className="btn-secondary py-1.5 text-sm">Approve</button>
+              <button onClick={() => del(p.kind, p.id)} className="rounded p-2 text-ink-soft hover:text-red-600" title="Delete"><Icon name="trash" size={15} /></button>
+            </div>
+          </div>
+        ))}
+        {pending.length === 0 && <p className="p-6 text-center text-sm text-ink-soft">Nothing waiting for review.</p>}
+      </div>
     </div>
   );
 }
@@ -690,10 +752,14 @@ export function SitePanel() {
         <Text label="License note (FR)" value={s.licenseNote.fr} onChange={(v) => set({ licenseNote: { ...s.licenseNote, fr: v } })} />
       </div>
       <div className="card space-y-3 p-5">
-        <h3 className="font-display font-bold text-brand">Blog comments</h3>
+        <h3 className="font-display font-bold text-brand">Community</h3>
         <label className="flex items-center gap-2 text-sm text-ink">
           <input type="checkbox" checked={s.commentsEnabled !== false} onChange={(e) => set({ commentsEnabled: e.target.checked })} />
           Allow comments on blog posts (always moderated — nothing shows before you approve it in the Blog tab)
+        </label>
+        <label className="flex items-center gap-2 text-sm text-ink">
+          <input type="checkbox" checked={s.forumEnabled === true} onChange={(e) => set({ forumEnabled: e.target.checked })} />
+          Enable the community forum at <code className="rounded bg-surface-soft px-1">/forum</code> (moderated topics &amp; replies — queue lives in the Blog tab)
         </label>
       </div>
       <div className="card space-y-3 p-5">

@@ -391,6 +391,29 @@ async function main() {
     await api("DELETE", `/api/admin/booking?id=${bookingId}`);
     check("admin cancel frees the slot", (await api("GET", `/api/booking?date=${bookDate}`, null, { auth: false })).json.slots.includes("09:00"));
 
+    // ── Forum + courses ────────────────────────────────────
+    console.log("▸ forum & courses");
+    check("forum 404s while disabled", (await fetchT(`${B}/en/forum`)).status === 404);
+    check("forum posting rejected while disabled", (await api("POST", "/api/forum", { title: "Hi there", body: "x", author: "V" }, { auth: false, headers: { "x-forwarded-for": "10.9.0.1" } })).status === 403);
+    const sF = (await api("GET", "/api/admin/settings")).json.settings;
+    await api("POST", "/api/admin/settings", { settings: { ...sF, forumEnabled: true } });
+    check("thread lands in moderation", (await api("POST", "/api/forum", { title: "How to deploy?", body: "Workers or Docker?", author: "Visitor" }, { auth: false, headers: { "x-forwarded-for": "10.9.0.2" } })).status === 201);
+    check("pending thread invisible on /forum", !(await (await fetchT(`${B}/en/forum`)).text()).includes("How to deploy?"));
+    const th = (await api("GET", "/api/admin/forum")).json.threads.find((t) => t.title === "How to deploy?");
+    await api("PATCH", "/api/admin/forum", { kind: "thread", id: th.id, status: "approved" });
+    check("approved thread renders", (await (await fetchT(`${B}/en/forum`)).text()).includes("How to deploy?"));
+    check("reply lands in moderation", (await api("POST", `/api/forum/${th.id}/replies`, { body: "Use the wizard", author: "Helper" }, { auth: false, headers: { "x-forwarded-for": "10.9.0.3" } })).status === 201);
+    const rp = (await api("GET", "/api/admin/forum")).json.replies.find((r) => r.threadId === th.id);
+    await api("PATCH", "/api/admin/forum", { kind: "reply", id: rp.id, status: "approved" });
+    check("approved reply renders on the thread", (await (await fetchT(`${B}/en/forum/${th.id}`)).text()).includes("Use the wizard"));
+
+    const courseRes = (await api("POST", "/api/admin/courses", { title: { en: "Edge 101" } })).json.course;
+    await api("PUT", `/api/admin/courses/${courseRes.id}`, { status: "published", description: { en: "Learn the edge" }, lessons: [{ title: { en: "First Lesson" }, body: { en: "<p>LESSON-BODY</p>" } }] });
+    check("published course lists at /learn", (await (await fetchT(`${B}/en/learn`)).text()).includes("Edge 101"));
+    check("lesson page renders its body", (await (await fetchT(`${B}/en/learn/edge-101/first-lesson`)).text()).includes("LESSON-BODY"));
+    await api("PUT", `/api/admin/courses/${courseRes.id}`, { status: "draft" });
+    check("draft course hidden from the public", (await fetchT(`${B}/en/learn/edge-101`)).status === 404);
+
     // ── OAuth flag ─────────────────────────────────────────
     check("SSO reports disabled without env config", (await api("GET", "/api/auth/oauth/google", null, { auth: false })).json.enabled === false);
     check("SSO start 404s when unconfigured", (await fetchT(`${B}/api/auth/oauth/google/start`)).status === 404);
