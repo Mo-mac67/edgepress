@@ -1,0 +1,11 @@
+# Root build context for apps/web/Dockerfile — keep the upload tiny.
+**/node_modules
+**/.next
+**/.open-next
+**/.wrangler
+.git
+**/data
+**/backups
+*.log
+**/.env*
+.claude

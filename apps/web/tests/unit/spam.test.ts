@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isSpam, spamScore } from "@/lib/spam";
+import { isSpam, spamScore } from "@edgepress/core/spam";
 
 describe("spam heuristic", () => {
   it("passes normal enquiries", () => {

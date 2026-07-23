@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseCsv, parseCsvObjects, toCsv } from "@/lib/csv";
+import { parseCsv, parseCsvObjects, toCsv } from "@edgepress/core/csv";
 
 describe("parseCsv", () => {
   it("parses simple rows", () => {

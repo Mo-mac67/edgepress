@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { generateSecret, totpUri, verifyTotp } from "@/lib/totp";
+import { generateSecret, totpUri, verifyTotp } from "@edgepress/core/totp";
 import { createHmac } from "node:crypto";
 
 // Reference HOTP (RFC 4226) to cross-check our implementation.

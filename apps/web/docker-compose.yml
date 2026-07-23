@@ -1,9 +1,12 @@
-# Run EdgePress locally or on any server with one command:
+# Run EdgePress locally or on any server with one command (from apps/web):
 #   docker compose up -d
 # Then open http://localhost:3000 — the first-run setup wizard guides the rest.
 services:
   edgepress:
-    build: .
+    build:
+      # Repo root — the app consumes packages/core + packages/ai as source.
+      context: ../..
+      dockerfile: apps/web/Dockerfile
     ports:
       - "3000:3000"
     environment:

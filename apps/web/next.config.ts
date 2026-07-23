@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // @edgepress/core + @edgepress/ai are consumed as SOURCE from ../../packages
+  // via tsconfig paths — let the compiler pick up files outside the app dir.
+  experimental: { externalDir: true },
   allowedDevOrigins: ["100.76.177.98", ...(process.env.DEV_ORIGINS?.split(",").map((s) => s.trim()) ?? [])],
   // Pin file tracing to this app so a stray parent lockfile can't make Next
   // infer the wrong workspace root (which stalls the build).
