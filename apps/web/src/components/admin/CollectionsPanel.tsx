@@ -206,7 +206,7 @@ function EntriesManager({ type, isSuper, onDeleteType, onReloadTypes }: { type: 
         <div className="mt-4 overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="border-b border-line text-left text-xs uppercase text-ink-soft">
-              <tr><th className="py-2 pr-4">Slug</th><th className="py-2 pr-4">Status</th><th className="py-2 pr-4">Updated</th><th className="py-2"></th></tr>
+              <tr><th scope="col" className="py-2 pr-4">Slug</th><th scope="col" className="py-2 pr-4">Status</th><th scope="col" className="py-2 pr-4">Updated</th><th scope="col" className="py-2"></th></tr>
             </thead>
             <tbody>
               {entries.map((e) => (

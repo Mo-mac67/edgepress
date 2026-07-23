@@ -194,7 +194,7 @@ function FormDetail({ form, onDelete }: { form: FormDef; onDelete: () => void })
       <div className="mt-4 overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="border-b border-line text-left text-xs uppercase text-ink-soft">
-            <tr>{form.fields.map((f) => <th key={f.key} className="py-2 pr-4">{f.label}</th>)}<th className="py-2 pr-4">When</th><th></th></tr>
+            <tr>{form.fields.map((f) => <th scope="col" key={f.key} className="py-2 pr-4">{f.label}</th>)}<th scope="col" className="py-2 pr-4">When</th><th scope="col"></th></tr>
           </thead>
           <tbody>
             {subs.map((s) => (

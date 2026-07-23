@@ -171,7 +171,7 @@ export function AiPanel() {
           <h3 className="font-display font-bold text-brand">Usage <span className="text-sm font-normal text-ink-soft">· {totalCalls} calls</span></h3>
           <div className="mt-3 overflow-x-auto">
             <table className="w-full text-sm">
-              <thead><tr className="text-left text-xs uppercase tracking-wide text-ink-soft"><th className="py-1 pr-4">Feature</th><th className="pr-4">Provider</th><th className="pr-4">Calls</th><th>Tokens (in/out)</th></tr></thead>
+              <thead><tr className="text-left text-xs uppercase tracking-wide text-ink-soft"><th scope="col" className="py-1 pr-4">Feature</th><th scope="col" className="pr-4">Provider</th><th scope="col" className="pr-4">Calls</th><th>Tokens (in/out)</th></tr></thead>
               <tbody>
                 {usage.map((r, i) => (
                   <tr key={i} className="border-t border-line"><td className="py-1.5 pr-4">{r.feature}</td><td className="pr-4 text-ink-soft">{r.provider}</td><td className="pr-4">{r.calls}</td><td className="text-ink-soft">{r.inTokens}/{r.outTokens}</td></tr>

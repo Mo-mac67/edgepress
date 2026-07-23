@@ -3,7 +3,17 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // @edgepress/core + @edgepress/ai are consumed as SOURCE from ../../packages
   // via tsconfig paths — let the compiler pick up files outside the app dir.
+  // externalDir covers the webpack production build; Turbopack (next dev)
+  // needs the same mapping spelled out explicitly.
   experimental: { externalDir: true },
+  turbopack: {
+    resolveAlias: {
+      "@edgepress/core": "../../packages/core/src/index.ts",
+      "@edgepress/core/*": "../../packages/core/src/*.ts",
+      "@edgepress/ai": "../../packages/ai/src/index.ts",
+      "@edgepress/ai/*": "../../packages/ai/src/*.ts",
+    },
+  },
   allowedDevOrigins: ["100.76.177.98", ...(process.env.DEV_ORIGINS?.split(",").map((s) => s.trim()) ?? [])],
   // Pin file tracing to this app so a stray parent lockfile can't make Next
   // infer the wrong workspace root (which stalls the build).

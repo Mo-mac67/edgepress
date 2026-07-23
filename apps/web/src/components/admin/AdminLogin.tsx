@@ -6,6 +6,10 @@ import { BrandMark } from "@/components/BrandMark";
 
 export function AdminLogin() {
   const [mode, setMode] = useState<"loading" | "setup" | "login">("loading");
+  // Auth is a focused task — hide the public site chrome (same pattern as the
+  // editors) so the wizard/login isn't sandwiched between marketing header
+  // and footer.
+  const hideChrome = <style dangerouslySetInnerHTML={{ __html: "body>header,body>footer{display:none!important} main{margin:0!important}" }} />;
 
   useEffect(() => {
     fetch("/api/setup")
@@ -15,9 +19,14 @@ export function AdminLogin() {
   }, []);
 
   if (mode === "loading") {
-    return <section className="container-page flex min-h-[70vh] items-center justify-center"><p className="text-sm text-ink-soft">Loading…</p></section>;
+    return <section className="container-page flex min-h-[70vh] items-center justify-center">{hideChrome}<p className="text-sm text-ink-soft">Loading…</p></section>;
   }
-  return mode === "setup" ? <SetupWizard /> : <LoginForm />;
+  return (
+    <>
+      {hideChrome}
+      {mode === "setup" ? <SetupWizard /> : <LoginForm />}
+    </>
+  );
 }
 
 function LoginForm() {
