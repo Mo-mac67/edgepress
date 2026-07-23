@@ -32,8 +32,8 @@ Whoever sets that password becomes the **Owner**.
 The left sidebar groups everything:
 
 - **Insights** — Dashboard, Copilot, Leads, Marketplace, Activity, Audit log
-- **Content** — Pages, Menus, Blog, Collections, Forms, Media
-- **Growth** — SEO, AI
+- **Content** — Pages, Menus, Blog, Collections, Forms, Courses, Media
+- **Growth** — SEO, Newsletter, AI
 - **Design & setup** — Appearance, Site info, Developer, Security, Help
 
 ## 4. Pages
@@ -352,3 +352,21 @@ accounts get in (as the owner); every attempt is audit-logged. Password +
   another time. Cancelling from the panel frees the slot instantly.
 - Each booking emails `LEAD_NOTIFY_TO` (logged when no Resend key). Times
   are your business's local wall time — one business, one timezone.
+
+## 23. Community forum (optional)
+
+Turn it on in **Site info → Community** and your site serves a moderated
+forum at `/forum`: visitors start topics and reply (rate-limited + honeypot
++ spam heuristics), and **nothing appears until you approve it** in the Blog
+tab's Forum queue. Deleting a topic removes its replies too. Off by default.
+
+## 24. Courses (LMS-lite)
+
+Build video + text courses under **Content → Courses**:
+
+- A course = title, description, cover, and an ordered list of lessons
+  (YouTube/Vimeo URL + rich HTML body, per language).
+- Published courses appear at `/learn`; each lesson page has the video,
+  the body, prev/next navigation, and a **Mark complete** button.
+- Progress is tracked in the visitor's browser (localStorage) — no
+  accounts needed; the course page shows a progress bar and checkmarks.

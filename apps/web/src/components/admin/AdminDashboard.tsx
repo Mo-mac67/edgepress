@@ -17,6 +17,7 @@ import { TabPermissionsCard } from "./TabPermissionsCard";
 import { SeoPanel } from "./SeoPanel";
 import { NewsletterPanel } from "./NewsletterPanel";
 import { BookingCard } from "./BookingCard";
+import { CoursesPanel } from "./CoursesPanel";
 import { AiPanel } from "./AiPanel";
 import { CopilotPanel } from "./CopilotPanel";
 import { ThemePanel } from "./ThemePanel";
@@ -37,9 +38,9 @@ const STATUS_LABEL: Record<LeadStatus, string> = {
   lost: "Lost",
 };
 const PALETTE = ["#16324f", "#e0a52e", "#1c4066", "#c2861a", "#5a6571", "#9aa4ae"];
-type Tab = "overview" | "copilot" | "leads" | "marketplace" | "pages" | "menu" | "blog" | "collections" | "forms" | "media" | "appearance" | "seo" | "newsletter" | "ai" | "site" | "developer" | "activity" | "settings" | "audit" | "help";
+type Tab = "overview" | "copilot" | "leads" | "marketplace" | "pages" | "menu" | "blog" | "collections" | "forms" | "media" | "courses" | "appearance" | "seo" | "newsletter" | "ai" | "site" | "developer" | "activity" | "settings" | "audit" | "help";
 /** Every dashboard tab id — also the vocabulary for per-admin tab permissions ("audit"/"developer" stay super-only regardless). */
-const ALL_TAB_IDS: Tab[] = ["overview", "leads", "marketplace", "activity", "audit", "pages", "menu", "blog", "collections", "forms", "media", "seo", "newsletter", "appearance", "site", "developer", "settings", "help"];
+const ALL_TAB_IDS: Tab[] = ["overview", "leads", "marketplace", "activity", "audit", "pages", "menu", "blog", "collections", "forms", "media", "courses", "seo", "newsletter", "appearance", "site", "developer", "settings", "help"];
 
 export function AdminDashboard({
   locale,
@@ -97,6 +98,7 @@ export function AdminDashboard({
         { id: "blog", label: "Blog", icon: "edit" },
         { id: "collections", label: "Collections", icon: "grid" },
         { id: "forms", label: "Forms", icon: "list" },
+        { id: "courses" as Tab, label: "Courses", icon: "info" as const },
         { id: "media", label: "Media", icon: "image" },
       ],
     },
@@ -225,6 +227,7 @@ export function AdminDashboard({
           {tab === "copilot" && <CopilotPanel locale={locale} />}
           {tab === "seo" && <SeoPanel />}
           {tab === "newsletter" && <NewsletterPanel />}
+          {tab === "courses" && <CoursesPanel />}
           {tab === "ai" && <AiPanel />}
           {tab === "help" && <HelpPanel />}
           {tab === "site" && <SitePanel />}
