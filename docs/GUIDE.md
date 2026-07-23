@@ -58,6 +58,15 @@ In the editor:
   back anytime). Full documents render isolated (own CSS/JS); *Standalone page*
   hides the site header/footer.
 - **Autosave** + dirty tracking; **History** restores any earlier version.
+- **Scheduled publishing**: on a draft, set *Publish automatically at* — the
+  page goes live by itself once that time passes (no cron; evaluated at
+  read time, so it works on the edge too). A **SCHEDULED** badge shows in
+  the list.
+- **Preview link**: share a signed URL that shows the draft to anyone —
+  no login needed. The link stops working the moment the page is published.
+- **Duplicate** any page as a new draft (`-copy` slug).
+- **Trash**: deleting moves a page to the Trash (chip above the list) —
+  restore it anytime, or *Delete forever*. Blog posts work the same way.
 - **Translate** fills another language with AI (source text untouched).
 - **A/B headline test**: in *Page settings*, enter 2+ headlines (one per
   line). Each visitor sees one at random; views and lead conversions are
@@ -66,6 +75,16 @@ In the editor:
 
 Legal pages (**/privacy**, **/terms**) are seeded as editable system pages —
 review and adapt the default copy to your business.
+
+**Menus**: manage the site navigation under **Content → Menus** — bilingual
+labels, page slugs or external URLs, reorder with arrows. **+ Add sub-link**
+nests links one level under a parent (rendered as an indented group in the
+site menu).
+
+**Site search** is built in: every site serves `/en/search` (and each other
+locale) — a search box over all live pages and posts, ranked by title >
+description > body matches. The JSON endpoint is `GET /api/search?q=…&lang=…`
+(rate-limited; drafts, scheduled-future and trashed content never appear).
 
 ## 5. Blog
 
@@ -82,10 +101,16 @@ review and adapt the default copy to your business.
 Model anything — products, team members, events, testimonials:
 
 1. **Collections → New type**: name it and define typed fields (text,
-   rich text, number, boolean, date, image, select). Owner only.
+   rich text, number, boolean, date, image, select, **relation**). Owner only.
 2. Add entries (draft/published) in the schema-generated editor.
 3. **Import CSV / Export CSV** — columns match field names; a `status`
    column is honored.
+
+**Relations** link collections together (a *Book* points at an *Author*):
+pick "relation" as the field type and choose the target collection; the
+entry editor then offers a dropdown of that collection's entries. On the
+Content API, add `?expand=1` to embed the full related entry in place of
+its slug (published targets only — drafts never leak).
 
 Every collection is automatically served by the **Content API** (see §12) —
 EdgePress doubles as a headless CMS.
@@ -96,6 +121,14 @@ Build forms (contact, signup, survey…) in the **Forms** tab:
 
 - Typed fields (text, email, tel, textarea, number, select, checkbox),
   custom submit label and success message.
+- **Validation rules** per field: a regex *pattern*, min/max **value** for
+  numbers, min/max **length** for text. Enforced on the server and mirrored
+  as native HTML attributes in the embed snippet; email fields are
+  format-checked automatically.
+- **Per-form notifications**: set *Email new submissions to* and every
+  (non-spam) submission is emailed there via Resend — leave blank to use
+  the site-wide `LEAD_NOTIFY_TO`. Without an API key it logs instead of
+  sending, so nothing breaks key-free.
 - Submissions land in the panel — **spam is flagged automatically**
   (heuristic, never blocks) — and export to **CSV**.
 - **Embed code**: copy a self-contained HTML snippet that posts to your
@@ -182,6 +215,8 @@ chatting: list/create/translate/publish pages, read leads.
 - **Content API** — every collection as JSON, CORS-enabled:
   - `GET /api/content/<type>` — published entries
   - `GET /api/content/<type>/<slug>` — one entry
+  - `?expand=1` — embeds entries referenced by **relation** fields
+    (published targets only).
   - `?status=all` with an **API key** (`Authorization: Bearer <key>`)
     includes drafts.
 - **API keys** — created once, shown once, stored hashed; revoke anytime.

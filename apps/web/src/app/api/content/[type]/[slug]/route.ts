@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getContentType, getEntry } from "@/lib/content-store";
+import { expandRelations, getContentType, getEntry } from "@/lib/content-store";
 import { tokenFromRequest, verifyApiKey } from "@/lib/api-keys";
 
 export const dynamic = "force-dynamic";
@@ -16,12 +16,15 @@ export async function GET(request: Request, { params }: { params: Promise<{ type
   const type = await getContentType(typeSlug);
   if (!type) return NextResponse.json({ error: "Unknown content type" }, { status: 404, headers: cors });
 
-  const entry = await getEntry(typeSlug, slug);
+  let entry = await getEntry(typeSlug, slug);
   if (!entry) return NextResponse.json({ error: "Not found" }, { status: 404, headers: cors });
 
   if (entry.status !== "published" && !(await verifyApiKey(tokenFromRequest(request)))) {
     return NextResponse.json({ error: "Not found" }, { status: 404, headers: cors });
   }
+
+  // ?expand=1 embeds published entries referenced by relation fields.
+  if (new URL(request.url).searchParams.get("expand") === "1") [entry] = await expandRelations(type, [entry]);
 
   const { id, status, data, createdAt, updatedAt } = entry;
   // Data first so system fields stay authoritative (see the list route).

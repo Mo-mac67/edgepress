@@ -10,6 +10,13 @@ import { CodeEditor } from "./CodeEditor";
 import type { Post } from "@/lib/cms-types";
 import type { Locale } from "@/i18n/config";
 
+/** ISO → the local-time string a datetime-local input expects. */
+function toLocalInput(iso: string): string {
+  const d = new Date(iso);
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
 export function PostEditor({ initial, uiLocale, contentLocales = ["en", "fr"] }: { initial: Post; uiLocale: Locale; contentLocales?: string[] }) {
   const router = useRouter();
   const [post, setPost] = useState<Post>(initial);
@@ -24,7 +31,7 @@ export function PostEditor({ initial, uiLocale, contentLocales = ["en", "fr"] }:
     const res = await fetch(`/api/admin/posts/${post.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(post),
+      body: JSON.stringify({ ...post, publishAt: post.publishAt ?? null }),
     });
     setSaving(false);
     if (res.ok) {
@@ -64,6 +71,18 @@ export function PostEditor({ initial, uiLocale, contentLocales = ["en", "fr"] }:
             <label className="block"><span className="mb-1 block text-sm font-medium text-ink">Author</span><input className="field" value={post.author} onChange={(e) => patch({ author: e.target.value })} /></label>
             <label className="block"><span className="mb-1 block text-sm font-medium text-ink">Status</span><select className="field" value={post.status} onChange={(e) => patch({ status: e.target.value as Post["status"] })}><option value="published">Published</option><option value="draft">Draft</option></select></label>
           </div>
+          {post.status === "draft" && (
+            <label className="block">
+              <span className="mb-1 block text-sm font-medium text-ink">Publish automatically at (optional)</span>
+              <input
+                type="datetime-local"
+                className="field"
+                value={post.publishAt ? toLocalInput(post.publishAt) : ""}
+                onChange={(e) => patch({ publishAt: e.target.value ? new Date(e.target.value).toISOString() : undefined })}
+              />
+              {post.publishAt && <span className="mt-1 block text-xs text-blue-700">Scheduled — goes live {new Date(post.publishAt).toLocaleString()}</span>}
+            </label>
+          )}
           <div><span className="mb-1 block text-sm font-medium text-ink">Cover image</span><MediaField value={post.cover} onChange={(v) => patch({ cover: v })} /></div>
           <label className="block"><span className="mb-1 block text-sm font-medium text-ink">Excerpt ({locale.toUpperCase()})</span><textarea className="field min-h-[70px]" value={post.excerpt[locale]} onChange={(e) => patch({ excerpt: { ...post.excerpt, [locale]: e.target.value } })} /></label>
         </div>

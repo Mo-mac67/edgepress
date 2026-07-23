@@ -50,12 +50,50 @@ export async function savePage(page: Page): Promise<void> {
   await writeJsonDoc(PAGES, pages);
 }
 
-export async function deletePage(id: string): Promise<boolean> {
+/** Soft delete: pages land in the Trash (restorable). `force` removes forever. */
+export async function deletePage(id: string, force = false): Promise<boolean> {
   const pages = await getPages();
   const target = pages.find((p) => p.id === id);
   if (!target || target.system) return false;
-  await writeJsonDoc(PAGES, pages.filter((p) => p.id !== id));
+  if (force) {
+    await writeJsonDoc(PAGES, pages.filter((p) => p.id !== id));
+  } else {
+    target.trashed = true;
+    target.trashedAt = new Date().toISOString();
+    await writeJsonDoc(PAGES, pages);
+  }
   return true;
+}
+
+export async function restorePage(id: string): Promise<boolean> {
+  const pages = await getPages();
+  const target = pages.find((p) => p.id === id);
+  if (!target?.trashed) return false;
+  delete target.trashed;
+  delete target.trashedAt;
+  await writeJsonDoc(PAGES, pages);
+  return true;
+}
+
+/** Copy a page as a new draft ("-copy" slug). */
+export async function duplicatePage(id: string): Promise<Page | null> {
+  const pages = await getPages();
+  const source = pages.find((p) => p.id === id);
+  if (!source) return null;
+  const copy: Page = structuredClone(source);
+  copy.id = uid();
+  copy.status = "draft";
+  copy.system = undefined;
+  copy.trashed = undefined;
+  copy.trashedAt = undefined;
+  copy.publishAt = undefined;
+  copy.updatedAt = new Date().toISOString();
+  let slug = `${source.slug || "home"}-copy`;
+  while (pages.some((p) => p.slug === slug)) slug = `${slug}-2`;
+  copy.slug = slug;
+  pages.push(copy);
+  await writeJsonDoc(PAGES, pages);
+  return copy;
 }
 
 // ─── Page revisions (version history) ──────────────────
@@ -197,12 +235,48 @@ export async function savePost(post: Post): Promise<void> {
   else posts[idx] = post;
   await writeJsonDoc(POSTS, posts);
 }
-export async function deletePost(id: string): Promise<boolean> {
+/** Soft delete (Trash) — `force` removes forever. */
+export async function deletePost(id: string, force = false): Promise<boolean> {
   const posts = await readJsonDoc<Post[]>(POSTS, []);
-  const next = posts.filter((p) => p.id !== id);
-  if (next.length === posts.length) return false;
-  await writeJsonDoc(POSTS, next);
+  const target = posts.find((p) => p.id === id);
+  if (!target) return false;
+  if (force) {
+    await writeJsonDoc(POSTS, posts.filter((p) => p.id !== id));
+  } else {
+    target.trashed = true;
+    target.trashedAt = new Date().toISOString();
+    await writeJsonDoc(POSTS, posts);
+  }
   return true;
+}
+
+export async function restorePost(id: string): Promise<boolean> {
+  const posts = await readJsonDoc<Post[]>(POSTS, []);
+  const target = posts.find((p) => p.id === id);
+  if (!target?.trashed) return false;
+  delete target.trashed;
+  delete target.trashedAt;
+  await writeJsonDoc(POSTS, posts);
+  return true;
+}
+
+/** Copy a post as a new draft ("-copy" slug). */
+export async function duplicatePost(id: string): Promise<Post | null> {
+  const posts = await readJsonDoc<Post[]>(POSTS, []);
+  const source = posts.find((p) => p.id === id);
+  if (!source) return null;
+  const copy: Post = structuredClone(source);
+  copy.id = uid();
+  copy.status = "draft";
+  copy.trashed = undefined;
+  copy.trashedAt = undefined;
+  copy.publishAt = undefined;
+  let slug = `${source.slug}-copy`;
+  while (posts.some((p) => p.slug === slug)) slug = `${slug}-2`;
+  copy.slug = slug;
+  posts.push(copy);
+  await writeJsonDoc(POSTS, posts);
+  return copy;
 }
 export function blankPost(slug: string, title: string): Post {
   return {

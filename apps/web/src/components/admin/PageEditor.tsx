@@ -24,7 +24,14 @@ import { BLOCKS, BLOCK_ORDER, newBlock, type Block, type BlockType, type Page } 
 import type { Locale } from "@/i18n/config";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
-const serialize = (p: Page) => JSON.stringify({ t: p.title, d: p.description, s: p.slug, st: p.status, b: p.blocks, m: p.mode, r: p.rawHtml, h: p.hideChrome, seo: p.seo, ab: p.ab });
+
+/** ISO → the local-time string a datetime-local input expects. */
+function toLocalInput(iso: string): string {
+  const d = new Date(iso);
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+const serialize = (p: Page) => JSON.stringify({ t: p.title, d: p.description, s: p.slug, st: p.status, b: p.blocks, m: p.mode, r: p.rawHtml, h: p.hideChrome, seo: p.seo, ab: p.ab, pa: p.publishAt });
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 
@@ -98,6 +105,7 @@ export function PageEditor({ initial, uiLocale, contentLocales = ["en", "fr"], s
           hideChrome: !!page.hideChrome,
           seo: page.seo ?? {},
           ab: page.ab ?? { headlines: [] },
+          publishAt: page.publishAt ?? null,
         }),
       });
       if (res.ok) {
@@ -215,6 +223,22 @@ export function PageEditor({ initial, uiLocale, contentLocales = ["en", "fr"], s
             <button onClick={translate} className="btn-secondary hidden py-2 text-sm lg:inline-flex" title="Translate this page with AI">
               <Icon name="star" size={15} /> Translate
             </button>
+            {page.status === "draft" && (
+              <button
+                onClick={async () => {
+                  const r = await fetch(`/api/admin/pages/${page.id}/preview-link`);
+                  const d = await r.json().catch(() => ({}));
+                  if (!r.ok) return ui.toast(d.error || "Couldn't create the link", "error");
+                  const url = `${window.location.origin}/${locale}/${d.path.replace(/^\//, "")}`;
+                  await navigator.clipboard?.writeText(url);
+                  ui.toast("Preview link copied — anyone with it can view this draft", "success");
+                }}
+                className="btn-secondary hidden py-2 text-sm lg:inline-flex"
+                title="Copy a shareable link that shows this draft without logging in"
+              >
+                <Icon name="arrow-up-right" size={15} /> Preview link
+              </button>
+            )}
             <button onClick={openHistory} className="btn-secondary hidden py-2 text-sm lg:inline-flex" title="Version history">
               <Icon name="refresh" size={15} /> History
             </button>
@@ -260,6 +284,18 @@ export function PageEditor({ initial, uiLocale, contentLocales = ["en", "fr"], s
                     <option value="published">Published</option>
                     <option value="draft">Draft</option>
                   </select>
+                  {page.status === "draft" && (
+                    <span className="mt-2 block">
+                      <span className="mb-1 block text-xs font-medium text-ink-soft">Publish automatically at (optional)</span>
+                      <input
+                        type="datetime-local"
+                        className="field"
+                        value={page.publishAt ? toLocalInput(page.publishAt) : ""}
+                        onChange={(e) => patch({ publishAt: e.target.value ? new Date(e.target.value).toISOString() : undefined })}
+                      />
+                      {page.publishAt && <span className="mt-1 block text-xs text-blue-700">Scheduled — goes live {new Date(page.publishAt).toLocaleString()}</span>}
+                    </span>
+                  )}
                 </label>
                 <label className="block">
                   <span className="mb-1 block text-sm font-medium text-ink">Page type</span>

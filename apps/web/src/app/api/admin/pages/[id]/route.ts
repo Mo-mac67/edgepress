@@ -19,14 +19,22 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     ...existing,
     title: body.title ?? existing.title,
     description: body.description ?? existing.description,
-    status: body.status === "draft" ? "draft" : "published",
+    // Partial updates (e.g. restore, schedule) must not flip publish state.
+    status: body.status === "draft" ? "draft" : body.status === "published" ? "published" : existing.status,
     blocks: Array.isArray(body.blocks) ? body.blocks : existing.blocks,
     mode: body.mode === "html" ? "html" : body.mode === "blocks" ? "blocks" : existing.mode,
     rawHtml: typeof body.rawHtml === "string" ? body.rawHtml.slice(0, 900_000) : existing.rawHtml,
     hideChrome: typeof body.hideChrome === "boolean" ? body.hideChrome : existing.hideChrome,
     // System pages keep their slug; custom pages may be re-slugged.
     slug: existing.system ? existing.slug : (body.slug ?? existing.slug),
+    // Scheduled publishing (ISO datetime or null to clear).
+    publishAt: body.publishAt === null ? undefined : typeof body.publishAt === "string" && body.publishAt ? body.publishAt : existing.publishAt,
   };
+  // Restore from Trash via trashed:false.
+  if (body.trashed === false) {
+    merged.trashed = undefined;
+    merged.trashedAt = undefined;
+  }
   // A/B headline test config.
   if (body.ab && Array.isArray(body.ab.headlines)) {
     const headlines = body.ab.headlines.map((h: unknown) => String(h).slice(0, 200)).filter((h: string) => h.trim()).slice(0, 6);
@@ -48,10 +56,12 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   return NextResponse.json({ page: merged });
 }
 
-export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   if (!(await isAuthed())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await params;
-  const ok = await deletePage(id);
-  if (ok) await logAudit({ action: "page_delete", role: await getRole(), detail: id });
+  // Default: move to Trash (restorable). ?force=1 deletes forever.
+  const force = new URL(req.url).searchParams.get("force") === "1";
+  const ok = await deletePage(id, force);
+  if (ok) await logAudit({ action: force ? "page_delete_forever" : "page_trash", role: await getRole(), detail: id });
   return NextResponse.json({ ok });
 }

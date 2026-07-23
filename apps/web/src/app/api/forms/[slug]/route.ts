@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { sendNotification } from "@/lib/email";
 import { addSubmission, getForm, validateSubmission } from "@/lib/forms-store";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { isSpam } from "@/lib/spam";
@@ -31,5 +32,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
   const spam = isSpam(Object.values(result.data).map(String).join(" "));
   const sub = await addSubmission(slug, result.data, spam);
   await dispatchWebhook("form.submitted", { form: slug, submission: sub });
+  // Per-form notification email (falls back to LEAD_NOTIFY_TO). Spam skipped.
+  const notifyTo = form.notifyEmail || process.env.LEAD_NOTIFY_TO;
+  if (notifyTo && !spam) {
+    const lines = form.fields.map((f) => `${f.label}: ${String(result.data[f.key] ?? "—")}`);
+    await sendNotification(notifyTo, `New "${form.name}" submission`, lines.join("\n"));
+  }
   return NextResponse.json({ ok: true, message: form.successMessage }, { status: 201, headers: cors });
 }

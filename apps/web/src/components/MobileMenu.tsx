@@ -19,7 +19,7 @@ export function MobileMenu({
   settings,
   light = false,
 }: {
-  links: { href: string; label: string }[];
+  links: { href: string; label: string; children?: { href: string; label: string }[] }[];
   ctaHref?: string;
   ctaLabel?: string;
   settings: SiteSettings;
@@ -48,6 +48,12 @@ export function MobileMenu({
 
   const tel = settings.phone.replace(/[^\d+]/g, "");
   const ease = "ease-[cubic-bezier(0.16,1,0.3,1)]";
+  // Flatten one level of sub-links so the reveal stagger runs top to bottom.
+  const flat: { href: string; label: string; sub: boolean }[] = [];
+  for (const l of links) {
+    flat.push({ href: l.href, label: l.label, sub: false });
+    for (const c of l.children ?? []) flat.push({ href: c.href, label: c.label, sub: true });
+  }
   const onDark = light; // white over the photo, ink once the header is solid
   const linkColor = onDark
     ? "text-white [text-shadow:0_1px_12px_rgba(0,0,0,0.55)] hover:text-accent"
@@ -77,22 +83,23 @@ export function MobileMenu({
           open ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-1 opacity-0"
         }`}
       >
-        {links.map((l, i) => (
+        {flat.map((l, i) => (
           <Link
-            key={l.href}
+            key={`${l.href}-${i}`}
             href={l.href}
             onClick={() => setOpen(false)}
             style={{ transitionDelay: open ? `${70 + i * 50}ms` : "0ms" }}
-            className={`whitespace-nowrap py-0.5 font-display text-xl font-light italic leading-tight tracking-tight transition-all duration-[600ms] ${ease} sm:text-2xl ${
-              open ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"
-            } ${linkColor}`}
+            className={`whitespace-nowrap py-0.5 font-display font-light italic leading-tight tracking-tight transition-all duration-[600ms] ${ease} ${
+              l.sub ? "text-base sm:text-lg" : "text-xl sm:text-2xl"
+            } ${open ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"} ${linkColor}`}
           >
+            {l.sub && <span aria-hidden className="mr-1.5 opacity-50">–</span>}
             {l.label}
           </Link>
         ))}
 
         <div
-          style={{ transitionDelay: open ? `${70 + links.length * 50}ms` : "0ms" }}
+          style={{ transitionDelay: open ? `${70 + flat.length * 50}ms` : "0ms" }}
           className={`mt-3 flex flex-col items-end gap-1 text-xs font-medium transition-all duration-[600ms] ${ease} ${
             open ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"
           } ${onDark ? "text-white/75 [text-shadow:0_1px_12px_rgba(0,0,0,0.55)]" : "text-ink-soft"}`}

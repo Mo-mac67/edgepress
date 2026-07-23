@@ -1,6 +1,6 @@
 import "server-only";
 import { getPages, getPosts, getSeo } from "./cms-store";
-import { tx, type Block, type Page } from "./cms-types";
+import { isLive, tx, type Block, type Page } from "./cms-types";
 
 const SITE = () => process.env.SITE_URL ?? "http://localhost:3000";
 
@@ -43,7 +43,7 @@ export interface PageAudit {
 }
 
 export async function auditPages(locale: string = "en"): Promise<PageAudit[]> {
-  const pages = (await getPages()).filter((p) => p.status === "published");
+  const pages = (await getPages()).filter((p) => isLive(p));
   return pages.map((p) => {
     const title = tx(p.title, locale);
     const desc = tx(p.description, locale);
@@ -76,8 +76,8 @@ export async function submitIndexNow(urls?: string[]): Promise<{ ok: boolean; su
   if (!list) {
     const [pages, posts] = await Promise.all([getPages(), getPosts()]);
     list = [
-      ...pages.filter((p) => p.status === "published").flatMap((p) => [`${SITE()}/en/${p.slug}`, `${SITE()}/fr/${p.slug}`]),
-      ...posts.filter((p) => p.status === "published").flatMap((p) => [`${SITE()}/en/blog/${p.slug}`, `${SITE()}/fr/blog/${p.slug}`]),
+      ...pages.filter((p) => isLive(p)).flatMap((p) => [`${SITE()}/en/${p.slug}`, `${SITE()}/fr/${p.slug}`]),
+      ...posts.filter((p) => isLive(p)).flatMap((p) => [`${SITE()}/en/blog/${p.slug}`, `${SITE()}/fr/blog/${p.slug}`]),
     ].map((u) => u.replace(/\/$/, ""));
   }
   if (list.length === 0) return { ok: true, submitted: 0 };

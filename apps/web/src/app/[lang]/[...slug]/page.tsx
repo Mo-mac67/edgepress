@@ -7,7 +7,8 @@ import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { isAuthed } from "@/lib/admin-auth";
 import { getPage, getPost, getPosts } from "@/lib/cms-store";
-import { tx } from "@/lib/cms-types";
+import { isLive, tx } from "@/lib/cms-types";
+import { isValidPreview } from "@/lib/preview";
 import { LEGAL } from "@/lib/legal-content";
 
 // Dynamic: CMS pages render per-request from KV so anything created or edited in
@@ -36,8 +37,9 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
   return {};
 }
 
-export default async function CmsPage({ params }: { params: Promise<{ lang: string; slug: string[] }> }) {
+export default async function CmsPage({ params, searchParams }: { params: Promise<{ lang: string; slug: string[] }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { lang, slug } = await params;
+  const sp = await searchParams;
   if (!isLocale(lang)) notFound();
   const dict = getDictionary(lang);
   const path = slug.join("/");
@@ -46,7 +48,7 @@ export default async function CmsPage({ params }: { params: Promise<{ lang: stri
   if (slug[0] === "blog") {
     if (slug.length === 1) return <BlogIndex lang={lang} />;
     const post = await getPost(slug[1]);
-    if (!post || post.status !== "published") notFound();
+    if (!post || !isLive(post)) notFound();
     const site = process.env.SITE_URL ?? "";
     const postLd = {
       "@context": "https://schema.org",
@@ -86,9 +88,21 @@ export default async function CmsPage({ params }: { params: Promise<{ lang: stri
     if (path === "privacy" || path === "terms") return <LegalFallback kind={path} lang={lang} />;
     notFound();
   }
-  // Drafts stay hidden from visitors but render for signed-in admins (live preview).
-  if (page.status !== "published" && !(await isAuthed())) notFound();
-  return <PageView page={page} locale={lang} dict={dict} />;
+  // Drafts render for signed-in admins, or for anyone holding a signed
+  // preview link (?preview=<token>) an admin shared.
+  const previewParam = typeof sp.preview === "string" ? sp.preview : undefined;
+  const previewing = !isLive(page) && (isValidPreview(page.id, previewParam) || (await isAuthed()));
+  if (!isLive(page) && !previewing) notFound();
+  return (
+    <>
+      {previewing && (
+        <div className="fixed inset-x-0 top-0 z-[100] bg-amber-500 py-1.5 text-center text-xs font-bold text-white">
+          Draft preview — this page is not published yet
+        </div>
+      )}
+      <PageView page={page} locale={lang} dict={dict} />
+    </>
+  );
 }
 
 function LegalFallback({ kind, lang }: { kind: "privacy" | "terms"; lang: string }) {
@@ -108,7 +122,7 @@ function LegalFallback({ kind, lang }: { kind: "privacy" | "terms"; lang: string
 }
 
 async function BlogIndex({ lang }: { lang: string }) {
-  const posts = (await getPosts()).filter((p) => p.status === "published");
+  const posts = (await getPosts()).filter((p) => isLive(p));
   return (
     <section className="bg-cream">
       <div className="container-page pb-16 pt-32">

@@ -86,6 +86,30 @@ export async function sendLeadConfirmation(lead: Lead): Promise<boolean> {
 }
 
 /**
+ * Generic notification email (form submissions, system alerts). Logs instead
+ * of sending when RESEND_API_KEY is missing so everything works key-free.
+ */
+export async function sendNotification(to: string, subject: string, text: string): Promise<boolean> {
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = process.env.LEAD_NOTIFY_FROM ?? "notifications@example.com";
+  if (!apiKey || !to) {
+    console.info(`[notify-email] (not sent — ${apiKey ? "no recipient" : "no RESEND_API_KEY"})\nTo: ${to}\nSubject: ${subject}\n${text}`);
+    return false;
+  }
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ from, to, subject, text }),
+    });
+    return res.ok;
+  } catch (err) {
+    console.error("[notify-email] failed to send", err);
+    return false;
+  }
+}
+
+/**
  * Sends a follow-up email to a lead from the admin panel. Returns whether a
  * real email was dispatched (false = logged only, e.g. no API key configured).
  */

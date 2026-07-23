@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { isAuthed } from "@/lib/admin-auth";
 import { aiComplete, aiReady } from "@/lib/ai/engine";
 import { getPages, getPosts } from "@/lib/cms-store";
-import { tx } from "@/lib/cms-types";
+import { isLive, tx } from "@/lib/cms-types";
 import { pageText } from "@/lib/seo";
 
 /** Learn the brand voice from the site's own published content. Returns a
@@ -15,8 +15,8 @@ export async function POST(request: Request) {
 
   const [pages, posts] = await Promise.all([getPages(), getPosts()]);
   const sample = [
-    ...pages.filter((p) => p.status === "published").map((p) => pageText(p, locale)),
-    ...posts.filter((p) => p.status === "published").map((p) => `${tx(p.title, locale)}\n${tx(p.body, locale).replace(/<[^>]+>/g, " ")}`),
+    ...pages.filter((p) => isLive(p)).map((p) => pageText(p, locale)),
+    ...posts.filter((p) => isLive(p)).map((p) => `${tx(p.title, locale)}\n${tx(p.body, locale).replace(/<[^>]+>/g, " ")}`),
   ]
     .join("\n\n")
     .replace(/\s+/g, " ")

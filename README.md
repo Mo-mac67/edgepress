@@ -19,10 +19,13 @@ Also runs on Docker, plain Node, or Vercel via storage adapters.
 ## What's inside
 
 - **Block CMS** — drag-and-drop page builder, Tiptap rich text, revisions,
-  autosave, themes, media, blog, menus — plus a code editor for page HTML and
-  site-wide Custom CSS.
-- **Headless too** — Custom Content Types with typed fields + CSV, a public
-  Content API, API keys, and HMAC-signed webhooks.
+  autosave, themes, media, blog, nested menus, built-in site search — plus a
+  code editor for page HTML and site-wide Custom CSS. Scheduled publishing,
+  shareable draft-preview links, duplicate, and trash/restore for pages and
+  posts.
+- **Headless too** — Custom Content Types with typed fields, relations
+  (`?expand=1`) + CSV, a public Content API, API keys, and HMAC-signed
+  webhooks.
 - **AI, provider-agnostic + BYOK** — free Cloudflare Workers AI by default, or
   your own Anthropic/OpenAI/Google/Ollama key. Pages, whole sites, articles
   (single or bulk), translation, image generation, audio transcription,
@@ -33,7 +36,8 @@ Also runs on Docker, plain Node, or Vercel via storage adapters.
 - **CRM + SEO + analytics** — lead inbox with AI replies; audits, instant
   indexing, freshness; anomaly alerts, a printable PDF report, and A/B
   headline testing with conversion tracking.
-- **Forms builder** — submissions, spam-flagging, CSV export, embeds.
+- **Forms builder** — submissions, validation rules (regex/min/max),
+  per-form email notifications, spam-flagging, CSV export, embeds.
 - **Auth & safety** — Owner/team roles, per-tab permissions, TOTP 2FA, audit
   log, one-file backup/restore.
 - **MCP server** — manage the site from Claude or any MCP agent.
