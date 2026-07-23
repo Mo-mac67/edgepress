@@ -1,9 +1,32 @@
 import { BlockRenderer } from "./BlockRenderer";
 import { AbTrack } from "@/components/AbTrack";
 import { getSettings } from "@/lib/cms-store";
+import { getSnippets, hasSnippetTokens, renderSnippets } from "@/lib/snippets-store";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { Block, Page } from "@/lib/cms-types";
+
+/** Expands `[snippet name]` tokens in rawHtml + html/richtext blocks. Loads
+ *  the snippet list only when a token actually appears (zero-cost otherwise). */
+async function expandSnippets(page: Page): Promise<Page> {
+  const richtextHas = (b: Block) => b.type === "richtext" && Object.values((b.data.html as Record<string, string>) ?? {}).some((v) => typeof v === "string" && hasSnippetTokens(v));
+  const htmlHas = (b: Block) => b.type === "html" && typeof b.data.code === "string" && hasSnippetTokens(b.data.code);
+  const rawHas = page.mode === "html" && hasSnippetTokens(page.rawHtml ?? "");
+  if (!rawHas && !page.blocks.some((b) => richtextHas(b) || htmlHas(b))) return page;
+  const snippets = await getSnippets();
+  return {
+    ...page,
+    rawHtml: rawHas ? renderSnippets(page.rawHtml ?? "", snippets) : page.rawHtml,
+    blocks: page.blocks.map((b) => {
+      if (htmlHas(b)) return { ...b, data: { ...b.data, code: renderSnippets(b.data.code as string, snippets) } };
+      if (richtextHas(b)) {
+        const html = Object.fromEntries(Object.entries((b.data.html as Record<string, string>) ?? {}).map(([k, v]) => [k, typeof v === "string" ? renderSnippets(v, snippets) : v]));
+        return { ...b, data: { ...b.data, html } };
+      }
+      return b;
+    }),
+  };
+}
 
 /**
  * Renders a CMS page in either mode:
@@ -12,7 +35,8 @@ import type { Block, Page } from "@/lib/cms-types";
  *   CSS/JS stay isolated); fragments are injected inline. With hideChrome the
  *   site header/footer are hidden so the import is standalone.
  */
-export async function PageView({ page, locale, dict }: { page: Page; locale: Locale; dict: Dictionary }) {
+export async function PageView({ page: rawPage, locale, dict }: { page: Page; locale: Locale; dict: Dictionary }) {
+  const page = await expandSnippets(rawPage);
   if (page.mode === "html") {
     const raw = page.rawHtml ?? "";
     const isDocument = /<html[\s>]|<!doctype/i.test(raw);

@@ -371,6 +371,26 @@ async function main() {
     check("webhook rejects unsigned calls", (await api("POST", "/api/pay/webhook", { type: "checkout.session.completed" }, { auth: false })).status === 400);
     await api("POST", "/api/admin/payments", { stripeSecretKey: "", stripeWebhookSecret: "" }); // clear again
 
+    // ── Reusable snippets + booking ────────────────────────
+    console.log("▸ snippets & booking");
+    await api("POST", "/api/admin/snippets", { name: "Promo Banner", html: "<b>SNIPPET-LIVE</b>" });
+    const snipPage = (await api("POST", "/api/admin/pages", { slug: "snip-test", title: "Snip" })).json.page;
+    await api("PUT", `/api/admin/pages/${snipPage.id}`, { status: "published", blocks: [{ id: "s1", type: "html", data: { code: "<div>[snippet promo-banner] and [snippet missing-one]</div>" } }] });
+    const snipHtml = await (await fetchT(`${B}/en/snip-test`)).text();
+    check("snippet token expands on the page", snipHtml.includes("SNIPPET-LIVE"));
+    check("unknown snippet degrades silently", !snipHtml.includes("[snippet missing-one]"));
+
+    await api("POST", "/api/admin/booking", { enabled: true, slotMinutes: 60 });
+    const bookDate = (() => { const d = new Date(Date.now() + 7 * 86_400_000); d.setDate(d.getDate() + ((8 - d.getDay()) % 7)); return d.toISOString().slice(0, 10); })(); // a future Monday
+    const slots1 = (await api("GET", `/api/booking?date=${bookDate}`, null, { auth: false })).json.slots;
+    check("slots offered from weekly availability", Array.isArray(slots1) && slots1.includes("09:00"));
+    check("booking a slot works", (await api("POST", "/api/booking", { date: bookDate, time: "09:00", name: "Visitor", email: "v@x.co" }, { auth: false })).status === 201);
+    check("booked slot disappears from availability", !(await api("GET", `/api/booking?date=${bookDate}`, null, { auth: false })).json.slots.includes("09:00"));
+    check("double-booking rejected", (await api("POST", "/api/booking", { date: bookDate, time: "09:00", name: "V2", email: "v2@x.co" }, { auth: false, headers: { "x-forwarded-for": "10.8.0.2" } })).status === 422);
+    const bookingId = (await api("GET", "/api/admin/booking")).json.bookings.find((b) => b.slot === `${bookDate}T09:00` && b.status === "confirmed")?.id;
+    await api("DELETE", `/api/admin/booking?id=${bookingId}`);
+    check("admin cancel frees the slot", (await api("GET", `/api/booking?date=${bookDate}`, null, { auth: false })).json.slots.includes("09:00"));
+
     // ── OAuth flag ─────────────────────────────────────────
     check("SSO reports disabled without env config", (await api("GET", "/api/auth/oauth/google", null, { auth: false })).json.enabled === false);
     check("SSO start 404s when unconfigured", (await fetchT(`${B}/api/auth/oauth/google/start`)).status === 404);
