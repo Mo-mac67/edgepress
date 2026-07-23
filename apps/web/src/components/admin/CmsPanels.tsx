@@ -563,6 +563,72 @@ export function BlogPanel({ locale }: { locale: Locale }) {
         ))}
         {visiblePosts.length === 0 && <p className="p-6 text-center text-sm text-ink-soft">{showPostTrash ? "Trash is empty." : "No posts yet."}</p>}
       </div>
+
+      <CommentsQueue />
+    </div>
+  );
+}
+
+/** Comment moderation queue — nothing is public until approved here. */
+function CommentsQueue() {
+  const ui = useAdminUI();
+  type C = { id: string; postSlug: string; author: string; body: string; createdAt: string; status: "pending" | "approved"; spam?: boolean };
+  const [comments, setComments] = useState<C[]>([]);
+  const [filter, setFilter] = useState<"pending" | "approved">("pending");
+
+  async function load() {
+    const res = await fetch("/api/admin/comments");
+    if (res.ok) setComments((await res.json()).comments ?? []);
+  }
+  useEffect(() => { load(); }, []);
+
+  async function moderate(id: string, status: "approved" | "pending") {
+    await fetch(`/api/admin/comments/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status }) });
+    ui.toast(status === "approved" ? "Comment approved" : "Comment unapproved", "success");
+    load();
+  }
+  async function del(id: string) {
+    await fetch(`/api/admin/comments/${id}`, { method: "DELETE" });
+    load();
+  }
+
+  const pending = comments.filter((c) => c.status === "pending").length;
+  const visible = comments.filter((c) => c.status === filter);
+
+  return (
+    <div className="mt-8">
+      <div className="mb-3 flex items-center gap-3">
+        <h3 className="font-display font-bold text-brand">Comments</h3>
+        <button onClick={() => setFilter("pending")} className={`rounded-full px-3 py-1 text-xs font-semibold ${filter === "pending" ? "bg-brand text-white" : "bg-surface-soft text-ink-soft"}`}>
+          Awaiting review{pending > 0 && ` (${pending})`}
+        </button>
+        <button onClick={() => setFilter("approved")} className={`rounded-full px-3 py-1 text-xs font-semibold ${filter === "approved" ? "bg-brand text-white" : "bg-surface-soft text-ink-soft"}`}>
+          Approved
+        </button>
+      </div>
+      <div className="card divide-y divide-line">
+        {visible.map((c) => (
+          <div key={c.id} className="flex items-start justify-between gap-3 p-4">
+            <div className="min-w-0">
+              <p className="text-sm">
+                <span className="font-semibold text-brand">{c.author}</span>
+                <span className="ml-2 text-xs text-ink-soft">on /blog/{c.postSlug} · {new Date(c.createdAt).toLocaleString()}</span>
+                {c.spam && <span className="ml-2 rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-bold uppercase text-red-700">spam?</span>}
+              </p>
+              <p className="mt-1 whitespace-pre-wrap text-sm text-ink">{c.body}</p>
+            </div>
+            <div className="flex shrink-0 gap-2">
+              {c.status === "pending" ? (
+                <button onClick={() => moderate(c.id, "approved")} className="btn-secondary py-1.5 text-sm">Approve</button>
+              ) : (
+                <button onClick={() => moderate(c.id, "pending")} className="btn-secondary py-1.5 text-sm">Unapprove</button>
+              )}
+              <button onClick={() => del(c.id)} className="rounded p-2 text-ink-soft hover:text-red-600" title="Delete"><Icon name="trash" size={15} /></button>
+            </div>
+          </div>
+        ))}
+        {visible.length === 0 && <p className="p-6 text-center text-sm text-ink-soft">{filter === "pending" ? "No comments waiting for review." : "No approved comments yet."}</p>}
+      </div>
     </div>
   );
 }
@@ -622,6 +688,13 @@ export function SitePanel() {
         <Text label="Tagline (FR)" value={s.footerTagline.fr} onChange={(v) => set({ footerTagline: { ...s.footerTagline, fr: v } })} />
         <Text label="License note (EN)" value={s.licenseNote.en} onChange={(v) => set({ licenseNote: { ...s.licenseNote, en: v } })} />
         <Text label="License note (FR)" value={s.licenseNote.fr} onChange={(v) => set({ licenseNote: { ...s.licenseNote, fr: v } })} />
+      </div>
+      <div className="card space-y-3 p-5">
+        <h3 className="font-display font-bold text-brand">Blog comments</h3>
+        <label className="flex items-center gap-2 text-sm text-ink">
+          <input type="checkbox" checked={s.commentsEnabled !== false} onChange={(e) => set({ commentsEnabled: e.target.checked })} />
+          Allow comments on blog posts (always moderated — nothing shows before you approve it in the Blog tab)
+        </label>
       </div>
       <div className="card space-y-3 p-5">
         <h3 className="font-display font-bold text-brand">Custom header &amp; footer (advanced)</h3>

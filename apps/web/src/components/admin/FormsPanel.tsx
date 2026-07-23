@@ -3,12 +3,12 @@
 import { useEffect, useState } from "react";
 import { useAdminUI } from "./ui";
 
-type FormFieldType = "text" | "email" | "tel" | "textarea" | "number" | "select" | "checkbox";
-interface FormField { key: string; label: string; type: FormFieldType; required?: boolean; placeholder?: string; options?: string[]; pattern?: string; min?: number; max?: number }
+type FormFieldType = "text" | "email" | "tel" | "textarea" | "number" | "select" | "checkbox" | "file";
+interface FormField { key: string; label: string; type: FormFieldType; required?: boolean; placeholder?: string; options?: string[]; pattern?: string; min?: number; max?: number; step?: number; showIf?: { field: string; equals: string } }
 interface FormDef { id: string; slug: string; name: string; fields: FormField[]; submitLabel: string; successMessage: string; notifyEmail?: string }
 interface Submission { id: string; data: Record<string, unknown>; createdAt: string; spam?: boolean }
 
-const TYPES: FormFieldType[] = ["text", "email", "tel", "textarea", "number", "select", "checkbox"];
+const TYPES: FormFieldType[] = ["text", "email", "tel", "textarea", "number", "select", "checkbox", "file"];
 
 export function FormsPanel() {
   const ui = useAdminUI();
@@ -106,7 +106,7 @@ function FormBuilder({ onDone, onCancel }: { onDone: (slug?: string) => void; on
             <label className="flex items-center gap-1.5 whitespace-nowrap text-xs text-ink-soft"><input type="checkbox" checked={!!f.required} onChange={(e) => setField(i, { required: e.target.checked })} /> required</label>
             <button type="button" onClick={() => setFields((x) => x.filter((_, idx) => idx !== i))} className="text-xs font-semibold text-red-600">Remove</button>
             {f.type === "select" && <input className="field sm:col-span-4" placeholder="Options, comma-separated" defaultValue={(f.options ?? []).join(", ")} onChange={(e) => setField(i, { options: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) })} />}
-            {f.type !== "select" && f.type !== "checkbox" && (
+            {f.type !== "select" && f.type !== "checkbox" && f.type !== "file" && (
               <div className="grid gap-2 sm:col-span-4 sm:grid-cols-[2fr_1fr_1fr]">
                 {f.type !== "number" && f.type !== "email" ? (
                   <input className="field text-xs" placeholder="Pattern (regex, optional) e.g. ^[A-Z]{2}\d{4}$" value={f.pattern ?? ""} onChange={(e) => setField(i, { pattern: e.target.value || undefined })} />
@@ -115,6 +115,14 @@ function FormBuilder({ onDone, onCancel }: { onDone: (slug?: string) => void; on
                 <input className="field text-xs" type="number" placeholder={f.type === "number" ? "Max value" : "Max length"} value={f.max ?? ""} onChange={(e) => setField(i, { max: e.target.value === "" ? undefined : Number(e.target.value) })} />
               </div>
             )}
+            <div className="grid gap-2 sm:col-span-4 sm:grid-cols-[100px_1fr_1fr]">
+              <input className="field text-xs" type="number" min={1} max={10} placeholder="Step (1)" title="Multi-step: which step this field is on" value={f.step ?? ""} onChange={(e) => setField(i, { step: e.target.value === "" ? undefined : Number(e.target.value) })} />
+              <select className="field text-xs" title="Only show this field when another field has a value" value={f.showIf?.field ?? ""} onChange={(e) => setField(i, { showIf: e.target.value ? { field: e.target.value, equals: f.showIf?.equals ?? "" } : undefined })}>
+                <option value="">Always shown</option>
+                {fields.filter((_, k) => k !== i).map((o) => o.key && <option key={o.key} value={o.key}>Show if “{o.label || o.key}” equals…</option>)}
+              </select>
+              {f.showIf && <input className="field text-xs" placeholder="…this value (checkbox: true/false)" value={f.showIf.equals} onChange={(e) => setField(i, { showIf: { field: f.showIf!.field, equals: e.target.value } })} />}
+            </div>
           </div>
         ))}
       </div>
@@ -209,36 +217,94 @@ function FormDetail({ form, onDelete }: { form: FormDef; onDelete: () => void })
   );
 }
 
-/** A self-contained HTML+JS snippet that renders the form and posts to the API. */
+/** A self-contained HTML+JS snippet that renders the form and posts to the API.
+ *  Supports multi-step (field.step), conditional fields (field.showIf) and
+ *  file uploads (multipart when any file field exists). */
 function buildEmbed(form: FormDef): string {
-  const inputs = form.fields.map((f) => {
+  const hasFiles = form.fields.some((f) => f.type === "file");
+  const steps = [...new Set(form.fields.map((f) => f.step ?? 1))].sort((a, b) => a - b);
+  const multiStep = steps.length > 1;
+
+  const inputFor = (f: FormField): string => {
     const req = f.required ? " required" : "";
     // Mirror server-side rules as native HTML validation attributes.
     const lenRules = `${f.min !== undefined ? ` minlength="${f.min}"` : ""}${f.max !== undefined ? ` maxlength="${f.max}"` : ""}`;
     const numRules = `${f.min !== undefined ? ` min="${f.min}"` : ""}${f.max !== undefined ? ` max="${f.max}"` : ""}`;
     const pat = f.pattern ? ` pattern="${f.pattern.replace(/"/g, "&quot;")}"` : "";
-    if (f.type === "textarea") return `    <label>${f.label}<textarea name="${f.key}"${req}${lenRules}></textarea></label>`;
-    if (f.type === "checkbox") return `    <label><input type="checkbox" name="${f.key}"${req}> ${f.label}</label>`;
-    if (f.type === "select") return `    <label>${f.label}<select name="${f.key}"${req}>${(f.options ?? []).map((o) => `<option>${o}</option>`).join("")}</select></label>`;
+    if (f.type === "textarea") return `<label>${f.label}<textarea name="${f.key}"${req}${lenRules}></textarea></label>`;
+    if (f.type === "checkbox") return `<label><input type="checkbox" name="${f.key}"${req}> ${f.label}</label>`;
+    if (f.type === "select") return `<label>${f.label}<select name="${f.key}"${req}>${(f.options ?? []).map((o) => `<option>${o}</option>`).join("")}</select></label>`;
+    if (f.type === "file") return `<label>${f.label}<input type="file" name="${f.key}"${req} accept=".png,.jpg,.jpeg,.webp,.gif,.pdf"></label>`;
     const t = f.type === "email" ? "email" : f.type === "tel" ? "tel" : f.type === "number" ? "number" : "text";
-    return `    <label>${f.label}<input type="${t}" name="${f.key}"${req}${t === "number" ? numRules : lenRules}${t === "text" || t === "tel" ? pat : ""}></label>`;
-  }).join("\n");
-  return `<form id="ep-${form.slug}">
-${inputs}
+    return `<label>${f.label}<input type="${t}" name="${f.key}"${req}${t === "number" ? numRules : lenRules}${t === "text" || t === "tel" ? pat : ""}></label>`;
+  };
+
+  const wrap = (f: FormField): string => {
+    const cond = f.showIf ? ` data-ep-showif="${f.showIf.field}" data-ep-equals="${String(f.showIf.equals).replace(/"/g, "&quot;")}"` : "";
+    return `    <div${cond}>${inputFor(f)}</div>`;
+  };
+
+  const body = multiStep
+    ? steps
+        .map((s, i) => {
+          const fields = form.fields.filter((f) => (f.step ?? 1) === s).map(wrap).join("\n");
+          const nav =
+            `      <div class="ep-nav">` +
+            (i > 0 ? `<button type="button" class="ep-prev">Back</button>` : "") +
+            (i < steps.length - 1 ? `<button type="button" class="ep-next">Next</button>` : `<button type="submit">${form.submitLabel}</button>`) +
+            `</div>`;
+          return `    <fieldset class="ep-step"${i > 0 ? ' style="display:none"' : ""}>\n${fields}\n${nav}\n    </fieldset>`;
+        })
+        .join("\n")
+    : `${form.fields.map(wrap).join("\n")}\n    <button type="submit">${form.submitLabel}</button>`;
+
+  return `<form id="ep-${form.slug}"${hasFiles ? ' enctype="multipart/form-data"' : ""}>
+${body}
     <input type="text" name="_hp" style="display:none" tabindex="-1" autocomplete="off">
-    <button type="submit">${form.submitLabel}</button>
     <p class="ep-msg"></p>
 </form>
 <script>
-document.getElementById("ep-${form.slug}").addEventListener("submit", async function(e){
-  e.preventDefault();
-  var f = e.target, d = {};
-  new FormData(f).forEach(function(v,k){ d[k] = v; });
-  f.querySelectorAll('input[type=checkbox]').forEach(function(c){ d[c.name] = c.checked; });
-  var res = await fetch("/api/forms/${form.slug}", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(d) });
-  var j = await res.json();
-  f.querySelector(".ep-msg").textContent = res.ok ? (j.message || "Thanks!") : (j.error || "Something went wrong");
-  if (res.ok) f.reset();
-});
+(function(){
+  var f = document.getElementById("ep-${form.slug}");
+  // Conditional fields: show only when the controlling field matches; hidden
+  // fields are disabled so they're neither validated nor submitted.
+  function applyConds(){
+    f.querySelectorAll("[data-ep-showif]").forEach(function(w){
+      var ctrl = f.querySelector('[name="'+w.getAttribute("data-ep-showif")+'"]');
+      var val = ctrl ? (ctrl.type === "checkbox" ? String(ctrl.checked) : ctrl.value) : "";
+      var show = val === w.getAttribute("data-ep-equals");
+      w.style.display = show ? "" : "none";
+      w.querySelectorAll("input,select,textarea").forEach(function(i){ i.disabled = !show; });
+    });
+  }
+  f.addEventListener("input", applyConds);
+  f.addEventListener("change", applyConds);
+  applyConds();
+  // Multi-step navigation with per-step native validation.
+  var stepEls = f.querySelectorAll(".ep-step");
+  function stepValid(el){
+    var ok = true;
+    el.querySelectorAll("input,select,textarea").forEach(function(i){ if (!i.disabled && !i.checkValidity()) { i.reportValidity(); ok = false; } });
+    return ok;
+  }
+  stepEls.forEach(function(el, idx){
+    var next = el.querySelector(".ep-next"), prev = el.querySelector(".ep-prev");
+    if (next) next.addEventListener("click", function(){ if (stepValid(el)) { el.style.display = "none"; stepEls[idx+1].style.display = ""; } });
+    if (prev) prev.addEventListener("click", function(){ el.style.display = "none"; stepEls[idx-1].style.display = ""; });
+  });
+  f.addEventListener("submit", async function(e){
+    e.preventDefault();
+    var res;
+    ${hasFiles
+      ? `res = await fetch("/api/forms/${form.slug}", { method:"POST", body: new FormData(f) });`
+      : `var d = {};
+    new FormData(f).forEach(function(v,k){ d[k] = v; });
+    f.querySelectorAll("input[type=checkbox]").forEach(function(c){ if (!c.disabled) d[c.name] = c.checked; });
+    res = await fetch("/api/forms/${form.slug}", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(d) });`}
+    var j = await res.json();
+    f.querySelector(".ep-msg").textContent = res.ok ? (j.message || "Thanks!") : (j.error || "Something went wrong");
+    if (res.ok) { f.reset(); applyConds(); if (stepEls.length) { stepEls.forEach(function(s,i){ s.style.display = i === 0 ? "" : "none"; }); } }
+  });
+})();
 </script>`;
 }

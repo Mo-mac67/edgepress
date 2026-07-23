@@ -77,6 +77,9 @@ export interface Post {
   /** Soft delete (see Page.trashed). */
   trashed?: boolean;
   trashedAt?: string;
+  /** Taxonomy: lowercase slugs, filterable on the blog index (?cat= / ?tag=). */
+  categories?: string[];
+  tags?: string[];
 }
 
 /**
@@ -123,6 +126,8 @@ export interface SiteSettings {
    *  Empty = use the built-in components (nav, language switcher, theme). */
   customHeaderHtml?: string;
   customFooterHtml?: string;
+  /** Blog comments (moderated — nothing shows before approval). Default on. */
+  commentsEnabled?: boolean;
 }
 
 export function tx(v: unknown, locale: Locale): string {
@@ -180,6 +185,8 @@ export type BlockType =
   | "beforeAfter"
   | "featuredProject"
   | "youtubeFeed"
+  | "newsletter"
+  | "payment"
   | "html"
   | "spacer";
 
@@ -404,6 +411,36 @@ export const BLOCKS: Record<BlockType, BlockDef> = {
     ],
     defaults: () => ({ title: L(), subtitle: L(), showSchema: false, items: [] }),
   },
+  newsletter: {
+    label: "Newsletter signup",
+    icon: "mail",
+    fields: [
+      { key: "title", label: "Title", type: "text", localized: true },
+      { key: "subtitle", label: "Subtitle", type: "textarea", localized: true },
+      { key: "placeholder", label: "Input placeholder", type: "text", localized: true },
+      { key: "buttonLabel", label: "Button label", type: "text", localized: true },
+    ],
+    defaults: () => ({ title: L("Stay in the loop"), subtitle: L(), placeholder: L(), buttonLabel: L("Subscribe") }),
+  },
+  payment: {
+    label: "Payment button (Stripe)",
+    icon: "lock",
+    fields: [
+      { key: "title", label: "Title", type: "text", localized: true },
+      { key: "subtitle", label: "Subtitle", type: "textarea", localized: true },
+      { key: "product", label: "Product name (on the receipt)", type: "text" },
+      { key: "amount", label: "Price (e.g. 49 or 49.99)", type: "text" },
+      {
+        key: "currency", label: "Currency", type: "select",
+        options: [
+          { value: "usd", label: "USD" }, { value: "cad", label: "CAD" },
+          { value: "eur", label: "EUR" }, { value: "gbp", label: "GBP" },
+        ],
+      },
+      { key: "buttonLabel", label: "Button label", type: "text", localized: true },
+    ],
+    defaults: () => ({ title: L(), subtitle: L(), product: "My product", amount: "10", currency: "usd", buttonLabel: L("Buy now") }),
+  },
   cta: {
     label: "Call to action",
     icon: "arrow-right",
@@ -554,7 +591,7 @@ export const BLOCKS: Record<BlockType, BlockDef> = {
 
 export const BLOCK_ORDER: BlockType[] = [
   "slideshow", "hero", "header", "richtext", "imageText", "cards", "stats", "steps",
-  "featuredProject", "gallery", "beforeAfter", "testimonials", "youtubeFeed", "faq", "cta", "contactForm", "image", "video", "embed", "html", "spacer",
+  "featuredProject", "gallery", "beforeAfter", "testimonials", "youtubeFeed", "faq", "cta", "contactForm", "newsletter", "payment", "image", "video", "embed", "html", "spacer",
 ];
 
 /**

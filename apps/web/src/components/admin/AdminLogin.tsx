@@ -27,6 +27,13 @@ function LoginForm() {
   const [needsCode, setNeedsCode] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [sso, setSso] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/auth/oauth/google").then(async (r) => r.ok && setSso((await r.json()).enabled === true)).catch(() => {});
+    const reason = new URLSearchParams(window.location.search).get("sso");
+    if (reason && reason !== "off") setError(reason === "email" ? "That Google account isn't on the allowlist." : "Google sign-in failed — try again or use your password.");
+  }, []);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -69,6 +76,12 @@ function LoginForm() {
         <button type="submit" disabled={loading} className="btn-primary mt-5 w-full">
           {loading ? "Signing in…" : needsCode ? "Verify" : "Sign in"}
         </button>
+        {sso && (
+          <a href="/api/auth/oauth/google/start" className="btn-secondary mt-3 flex w-full items-center justify-center gap-2">
+            <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden><path fill="currentColor" d="M21.35 11.1H12v2.9h5.3c-.5 2.5-2.6 3.9-5.3 3.9a6 6 0 1 1 0-12c1.5 0 2.9.5 4 1.5l2.2-2.2A9 9 0 1 0 12 21c5.2 0 8.9-3.6 8.9-8.9 0-.3 0-.7-.1-1z"/></svg>
+            Sign in with Google
+          </a>
+        )}
       </form>
     </section>
   );

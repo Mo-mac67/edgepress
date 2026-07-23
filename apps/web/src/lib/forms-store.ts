@@ -10,7 +10,7 @@ import { slugify } from "./content-store";
  * CSV-exportable in the admin. Forms embed anywhere via a copy-paste snippet.
  */
 
-export type FormFieldType = "text" | "email" | "tel" | "textarea" | "number" | "select" | "checkbox";
+export type FormFieldType = "text" | "email" | "tel" | "textarea" | "number" | "select" | "checkbox" | "file";
 
 export interface FormField {
   key: string;
@@ -24,6 +24,10 @@ export interface FormField {
   /** number type: value bounds. String types: length bounds. */
   min?: number;
   max?: number;
+  /** Multi-step forms: 1-based step this field belongs to (default 1). */
+  step?: number;
+  /** Conditional: only shown (and validated) when another field equals a value. */
+  showIf?: { field: string; equals: string };
 }
 
 export interface FormDef {
@@ -57,7 +61,7 @@ function normalizeFields(raw: unknown): FormField[] {
   for (const f of raw) {
     const key = slugify(String((f as FormField)?.key || (f as FormField)?.label || "")).replace(/-/g, "_");
     if (!key || seen.has(key)) continue;
-    const type = (["text", "email", "tel", "textarea", "number", "select", "checkbox"] as FormFieldType[]).includes((f as FormField)?.type) ? (f as FormField).type : "text";
+    const type = (["text", "email", "tel", "textarea", "number", "select", "checkbox", "file"] as FormFieldType[]).includes((f as FormField)?.type) ? (f as FormField).type : "text";
     seen.add(key);
     const field: FormField = { key, label: String((f as FormField)?.label || key).slice(0, 80), type };
     if ((f as FormField)?.required) field.required = true;
@@ -71,6 +75,13 @@ function normalizeFields(raw: unknown): FormField[] {
     const min = num((f as FormField)?.min), max = num((f as FormField)?.max);
     if (min !== undefined) field.min = min;
     if (max !== undefined) field.max = max;
+    const step = num((f as FormField)?.step);
+    if (step !== undefined && step >= 2) field.step = Math.min(Math.floor(step), 10);
+    const showIf = (f as FormField)?.showIf;
+    if (showIf && typeof showIf.field === "string" && showIf.field.trim() && typeof showIf.equals === "string") {
+      const target = slugify(showIf.field).replace(/-/g, "_");
+      if (target && target !== key) field.showIf = { field: target, equals: String(showIf.equals).slice(0, 120) };
+    }
     out.push(field);
   }
   return out.slice(0, 40);
@@ -152,10 +163,17 @@ export async function deleteSubmission(slug: string, id: string): Promise<boolea
   return true;
 }
 
+/** A field hidden by its showIf condition is neither validated nor stored. */
+export function isFieldVisible(f: FormField, raw: Record<string, unknown>): boolean {
+  if (!f.showIf) return true;
+  return String(raw[f.showIf.field] ?? "") === f.showIf.equals;
+}
+
 /** Validate + coerce a raw public submission against the form's field schema. */
 export function validateSubmission(form: FormDef, raw: Record<string, unknown>): { ok: true; data: Record<string, unknown> } | { ok: false; error: string } {
   const data: Record<string, unknown> = {};
   for (const f of form.fields) {
+    if (!isFieldVisible(f, raw)) continue;
     const v = raw[f.key];
     if (f.required && (v === undefined || v === null || String(v).trim() === "" || (f.type === "checkbox" && !v))) {
       return { ok: false, error: `${f.label} is required` };

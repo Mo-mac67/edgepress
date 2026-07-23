@@ -54,7 +54,7 @@ export async function PageView({ page, locale, dict }: { page: Page; locale: Loc
   return (
     <>
       {ab && <AbTrack slug={page.slug} variant={ab.variant} />}
-      <BlockRenderer blocks={blocks} locale={locale} dict={dict} settings={settings} first pageDate={page.updatedAt} />
+      <BlockRenderer blocks={blocks} locale={locale} dict={dict} settings={settings} first pageDate={page.updatedAt} pageId={page.id} />
     </>
   );
 }
