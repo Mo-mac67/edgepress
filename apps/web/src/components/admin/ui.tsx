@@ -62,6 +62,10 @@ export function AdminUIProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <Ctx.Provider value={api}>
+      {/* .admin-ui: the panel (incl. toasts + dialogs) wears a FIXED
+          professional graphite palette (globals.css) instead of inheriting
+          the site's marketing theme — the admin looks identical everywhere. */}
+      <div className="admin-ui contents">
       {children}
 
       {/* Toast stack */}
@@ -97,6 +101,7 @@ export function AdminUIProvider({ children }: { children: React.ReactNode }) {
           }}
         />
       )}
+      </div>
     </Ctx.Provider>
   );
 }
