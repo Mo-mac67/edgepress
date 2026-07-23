@@ -297,6 +297,13 @@ redeploy. Your content, deploy config (`wrangler.jsonc`, `.env*`), data and
 extra dependencies are preserved; core code is refreshed. The admin sidebar
 shows your current version. Details: [DEPLOYMENT.md](DEPLOYMENT.md) §9.
 
+**Update notifications**: the admin shows an owner-only banner when a newer
+release exists (checked once a day against the repo's GitHub Releases; set
+`EDGEPRESS_UPDATE_REPO=off` to disable, or point it at your fork). Release
+notes live in [CHANGELOG.md](../CHANGELOG.md); to get emails, use
+**Watch → Custom → Releases** on GitHub. Updates never touch your content —
+it lives in your storage, not in the code.
+
 ## 18. Storage & hosting
 
 The same app runs on:
