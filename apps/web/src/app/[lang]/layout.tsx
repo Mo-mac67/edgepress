@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Fraunces, Inter, Lora, Manrope, Playfair_Display, Plus_Jakarta_Sans, Poppins, Space_Grotesk } from "next/font/google";
 import { notFound } from "next/navigation";
+import { redirectOrNotFound } from "@/lib/redirect-guard";
 import "../globals.css";
 import { Analytics } from "@/components/Analytics";
 import { FloatingQuote } from "@/components/FloatingQuote";
@@ -93,7 +94,9 @@ export default async function LangLayout({
   params: Promise<{ lang: string }>;
 }) {
   const { lang } = await params;
-  if (!isLocale(lang) || !(await getActiveLocales()).includes(lang)) notFound();
+  // Non-locale first segments (e.g. /old-page.html from a migrated site) land
+  // here — give the redirect rules a chance before 404ing.
+  if (!isLocale(lang) || !(await getActiveLocales()).includes(lang)) await redirectOrNotFound(`/${lang}`);
 
   const dict = getDictionary(lang);
   const [nav, settings, seo, aiCfg, theme] = await Promise.all([getNav(), getSettings(), getSeo(), getAIConfig(), getTheme()]);

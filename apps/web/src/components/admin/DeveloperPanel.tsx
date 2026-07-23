@@ -12,6 +12,59 @@ export function DeveloperPanel() {
       <ApiDocsCard />
       <ApiKeysCard />
       <WebhooksCard />
+      <PaymentsCard />
+    </div>
+  );
+}
+
+/** Stripe hosted-checkout config + paid orders. Keys are stored server-side
+ *  and masked ("set") on read — never echoed back. */
+function PaymentsCard() {
+  const ui = useAdminUI();
+  interface Order { id: string; product: string; amount: number; currency: string; email?: string; createdAt: string }
+  const [secretKey, setSecretKey] = useState("");
+  const [webhookSecret, setWebhookSecret] = useState("");
+  const [orders, setOrders] = useState<Order[]>([]);
+
+  async function load() {
+    const res = await fetch("/api/admin/payments");
+    if (!res.ok) return;
+    const d = await res.json();
+    setSecretKey(d.config.stripeSecretKey);
+    setWebhookSecret(d.config.stripeWebhookSecret);
+    setOrders(d.orders ?? []);
+  }
+  useEffect(() => { load(); }, []);
+
+  async function save() {
+    const res = await fetch("/api/admin/payments", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ stripeSecretKey: secretKey, stripeWebhookSecret: webhookSecret }) });
+    if (res.ok) { ui.toast("Payment settings saved", "success"); load(); }
+    else ui.toast("Couldn't save (owner only)", "error");
+  }
+
+  return (
+    <div className="card p-5">
+      <h3 className="font-display font-bold text-brand">Payments (Stripe)</h3>
+      <p className="mt-1 text-xs text-ink-soft">
+        Add a <b>Payment button</b> block to any page. Buyers pay on Stripe&apos;s hosted checkout — card data never touches this site. Point a Stripe webhook (event <code className="rounded bg-surface-soft px-1">checkout.session.completed</code>) at <code className="rounded bg-surface-soft px-1">/api/pay/webhook</code> to record orders below.
+      </p>
+      <label className="mt-3 block"><span className="mb-1 block text-xs font-medium text-ink-soft">Secret key (sk_…)</span><input type="password" className="field" placeholder="sk_live_…" value={secretKey} onChange={(e) => setSecretKey(e.target.value)} /></label>
+      <label className="mt-2 block"><span className="mb-1 block text-xs font-medium text-ink-soft">Webhook signing secret (whsec_…)</span><input type="password" className="field" placeholder="whsec_…" value={webhookSecret} onChange={(e) => setWebhookSecret(e.target.value)} /></label>
+      <button onClick={save} className="btn-secondary mt-3">Save payment settings</button>
+
+      <h4 className="mt-5 text-sm font-semibold text-ink">Orders ({orders.length})</h4>
+      {orders.length === 0 ? (
+        <p className="mt-1 text-xs text-ink-soft">No paid orders yet.</p>
+      ) : (
+        <ul className="mt-2 divide-y divide-line">
+          {orders.slice(0, 50).map((o) => (
+            <li key={o.id} className="flex items-center justify-between gap-3 py-2 text-sm">
+              <span className="min-w-0 truncate">{o.product}{o.email && <span className="ml-2 text-xs text-ink-soft">{o.email}</span>}</span>
+              <span className="shrink-0 text-xs"><b>{(o.amount / 100).toFixed(2)} {o.currency.toUpperCase()}</b> · {new Date(o.createdAt).toLocaleString()}</span>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

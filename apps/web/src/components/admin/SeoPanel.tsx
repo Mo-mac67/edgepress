@@ -254,7 +254,66 @@ export function SeoPanel() {
       </section>
 
       <button onClick={save} className="btn-primary">{saved ? "Saved — live on the site ✓" : "Save SEO settings"}</button>
+
+      <RedirectsCard />
     </div>
+  );
+}
+
+/** Redirect manager — keeps old URLs alive after a migration or re-slug. */
+function RedirectsCard() {
+  const [rules, setRules] = useState<{ id: string; from: string; to: string; code: number }[]>([]);
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [code, setCode] = useState<301 | 302>(301);
+  const [err, setErr] = useState("");
+
+  async function load() {
+    const res = await fetch("/api/admin/redirects");
+    if (res.ok) setRules((await res.json()).redirects ?? []);
+  }
+  useEffect(() => { load(); }, []);
+
+  async function add() {
+    setErr("");
+    const res = await fetch("/api/admin/redirects", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ from, to, code }) });
+    const d = await res.json().catch(() => ({}));
+    if (res.ok) { setFrom(""); setTo(""); load(); }
+    else setErr(d.error || "Couldn't add the rule");
+  }
+
+  async function del(id: string) {
+    await fetch(`/api/admin/redirects?id=${id}`, { method: "DELETE" });
+    load();
+  }
+
+  return (
+    <section className="card p-5">
+      <h3 className="font-display font-bold text-brand">Redirects</h3>
+      <p className="mt-1 text-sm text-ink-soft">
+        Old URLs keep working after a migration or a slug change. Checked only when a page isn&apos;t found. <code className="rounded bg-surface-soft px-1">/old/*</code> matches a whole section; a trailing <code className="rounded bg-surface-soft px-1">*</code> in the target carries the rest of the path over.
+      </p>
+      <div className="mt-4 grid gap-2 sm:grid-cols-[1fr_1fr_auto_auto]">
+        <input className="field" placeholder="/old-page.html or /old-blog/*" value={from} onChange={(e) => setFrom(e.target.value)} />
+        <input className="field" placeholder="/en/new-page or /en/blog/*" value={to} onChange={(e) => setTo(e.target.value)} />
+        <select className="field" value={code} onChange={(e) => setCode(Number(e.target.value) as 301 | 302)}>
+          <option value={301}>301 permanent</option>
+          <option value={302}>302 temporary</option>
+        </select>
+        <button onClick={add} className="btn-secondary">Add</button>
+      </div>
+      {err && <p className="mt-2 text-sm text-red-600">{err}</p>}
+      {rules.length > 0 && (
+        <ul className="mt-4 divide-y divide-line">
+          {rules.map((r) => (
+            <li key={r.id} className="flex items-center justify-between gap-3 py-2 text-sm">
+              <span className="min-w-0 truncate"><code className="text-brand">{r.from}</code> <span className="text-ink-soft">→</span> <code>{r.to}</code> <span className="text-xs text-ink-soft">({r.code})</span></span>
+              <button onClick={() => del(r.id)} className="shrink-0 text-xs font-semibold text-red-600">Delete</button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }
 

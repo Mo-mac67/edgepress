@@ -15,6 +15,7 @@ import { FormsPanel } from "./FormsPanel";
 import { DeveloperPanel } from "./DeveloperPanel";
 import { TabPermissionsCard } from "./TabPermissionsCard";
 import { SeoPanel } from "./SeoPanel";
+import { NewsletterPanel } from "./NewsletterPanel";
 import { AiPanel } from "./AiPanel";
 import { CopilotPanel } from "./CopilotPanel";
 import { ThemePanel } from "./ThemePanel";
@@ -35,9 +36,9 @@ const STATUS_LABEL: Record<LeadStatus, string> = {
   lost: "Lost",
 };
 const PALETTE = ["#16324f", "#e0a52e", "#1c4066", "#c2861a", "#5a6571", "#9aa4ae"];
-type Tab = "overview" | "copilot" | "leads" | "marketplace" | "pages" | "menu" | "blog" | "collections" | "forms" | "media" | "appearance" | "seo" | "ai" | "site" | "developer" | "activity" | "settings" | "audit" | "help";
+type Tab = "overview" | "copilot" | "leads" | "marketplace" | "pages" | "menu" | "blog" | "collections" | "forms" | "media" | "appearance" | "seo" | "newsletter" | "ai" | "site" | "developer" | "activity" | "settings" | "audit" | "help";
 /** Every dashboard tab id — also the vocabulary for per-admin tab permissions ("audit"/"developer" stay super-only regardless). */
-const ALL_TAB_IDS: Tab[] = ["overview", "leads", "marketplace", "activity", "audit", "pages", "menu", "blog", "collections", "forms", "media", "seo", "appearance", "site", "developer", "settings", "help"];
+const ALL_TAB_IDS: Tab[] = ["overview", "leads", "marketplace", "activity", "audit", "pages", "menu", "blog", "collections", "forms", "media", "seo", "newsletter", "appearance", "site", "developer", "settings", "help"];
 
 export function AdminDashboard({
   locale,
@@ -102,6 +103,7 @@ export function AdminDashboard({
       title: "Growth",
       items: [
         { id: "seo" as Tab, label: "SEO", icon: "chart" as const },
+        { id: "newsletter" as Tab, label: "Newsletter", icon: "mail" as const },
         { id: "ai" as Tab, label: "AI", icon: "star" as const },
       ],
     },
@@ -221,6 +223,7 @@ export function AdminDashboard({
           {tab === "appearance" && <ThemePanel />}
           {tab === "copilot" && <CopilotPanel locale={locale} />}
           {tab === "seo" && <SeoPanel />}
+          {tab === "newsletter" && <NewsletterPanel />}
           {tab === "ai" && <AiPanel />}
           {tab === "help" && <HelpPanel />}
           {tab === "site" && <SitePanel />}

@@ -91,6 +91,12 @@ description > body matches. The JSON endpoint is `GET /api/search?q=…&lang=…
 - **New post** — write in the rich-text editor, per language. A **Visual/HTML**
   toggle above the body switches to a code editor for editing the post's exact
   HTML (Blogger-style source view).
+- **Categories & tags** — comma-separated on each post (normalized to slugs).
+  The blog index grows filter chips per category; `?cat=` / `?tag=` filter
+  links work anywhere, and each post shows clickable chips.
+- **Comments** — moderated: visitors can comment on posts (rate-limited,
+  honeypot + spam heuristics) and **nothing appears until you approve it** in
+  the Blog tab's Comments queue. Toggle the whole feature in Site info.
 - **Write with AI** — give a topic; AI drafts the full article (title,
   excerpt, body, keywords) as a draft post.
 - **Bulk from CSV** — upload a CSV/text file of topics (one per line); AI
@@ -125,6 +131,14 @@ Build forms (contact, signup, survey…) in the **Forms** tab:
   numbers, min/max **length** for text. Enforced on the server and mirrored
   as native HTML attributes in the embed snippet; email fields are
   format-checked automatically.
+- **Multi-step forms** — give fields a *Step* number and the embed renders
+  one step at a time with Back/Next (each step natively validated).
+- **Conditional fields** — *Show if "X" equals…*: the field only appears
+  (and is only validated/stored) when another field has that value. For
+  checkboxes match on `true`/`false`.
+- **File uploads** — the `file` field type accepts png/jpg/webp/gif/pdf up
+  to 5 MB (hard server-side limits); uploads land in your media storage and
+  the submission stores the link.
 - **Per-form notifications**: set *Email new submissions to* and every
   (non-spam) submission is emailed there via Resend — leave blank to use
   the site-wide `LEAD_NOTIFY_TO`. Without an API key it logs instead of
@@ -234,6 +248,10 @@ chatting: list/create/translate/publish pages, read leads.
   it (issue → action).
 - **Content freshness** — pages not updated in 120+ days, with one-click
   edit links.
+- **Redirects** — keep old URLs alive after a migration or slug change.
+  Exact rules (`/old-page.html → /en/new-page`) or wildcards
+  (`/old-blog/* → /en/blog/*`, the `*` carries the rest of the path).
+  Checked only on the 404 path, 301 or 302, capped at 500 rules.
 - **Keyword ideas** and content gaps for any topic.
 - Automatic **sitemap** (all languages), **IndexNow** ping on publish,
   structured data (Organization/LocalBusiness), GA4/GTM/Meta Pixel tags.
@@ -290,3 +308,31 @@ content between any of them.
 📖 Full deployment walkthroughs — one-command Cloudflare wizard, custom
 domains, several sites on one account, quotas, migration, self-host storage and
 troubleshooting — live in [DEPLOYMENT.md](DEPLOYMENT.md).
+
+## 19. Newsletter
+
+- Grow the list with the **Newsletter signup** block on any page (public
+  signup is rate-limited + honeypot-protected, addresses deduped).
+- The **Newsletter** tab lists subscribers (CSV export) and sends plain-text
+  **campaigns** via Resend in batches — every email carries a signed
+  one-click unsubscribe link. Owner only; without `RESEND_API_KEY` the
+  campaign is logged, never sent.
+
+## 20. Payments (Stripe)
+
+- Add a **Payment button** block: product name, price, currency, label.
+- Buyers pay on **Stripe-hosted Checkout** — card data never touches your
+  site. Prices are read server-side from the stored page, so they can't be
+  tampered with from the browser.
+- Setup (Developer → Payments): paste your Stripe **secret key**, and point
+  a Stripe webhook (`checkout.session.completed`) at `/api/pay/webhook` with
+  its **signing secret** — paid orders then appear in the Orders list and
+  fire the `order.paid` webhook.
+
+## 21. Sign in with Google (optional SSO)
+
+Set three env vars and a **Sign in with Google** button appears on the admin
+login: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and
+`OAUTH_ALLOWED_EMAILS` (comma-separated). Only allowlisted, verified Google
+accounts get in (as the owner); every attempt is audit-logged. Password +
+2FA keep working alongside.

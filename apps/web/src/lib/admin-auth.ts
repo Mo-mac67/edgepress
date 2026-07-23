@@ -113,6 +113,16 @@ export async function clearAuthCookie(): Promise<void> {
   (await cookies()).delete(COOKIE_NAME);
 }
 
+/** SSO (Google OAuth) sign-in as the owner. The cookie reuses the stored
+ *  owner credential hash so getRole() validates it like any session. Only
+ *  callable after the OAuth callback verified an allowlisted email. */
+export async function signInAsOwnerSso(): Promise<boolean> {
+  const h = await primaryAdminHash();
+  if (!h) return false;
+  await setAuthCookie("super", h);
+  return true;
+}
+
 /** Sets the primary client-admin password (self-change or super reset). Preserves other config fields (tabPermissions). */
 export async function setAdminPassword(next: string): Promise<boolean> {
   if (!next || next.length < 4) return false;

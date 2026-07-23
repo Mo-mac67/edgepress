@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { redirectOrNotFound } from "@/lib/redirect-guard";
 import type { Metadata } from "next";
 import { PageView } from "@/components/blocks/PageView";
 import { isLocale } from "@/i18n/config";
@@ -26,7 +27,7 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
 
 export default async function HomePage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params;
-  if (!isLocale(lang)) notFound();
+  if (!isLocale(lang)) return redirectOrNotFound(`/${lang}`);
   const dict = getDictionary(lang);
   const page = await getPage("");
   if (!page) notFound();

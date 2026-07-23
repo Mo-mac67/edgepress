@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { sendNotification } from "@/lib/email";
 import { addSubmission, getForm, validateSubmission } from "@/lib/forms-store";
+import { putMedia } from "@/lib/media-r2";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { isSpam } from "@/lib/spam";
 import { dispatchWebhook } from "@/lib/webhooks";
@@ -22,9 +23,37 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
   const form = await getForm(slug);
   if (!form) return NextResponse.json({ error: "Unknown form" }, { status: 404, headers: cors });
 
-  const body = await request.json().catch(() => ({}));
+  // JSON for plain forms; multipart when the form has file fields.
+  let body: Record<string, unknown> = {};
+  const pendingFiles: { field: string; file: File }[] = [];
+  if ((request.headers.get("content-type") ?? "").includes("multipart/form-data")) {
+    const fd = await request.formData().catch(() => null);
+    if (!fd) return NextResponse.json({ error: "Invalid form data" }, { status: 400, headers: cors });
+    for (const [k, v] of fd.entries()) {
+      if (typeof v === "string") body[k] = v;
+    }
+    for (const f of form.fields.filter((x) => x.type === "file")) {
+      const v = fd.get(f.key);
+      if (v && typeof v !== "string" && v.size > 0) pendingFiles.push({ field: f.key, file: v });
+    }
+  } else {
+    body = await request.json().catch(() => ({}));
+  }
   // Honeypot: hidden "_hp" field filled → pretend success, store nothing.
   if (body._hp) return NextResponse.json({ ok: true }, { headers: cors });
+
+  // Validate + store uploads BEFORE schema validation so required file fields
+  // see their value. Size/type limits are hard server-side rules.
+  const FILE_MAX = 5 * 1024 * 1024;
+  const FILE_EXT = ["png", "jpg", "jpeg", "webp", "gif", "pdf"];
+  for (const { field, file } of pendingFiles) {
+    if (file.size > FILE_MAX) return NextResponse.json({ error: "File too large (max 5 MB)" }, { status: 422, headers: cors });
+    const ext = (file.name.split(".").pop() ?? "").toLowerCase();
+    if (!FILE_EXT.includes(ext)) return NextResponse.json({ error: `File type .${ext} not allowed` }, { status: 422, headers: cors });
+    const key = `form-uploads/${slug}/${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    await putMedia(key, new Uint8Array(await file.arrayBuffer()), file.type || "application/octet-stream");
+    body[field] = `/api/media/${key}`;
+  }
 
   const result = validateSubmission(form, body);
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: 422, headers: cors });

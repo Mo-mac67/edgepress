@@ -25,12 +25,17 @@ async function localPath(key: string): Promise<string> {
   const dir = process.env.DATA_DIR || path.join(process.cwd(), "data");
   // SECURITY: the key comes from the URL — never let it traverse out of the
   // media dir (e.g. "../admin-config.json" would expose the password hash in
-  // fs/sqlite mode). Keys we generate are always "<id>.<ext>"; reject anything
-  // with path separators, "..", or other unexpected characters.
-  if (!/^[A-Za-z0-9._-]+$/.test(key) || key.includes("..")) {
+  // fs/sqlite mode). Nested keys (form-uploads/<form>/<id>.<ext>) are allowed,
+  // but EVERY segment must be a plain filename — no "..", ".", empty, or odd
+  // characters — and the resolved path must stay under the media dir.
+  const segments = key.split("/");
+  if (segments.length > 4 || segments.some((s) => !/^[A-Za-z0-9._-]+$/.test(s) || s === ".." || s === ".")) {
     throw new Error("Invalid media key");
   }
-  return path.join(dir, "media", key);
+  const mediaDir = path.join(dir, "media");
+  const p = path.join(mediaDir, ...segments);
+  if (!path.resolve(p).startsWith(path.resolve(mediaDir))) throw new Error("Invalid media key");
+  return p;
 }
 
 /** S3-compatible object storage (EDGEPRESS_MEDIA=s3). Loaded lazily so it's

@@ -295,6 +295,86 @@ async function main() {
     check("depth caps at one sub-level", savedNav[0]?.children?.[0]?.children === undefined);
     check("sub-link renders in the site menu", (await (await fetchT(`${B}/en`)).text()).includes("Sub Nine"));
 
+    // ── Redirect manager ───────────────────────────────────
+    console.log("▸ redirects");
+    check("redirect rule created", (await api("POST", "/api/admin/redirects", { from: "/old-page.html", to: "/en/int-test" })).status === 201);
+    await api("POST", "/api/admin/redirects", { from: "/legacy/*", to: "/en/blog/*", code: 302 });
+    check("self-redirect rejected", (await api("POST", "/api/admin/redirects", { from: "/loop", to: "/loop" })).status === 422);
+    const r1 = await fetchT(`${B}/old-page.html`, { redirect: "manual" });
+    check("old URL 30x-redirects to the new page", [301, 302, 307, 308].includes(r1.status) && (r1.headers.get("location") ?? "").includes("/en/int-test"));
+    const r2 = await fetchT(`${B}/legacy/deep/post`, { redirect: "manual" });
+    check("wildcard rule carries the tail over", [301, 302, 307, 308].includes(r2.status) && (r2.headers.get("location") ?? "").includes("/en/blog"));
+    check("unknown paths still 404", (await fetchT(`${B}/definitely-not-here`)).status === 404);
+
+    // ── Post categories/tags + comments ────────────────────
+    console.log("▸ taxonomy & comments");
+    const taxPost = (await api("POST", "/api/admin/posts", { slug: "tax-post", title: "Tax Post" })).json.post;
+    await api("PUT", `/api/admin/posts/${taxPost.id}`, { status: "published", categories: ["Guides", "News!"], tags: ["Next JS"] });
+    const taxSaved = (await api("GET", "/api/admin/posts")).json.posts.find((p) => p.id === taxPost.id);
+    check("categories/tags normalized to slugs", taxSaved.categories.join(",") === "guides,news" && taxSaved.tags[0] === "next-js");
+    check("blog index filters by category", (await (await fetchT(`${B}/en/blog?cat=guides`)).text()).includes("tax-post") && !(await (await fetchT(`${B}/en/blog?cat=nope`)).text()).includes("tax-post"));
+
+    const cRes = await api("POST", "/api/comments/tax-post", { author: "Visitor", body: "Great write-up!" }, { auth: false });
+    check("comment lands in moderation (pending)", cRes.status === 201 && cRes.json.pending === true);
+    check("pending comment invisible publicly", ((await api("GET", "/api/comments/tax-post", null, { auth: false })).json.comments ?? []).length === 0);
+    const cid = (await api("GET", "/api/admin/comments")).json.comments.find((c) => c.author === "Visitor")?.id;
+    await api("PATCH", `/api/admin/comments/${cid}`, { status: "approved" });
+    check("approved comment shows on the API", (await api("GET", "/api/comments/tax-post", null, { auth: false })).json.comments.some((c) => c.author === "Visitor"));
+    check("approved comment renders on the post", (await (await fetchT(`${B}/en/blog/tax-post`)).text()).includes("Great write-up!"));
+    check("comments on unknown posts rejected", (await api("POST", "/api/comments/none", { author: "X", body: "Y" }, { auth: false, headers: { "x-forwarded-for": "10.5.0.9" } })).status === 404);
+
+    // ── Forms v2: conditional + multipart file upload ─────
+    console.log("▸ forms v2");
+    await api("POST", "/api/admin/forms", {
+      name: "Apply",
+      fields: [
+        { label: "Kind", type: "select", options: ["personal", "business"] },
+        { label: "Company", type: "text", required: true, showIf: { field: "kind", equals: "business" }, step: 1 },
+        { label: "Resume", type: "file", step: 2 },
+      ],
+    });
+    check("hidden conditional field skips required", (await api("POST", "/api/forms/apply", { kind: "personal" }, { auth: false, headers: { "x-forwarded-for": "10.6.0.1" } })).status === 201);
+    check("visible conditional field enforced", (await api("POST", "/api/forms/apply", { kind: "business" }, { auth: false, headers: { "x-forwarded-for": "10.6.0.2" } })).status === 422);
+    const fd = new FormData();
+    fd.append("kind", "personal");
+    fd.append("resume", new File([new Uint8Array([0x25, 0x50, 0x44, 0x46])], "cv.pdf", { type: "application/pdf" }));
+    const up = await fetchT(`${B}/api/forms/apply`, { method: "POST", body: fd, headers: { "x-forwarded-for": "10.6.0.3" } });
+    check("multipart file upload accepted", up.status === 201);
+    const applySubs = (await api("GET", "/api/admin/forms/apply/submissions")).json.submissions;
+    const fileUrl = applySubs.find((s) => s.data.resume)?.data.resume;
+    check("upload stored under /api/media", typeof fileUrl === "string" && fileUrl.startsWith("/api/media/form-uploads/"));
+    if (typeof fileUrl === "string") check("uploaded file is served back", (await fetchT(`${B}${fileUrl}`)).status === 200);
+    check("media path traversal blocked", (await fetchT(`${B}/api/media/..%2F..%2Fadmin-config.json`)).status === 404 && (await fetchT(`${B}/api/media/form-uploads/../../admin-config.json`)).status === 404);
+    const badFd = new FormData();
+    badFd.append("kind", "personal");
+    badFd.append("resume", new File([new Uint8Array(8)], "evil.exe", { type: "application/x-msdownload" }));
+    check("disallowed file type rejected", (await fetchT(`${B}/api/forms/apply`, { method: "POST", body: badFd, headers: { "x-forwarded-for": "10.6.0.4" } })).status === 422);
+
+    // ── Newsletter ─────────────────────────────────────────
+    console.log("▸ newsletter");
+    check("public signup works", (await api("POST", "/api/newsletter", { email: "reader@example.com" }, { auth: false })).status === 201);
+    await api("POST", "/api/newsletter", { email: "READER@example.com" }, { auth: false, headers: { "x-forwarded-for": "10.7.0.1" } });
+    const nl = (await api("GET", "/api/admin/newsletter")).json;
+    check("signup deduped case-insensitively", nl.subscribers.filter((s) => s.email === "reader@example.com").length === 1);
+    check("bad email rejected", (await api("POST", "/api/newsletter", { email: "nope" }, { auth: false, headers: { "x-forwarded-for": "10.7.0.2" } })).status === 422);
+    const camp = await api("POST", "/api/admin/newsletter/send", { subject: "Hello", body: "First issue" });
+    check("campaign records (logged, key-free)", camp.status === 200 && camp.json.campaign.recipients >= 1 && camp.json.campaign.delivered === false);
+    const badUnsub = await fetchT(`${B}/api/newsletter/unsubscribe?email=reader@example.com&token=forged`);
+    check("forged unsubscribe link rejected", badUnsub.status === 400);
+
+    // ── Payments (config surface; live Stripe not reachable in CI) ──
+    console.log("▸ payments");
+    check("checkout cleanly 503s when unconfigured", (await api("POST", "/api/pay/checkout", { pageId: "x", blockId: "y" }, { auth: false })).status === 503);
+    await api("POST", "/api/admin/payments", { stripeSecretKey: "sk_test_fake", stripeWebhookSecret: "whsec_fake" });
+    const payCfg = (await api("GET", "/api/admin/payments")).json.config;
+    check("keys stored but masked on read", payCfg.stripeSecretKey === "set" && payCfg.stripeWebhookSecret === "set");
+    check("webhook rejects unsigned calls", (await api("POST", "/api/pay/webhook", { type: "checkout.session.completed" }, { auth: false })).status === 400);
+    await api("POST", "/api/admin/payments", { stripeSecretKey: "", stripeWebhookSecret: "" }); // clear again
+
+    // ── OAuth flag ─────────────────────────────────────────
+    check("SSO reports disabled without env config", (await api("GET", "/api/auth/oauth/google", null, { auth: false })).json.enabled === false);
+    check("SSO start 404s when unconfigured", (await fetchT(`${B}/api/auth/oauth/google/start`)).status === 404);
+
     // ── Rate limiting (in-memory path in fs mode) ──────────
     console.log("▸ rate limiting");
     cookie = "";

@@ -83,6 +83,18 @@ export function PostEditor({ initial, uiLocale, contentLocales = ["en", "fr"] }:
               {post.publishAt && <span className="mt-1 block text-xs text-blue-700">Scheduled — goes live {new Date(post.publishAt).toLocaleString()}</span>}
             </label>
           )}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="block">
+              <span className="mb-1 block text-sm font-medium text-ink">Categories</span>
+              <input className="field" placeholder="news, guides (comma-separated)" defaultValue={(post.categories ?? []).join(", ")}
+                onChange={(e) => patch({ categories: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) })} />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-sm font-medium text-ink">Tags</span>
+              <input className="field" placeholder="nextjs, seo (comma-separated)" defaultValue={(post.tags ?? []).join(", ")}
+                onChange={(e) => patch({ tags: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) })} />
+            </label>
+          </div>
           <div><span className="mb-1 block text-sm font-medium text-ink">Cover image</span><MediaField value={post.cover} onChange={(v) => patch({ cover: v })} /></div>
           <label className="block"><span className="mb-1 block text-sm font-medium text-ink">Excerpt ({locale.toUpperCase()})</span><textarea className="field min-h-[70px]" value={post.excerpt[locale]} onChange={(e) => patch({ excerpt: { ...post.excerpt, [locale]: e.target.value } })} /></label>
         </div>

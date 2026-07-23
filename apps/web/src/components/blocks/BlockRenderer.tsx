@@ -5,6 +5,8 @@ import { BusinessHours } from "@/components/BusinessHours";
 import { Slideshow } from "@/components/Slideshow";
 import { YouTubeFeed } from "@/components/YouTubeFeed";
 import { Icon, type IconName } from "@/components/Icon";
+import { NewsletterSignup } from "@/components/NewsletterSignup";
+import { PayButton } from "@/components/PayButton";
 import { QuoteForm } from "@/components/QuoteForm";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries";
@@ -29,6 +31,7 @@ export function BlockRenderer({
   settings,
   first,
   pageDate,
+  pageId,
 }: {
   blocks: Block[];
   locale: Locale;
@@ -37,11 +40,13 @@ export function BlockRenderer({
   first?: boolean;
   /** Page updatedAt — used as uploadDate in VideoObject structured data. */
   pageDate?: string;
+  /** Page id — payment blocks reference it so prices are read server-side. */
+  pageId?: string;
 }) {
   return (
     <>
       {blocks.map((block, i) => (
-        <BlockView key={block.id} block={block} locale={locale} dict={dict} settings={settings} priority={first && i === 0} pageDate={pageDate} />
+        <BlockView key={block.id} block={block} locale={locale} dict={dict} settings={settings} priority={first && i === 0} pageDate={pageDate} pageId={pageId} />
       ))}
     </>
   );
@@ -94,6 +99,7 @@ function BlockView({
   settings,
   priority,
   pageDate,
+  pageId,
 }: {
   block: Block;
   locale: Locale;
@@ -101,6 +107,7 @@ function BlockView({
   settings: SiteSettings;
   priority?: boolean;
   pageDate?: string;
+  pageId?: string;
 }) {
   const d = block.data;
   const t = (k: string) => tx(d[k], locale);
@@ -714,6 +721,36 @@ function BlockView({
         </section>
       );
     }
+
+    case "payment": {
+      const amount = String(block.data.amount ?? "");
+      const currency = String(block.data.currency ?? "usd").toUpperCase();
+      return (
+        <section className="bg-white">
+          <div className="container-page py-14 text-center md:py-16">
+            {t("title") && <h2 className="section-title text-brand">{t("title")}</h2>}
+            {t("subtitle") && <p className="mx-auto mt-3 max-w-xl text-ink-soft">{t("subtitle")}</p>}
+            <p className="mt-4 font-display text-3xl font-bold text-brand">{amount ? `${amount} ${currency}` : ""}</p>
+            {pageId ? (
+              <div className="flex justify-center"><PayButton pageId={pageId} blockId={block.id} locale={locale} label={t("buttonLabel") || "Buy now"} /></div>
+            ) : (
+              <p className="mt-4 text-sm text-ink-soft">Payment buttons work on published pages.</p>
+            )}
+          </div>
+        </section>
+      );
+    }
+
+    case "newsletter":
+      return (
+        <section className="bg-cream">
+          <div className="container-page py-14 text-center md:py-16">
+            {t("title") && <h2 className="section-title text-brand">{t("title")}</h2>}
+            {t("subtitle") && <p className="mx-auto mt-3 max-w-xl text-ink-soft">{t("subtitle")}</p>}
+            <NewsletterSignup locale={locale} placeholder={t("placeholder")} buttonLabel={t("buttonLabel")} />
+          </div>
+        </section>
+      );
 
     case "contactForm":
       return (

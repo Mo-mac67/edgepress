@@ -24,6 +24,13 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     status: body.status === "published" ? "published" : body.status === "draft" ? "draft" : existing.status,
     publishAt: body.publishAt === null ? undefined : typeof body.publishAt === "string" && body.publishAt ? body.publishAt : existing.publishAt,
   };
+  // Taxonomy: lowercase slugs, deduped, capped.
+  const tax = (v: unknown, cur?: string[]) =>
+    Array.isArray(v)
+      ? [...new Set(v.map((s) => String(s).trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")).filter(Boolean))].slice(0, 10)
+      : cur;
+  merged.categories = tax(body.categories, existing.categories);
+  merged.tags = tax(body.tags, existing.tags);
   // Restore from Trash via trashed:false.
   if ((body as { trashed?: boolean }).trashed === false) {
     merged.trashed = undefined;
