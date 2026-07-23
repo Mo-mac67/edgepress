@@ -7,14 +7,11 @@ Block-based site builder + admin panel + CRM + automated SEO + a full AI suite
 self-hostable app. Default deployment: Cloudflare Workers free tier ($0/month).
 Also runs on Docker, plain Node, or Vercel via storage adapters.
 
-> ⛔ **PRIVATE** — do not publish, announce, or make this repository public.
-> Launch happens only on the owner's explicit instruction (see RFC §11).
-
 - Architecture & roadmap: [docs/RFC-001-architecture.md](docs/RFC-001-architecture.md)
 - Product app: `apps/web` (Next.js — public site + admin + Content API)
-- Status: building toward v1 (block CMS + CRM + SEO + full AI suite: content
-  studio, translation, site builder, admin copilot, MCP server, visitor
-  assistant). Private dev instance only.
+- Status: **public beta** — the full v1 feature set ships and is covered by
+  120 unit tests + a 111-check integration suite run against production
+  builds in CI. APIs may still move before 1.0.
 
 ## What's inside
 
