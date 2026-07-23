@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isLive } from "@/lib/cms-types";
+import { isLive } from "@edgepress/core/types";
 
 const NOW = new Date("2026-07-22T12:00:00.000Z");
 

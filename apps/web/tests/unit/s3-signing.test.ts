@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { signingKey } from "@/lib/media-s3";
+import { signingKey } from "@edgepress/core/s3";
 
 describe("AWS SigV4 signing key", () => {
   it("matches AWS's official documented test vector", () => {

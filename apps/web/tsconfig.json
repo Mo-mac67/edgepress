@@ -19,7 +19,11 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@edgepress/core/*": ["../../packages/core/src/*"],
+      "@edgepress/core": ["../../packages/core/src/index.ts"],
+      "@edgepress/ai/*": ["../../packages/ai/src/*"],
+      "@edgepress/ai": ["../../packages/ai/src/index.ts"]
     }
   },
   "include": [

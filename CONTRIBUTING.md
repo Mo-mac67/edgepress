@@ -25,16 +25,55 @@ Zero config runs in filesystem mode (`data/`). No cloud account needed.
 - **No personal/account data in the repo.** Deploy config ships as
   `*.example` templates only.
 
+## The merge gate — tests + docs, or no merge
+
+Every PR that changes behaviour must ship **in the same PR**:
+
+1. **Tests** — a unit test (`apps/web/tests/unit/`, vitest) for pure logic, or
+   integration checks (`apps/web/tests/integration/run.mjs`) for anything that
+   crosses an HTTP boundary. Bug fixes add a regression test that fails
+   without the fix.
+2. **Docs** — the matching update to `docs/GUIDE.md` (user-facing features),
+   `docs/DEPLOYMENT.md` (ops), or the package README (library API). A PR that
+   only refactors internals may skip docs, never tests.
+
+CI enforces the executable half of this gate — all three jobs are required
+checks on `main`:
+
+| Job | What it proves |
+| --- | --- |
+| `quality` | `tsc --noEmit`, ESLint (0 errors), vitest unit suite |
+| `integration` | full HTTP suite against a production build (fs mode) |
+| `docker` | image builds and the container answers end-to-end |
+
+The docs half is reviewed by hand — the PR template asks you to link the
+section you touched.
+
 ## Before you open a PR
 
 ```bash
-npx tsc --noEmit   # must pass
-npm run lint       # must pass
-npm run build      # must pass
+cd apps/web
+npx tsc --noEmit                     # must pass
+npm run lint                         # must pass — 0 errors
+npm test                             # unit suite
+node tests/integration/run.mjs       # HTTP suite (add --prod to mirror CI)
 ```
 
-Add a short test or verification note in the PR description — what you ran and
-what proved the change works.
+⚠️ **Never run plain `npm install` to update `package-lock.json` on Windows** —
+it silently drops nested subtrees and breaks `npm ci` on Linux. Regenerate the
+lock only from a pristine directory (package.json alone →
+`npm install --package-lock-only` → verify with `npm ci --ignore-scripts`).
+
+## Monorepo layout
+
+`packages/core` (storage adapters, content types, append-log, pure utils) and
+`packages/ai` (provider-agnostic engine + features) are **source packages**:
+`apps/web` consumes them via tsconfig path aliases (`@edgepress/core/*`,
+`@edgepress/ai/*`) with `experimental.externalDir`, so there is no build step
+and no lockfile coupling. App-side files in `src/lib/` that moved there remain
+as re-export shims — import sites never change. Core is host-agnostic: it
+reads platform bindings (KV, Workers AI) only through the injected source in
+`src/lib/cf-env.ts` — never import a host SDK inside `packages/`.
 
 ## Commit style
 

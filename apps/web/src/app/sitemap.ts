@@ -4,6 +4,10 @@ import { isLive } from "@/lib/cms-types";
 
 const SITE = process.env.SITE_URL ?? "http://localhost:3000";
 
+// Without this, Next prerenders sitemap.xml ONCE at build time — pages
+// published after deploy would never appear. Serve it fresh per request.
+export const dynamic = "force-dynamic";
+
 /** Built live from the CMS — new pages and posts appear automatically. */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [pages, posts, locales] = await Promise.all([getPages(), getPosts(), getActiveLocales()]);

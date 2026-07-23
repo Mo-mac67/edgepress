@@ -1,0 +1,20 @@
+{
+  "name": "@edgepress/core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "EdgePress core: storage adapters (Cloudflare KV / filesystem / SQLite / Postgres), race-safe append-log, content types + locale helpers, and dependency-free utilities (CSV, TOTP, S3 SigV4, spam heuristics).",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*.ts"
+  },
+  "peerDependencies": {
+    "@opennextjs/cloudflare": ">=1.0.0",
+    "pg": ">=8"
+  },
+  "peerDependenciesMeta": {
+    "@opennextjs/cloudflare": { "optional": true },
+    "pg": { "optional": true }
+  }
+}

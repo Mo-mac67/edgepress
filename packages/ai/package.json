@@ -1,0 +1,15 @@
+{
+  "name": "@edgepress/ai",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "EdgePress AI layer: provider-agnostic engine (Cloudflare Workers AI, Anthropic, OpenAI, Google, Ollama) with BYOK, per-feature routing, usage metering, and the content-generation feature set.",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*.ts"
+  },
+  "peerDependencies": {
+    "@edgepress/core": "*"
+  }
+}

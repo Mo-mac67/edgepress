@@ -53,6 +53,11 @@ limiter is a good follow-up for high-profile deployments.
 - [x] Backup/restore from the panel (Settings → Backup, works on KV and fs).
       Document a cron'd `GET`-based backup for self-hosters as a follow-up.
 - [ ] Error monitoring guidance (Workers logs / Sentry) — add a docs section.
+- [ ] **Branch protection on `main`** (do on Aug 1 with the push):
+      require the `quality`, `integration` and `docker` checks + PR review;
+      the merge gate itself is documented in CONTRIBUTING.md and the PR
+      template. `gh api repos/{owner}/{repo}/branches/main/protection` or
+      Settings → Branches.
 - [x] `create-edgepress` CLI scaffolds a clean, generic project (verified: no
       personal identifiers leak into scaffolds).
 
