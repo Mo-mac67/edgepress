@@ -37,6 +37,12 @@ export interface Page {
   /** A/B headline test: candidate hero headlines. When 2+ are set, each visit
    *  gets a random one and impressions/conversions are tracked per variant. */
   ab?: { headlines: string[] };
+  /** Scheduled publishing: a draft goes live automatically once this ISO time
+   *  passes (evaluated at read time — no cron needed on the edge). */
+  publishAt?: string;
+  /** Soft delete: hidden everywhere, restorable from the Trash view. */
+  trashed?: boolean;
+  trashedAt?: string;
   /** Per-page SEO overrides (managed in the editor + SEO tab). */
   seo?: {
     ogImage?: string;
@@ -52,6 +58,8 @@ export interface NavItem {
   /** Internal slug (relative, no locale) or full external URL. */
   href: string;
   external?: boolean;
+  /** Sub-links rendered as a dropdown/indent under this item (one level max). */
+  children?: NavItem[];
 }
 
 export interface Post {
@@ -64,6 +72,22 @@ export interface Post {
   body: Localized; // rich HTML
   date: string;
   author: string;
+  /** Scheduled publishing (see Page.publishAt). */
+  publishAt?: string;
+  /** Soft delete (see Page.trashed). */
+  trashed?: boolean;
+  trashedAt?: string;
+}
+
+/**
+ * Whether a page/post is visible to the public RIGHT NOW: published, or a
+ * draft whose scheduled publishAt has passed. Evaluated at read time so
+ * scheduling needs no cron — ideal on the edge. Trashed items are never live.
+ */
+export function isLive(item: { status: "published" | "draft"; publishAt?: string; trashed?: boolean }, now = new Date()): boolean {
+  if (item.trashed) return false;
+  if (item.status === "published") return true;
+  return !!item.publishAt && item.publishAt <= now.toISOString();
 }
 
 export interface MediaItem {

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getContentType, getEntries, getPublishedEntries } from "@/lib/content-store";
+import { expandRelations, getContentType, getEntries, getPublishedEntries } from "@/lib/content-store";
 import { tokenFromRequest, verifyApiKey } from "@/lib/api-keys";
 
 export const dynamic = "force-dynamic";
@@ -28,9 +28,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ type
 
   const all = wantAll ? await getEntries(typeSlug) : await getPublishedEntries(typeSlug);
   const limit = Math.min(Number(url.searchParams.get("limit")) || 100, 500);
+  let sliced = all.slice(0, limit);
+  // ?expand=1 embeds published entries referenced by relation fields.
+  if (url.searchParams.get("expand") === "1") sliced = await expandRelations(type, sliced);
   // Spread data first so system fields stay authoritative even if a content
   // type defines a field named "status"/"id"/etc.
-  const entries = all.slice(0, limit).map(({ id, slug, status, data, createdAt, updatedAt }) => ({ ...data, id, slug, status, createdAt, updatedAt }));
+  const entries = sliced.map(({ id, slug, status, data, createdAt, updatedAt }) => ({ ...data, id, slug, status, createdAt, updatedAt }));
 
   return NextResponse.json(
     { type: { slug: type.slug, name: type.name, fields: type.fields }, count: entries.length, entries },

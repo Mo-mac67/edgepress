@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { useAdminUI } from "./ui";
 
 type FormFieldType = "text" | "email" | "tel" | "textarea" | "number" | "select" | "checkbox";
-interface FormField { key: string; label: string; type: FormFieldType; required?: boolean; placeholder?: string; options?: string[] }
-interface FormDef { id: string; slug: string; name: string; fields: FormField[]; submitLabel: string; successMessage: string }
+interface FormField { key: string; label: string; type: FormFieldType; required?: boolean; placeholder?: string; options?: string[]; pattern?: string; min?: number; max?: number }
+interface FormDef { id: string; slug: string; name: string; fields: FormField[]; submitLabel: string; successMessage: string; notifyEmail?: string }
 interface Submission { id: string; data: Record<string, unknown>; createdAt: string; spam?: boolean }
 
 const TYPES: FormFieldType[] = ["text", "email", "tel", "textarea", "number", "select", "checkbox"];
@@ -67,6 +67,7 @@ function FormBuilder({ onDone, onCancel }: { onDone: (slug?: string) => void; on
   const [name, setName] = useState("");
   const [submitLabel, setSubmitLabel] = useState("Send");
   const [successMessage, setSuccessMessage] = useState("Thanks — we'll be in touch.");
+  const [notifyEmail, setNotifyEmail] = useState("");
   const [fields, setFields] = useState<FormField[]>([
     { key: "name", label: "Name", type: "text", required: true },
     { key: "email", label: "Email", type: "email", required: true },
@@ -79,7 +80,7 @@ function FormBuilder({ onDone, onCancel }: { onDone: (slug?: string) => void; on
   async function save() {
     if (!name.trim()) return ui.toast("Name the form", "error");
     setSaving(true);
-    const res = await fetch("/api/admin/forms", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, fields, submitLabel, successMessage }) });
+    const res = await fetch("/api/admin/forms", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, fields, submitLabel, successMessage, notifyEmail: notifyEmail.trim() || undefined }) });
     setSaving(false);
     const data = await res.json().catch(() => ({}));
     if (res.ok) { ui.toast("Form created", "success"); onDone(data.form?.slug); }
@@ -94,6 +95,7 @@ function FormBuilder({ onDone, onCancel }: { onDone: (slug?: string) => void; on
         <label className="block"><span className="mb-1.5 block text-sm font-medium text-ink-soft">Submit button label</span><input className="field" value={submitLabel} onChange={(e) => setSubmitLabel(e.target.value)} /></label>
       </div>
       <label className="mt-3 block"><span className="mb-1.5 block text-sm font-medium text-ink-soft">Success message</span><input className="field" value={successMessage} onChange={(e) => setSuccessMessage(e.target.value)} /></label>
+      <label className="mt-3 block"><span className="mb-1.5 block text-sm font-medium text-ink-soft">Email new submissions to (optional)</span><input type="email" className="field" placeholder="you@company.com" value={notifyEmail} onChange={(e) => setNotifyEmail(e.target.value)} /></label>
 
       <p className="mt-6 text-sm font-semibold text-ink">Fields</p>
       <div className="mt-2 space-y-2">
@@ -104,6 +106,15 @@ function FormBuilder({ onDone, onCancel }: { onDone: (slug?: string) => void; on
             <label className="flex items-center gap-1.5 whitespace-nowrap text-xs text-ink-soft"><input type="checkbox" checked={!!f.required} onChange={(e) => setField(i, { required: e.target.checked })} /> required</label>
             <button type="button" onClick={() => setFields((x) => x.filter((_, idx) => idx !== i))} className="text-xs font-semibold text-red-600">Remove</button>
             {f.type === "select" && <input className="field sm:col-span-4" placeholder="Options, comma-separated" defaultValue={(f.options ?? []).join(", ")} onChange={(e) => setField(i, { options: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) })} />}
+            {f.type !== "select" && f.type !== "checkbox" && (
+              <div className="grid gap-2 sm:col-span-4 sm:grid-cols-[2fr_1fr_1fr]">
+                {f.type !== "number" && f.type !== "email" ? (
+                  <input className="field text-xs" placeholder="Pattern (regex, optional) e.g. ^[A-Z]{2}\d{4}$" value={f.pattern ?? ""} onChange={(e) => setField(i, { pattern: e.target.value || undefined })} />
+                ) : <span className="hidden sm:block" />}
+                <input className="field text-xs" type="number" placeholder={f.type === "number" ? "Min value" : "Min length"} value={f.min ?? ""} onChange={(e) => setField(i, { min: e.target.value === "" ? undefined : Number(e.target.value) })} />
+                <input className="field text-xs" type="number" placeholder={f.type === "number" ? "Max value" : "Max length"} value={f.max ?? ""} onChange={(e) => setField(i, { max: e.target.value === "" ? undefined : Number(e.target.value) })} />
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -121,6 +132,13 @@ function FormDetail({ form, onDelete }: { form: FormDef; onDelete: () => void })
   const ui = useAdminUI();
   const [subs, setSubs] = useState<Submission[]>([]);
   const [showEmbed, setShowEmbed] = useState(false);
+  const [notifyEmail, setNotifyEmail] = useState(form.notifyEmail ?? "");
+
+  async function saveNotify() {
+    const res = await fetch(`/api/admin/forms/${form.slug}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ notifyEmail: notifyEmail.trim() }) });
+    if (res.ok) ui.toast(notifyEmail.trim() ? "Notifications updated" : "Notifications cleared", "success");
+    else ui.toast("Couldn't save", "error");
+  }
 
   async function load() {
     const res = await fetch(`/api/admin/forms/${form.slug}/submissions`);
@@ -147,6 +165,14 @@ function FormDetail({ form, onDelete }: { form: FormDef; onDelete: () => void })
           <a href={`/api/admin/forms/${form.slug}/submissions?format=csv`} className="btn-secondary">Export CSV</a>
           <button onClick={onDelete} className="btn-secondary text-red-600">Delete form</button>
         </div>
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-end gap-2 rounded-lg border border-line p-3">
+        <label className="block min-w-[240px] flex-1">
+          <span className="mb-1 block text-xs font-medium text-ink-soft">Email new submissions to</span>
+          <input type="email" className="field" placeholder="you@company.com (blank = default inbox)" value={notifyEmail} onChange={(e) => setNotifyEmail(e.target.value)} />
+        </label>
+        <button onClick={saveNotify} className="btn-secondary text-sm">Save</button>
       </div>
 
       {showEmbed && (
@@ -187,11 +213,15 @@ function FormDetail({ form, onDelete }: { form: FormDef; onDelete: () => void })
 function buildEmbed(form: FormDef): string {
   const inputs = form.fields.map((f) => {
     const req = f.required ? " required" : "";
-    if (f.type === "textarea") return `    <label>${f.label}<textarea name="${f.key}"${req}></textarea></label>`;
+    // Mirror server-side rules as native HTML validation attributes.
+    const lenRules = `${f.min !== undefined ? ` minlength="${f.min}"` : ""}${f.max !== undefined ? ` maxlength="${f.max}"` : ""}`;
+    const numRules = `${f.min !== undefined ? ` min="${f.min}"` : ""}${f.max !== undefined ? ` max="${f.max}"` : ""}`;
+    const pat = f.pattern ? ` pattern="${f.pattern.replace(/"/g, "&quot;")}"` : "";
+    if (f.type === "textarea") return `    <label>${f.label}<textarea name="${f.key}"${req}${lenRules}></textarea></label>`;
     if (f.type === "checkbox") return `    <label><input type="checkbox" name="${f.key}"${req}> ${f.label}</label>`;
     if (f.type === "select") return `    <label>${f.label}<select name="${f.key}"${req}>${(f.options ?? []).map((o) => `<option>${o}</option>`).join("")}</select></label>`;
     const t = f.type === "email" ? "email" : f.type === "tel" ? "tel" : f.type === "number" ? "number" : "text";
-    return `    <label>${f.label}<input type="${t}" name="${f.key}"${req}></label>`;
+    return `    <label>${f.label}<input type="${t}" name="${f.key}"${req}${t === "number" ? numRules : lenRules}${t === "text" || t === "tel" ? pat : ""}></label>`;
   }).join("\n");
   return `<form id="ep-${form.slug}">
 ${inputs}

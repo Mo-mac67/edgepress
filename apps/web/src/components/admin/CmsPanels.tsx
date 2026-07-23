@@ -21,6 +21,7 @@ export function PagesPanel({ locale }: { locale: Locale }) {
   const [err, setErr] = useState("");
   const [dragging, setDragging] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [showTrash, setShowTrash] = useState(false);
 
   async function load() {
     const res = await fetch("/api/admin/pages");
@@ -203,11 +204,36 @@ export function PagesPanel({ locale }: { locale: Locale }) {
   }
 
   async function remove(id: string, title: string) {
-    if (!(await ui.confirm({ title: "Delete page?", message: `“${title}” will be permanently removed.`, confirmLabel: "Delete", danger: true }))) return;
-    setPages((p) => p.filter((x) => x.id !== id));
+    if (!(await ui.confirm({ title: "Move to Trash?", message: `“${title}” is hidden from the site but can be restored from the Trash.`, confirmLabel: "Move to Trash" }))) return;
     await fetch(`/api/admin/pages/${id}`, { method: "DELETE" });
-    ui.toast("Page deleted", "success");
+    ui.toast("Moved to Trash", "success");
+    load();
   }
+
+  async function restore(id: string) {
+    await fetch(`/api/admin/pages/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ trashed: false }) });
+    ui.toast("Restored", "success");
+    load();
+  }
+
+  async function deleteForever(id: string, title: string) {
+    if (!(await ui.confirm({ title: "Delete forever?", message: `“${title}” will be permanently removed. This cannot be undone.`, confirmLabel: "Delete forever", danger: true }))) return;
+    await fetch(`/api/admin/pages/${id}?force=1`, { method: "DELETE" });
+    ui.toast("Deleted forever", "success");
+    load();
+  }
+
+  async function duplicate(id: string) {
+    const res = await fetch(`/api/admin/pages/${id}/duplicate`, { method: "POST" });
+    const d = await res.json().catch(() => ({}));
+    if (res.ok) {
+      ui.toast("Duplicated as a draft", "success");
+      router.push(`/${locale}/admin/pages/${d.page.id}`);
+    } else ui.toast(d.error || "Duplicate failed", "error");
+  }
+
+  const trashedCount = pages.filter((p) => p.trashed).length;
+  const visiblePages = pages.filter((p) => (showTrash ? p.trashed : !p.trashed));
 
   return (
     <div>
@@ -242,6 +268,13 @@ export function PagesPanel({ locale }: { locale: Locale }) {
       </div>
       {err && <p className="mb-3 text-sm text-red-600">{err}</p>}
 
+      {trashedCount > 0 && (
+        <div className="mb-3 flex gap-2 text-sm">
+          <button onClick={() => setShowTrash(false)} className={`rounded-full px-3 py-1 font-semibold ${!showTrash ? "bg-brand text-white" : "bg-surface-soft text-ink-soft"}`}>Pages</button>
+          <button onClick={() => setShowTrash(true)} className={`rounded-full px-3 py-1 font-semibold ${showTrash ? "bg-brand text-white" : "bg-surface-soft text-ink-soft"}`}>Trash ({trashedCount})</button>
+        </div>
+      )}
+
       {/* Drop zone + list */}
       <div
         onDragOver={(e) => {
@@ -256,7 +289,7 @@ export function PagesPanel({ locale }: { locale: Locale }) {
         className={`rounded-xl border-2 transition ${dragging ? "border-dashed border-accent bg-accent-soft/40" : "border-transparent"}`}
       >
         <div className="card divide-y divide-line">
-          {pages.map((p) => (
+          {visiblePages.map((p) => (
             <div key={p.id} className="flex items-center gap-3 p-4">
               <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-lg ${p.mode === "html" ? "bg-accent-soft text-accent-dark" : "bg-brand-soft text-brand"}`}>
                 <Icon name={p.mode === "html" ? "edit" : "list"} size={18} />
@@ -266,24 +299,43 @@ export function PagesPanel({ locale }: { locale: Locale }) {
                   {p.title[locale] || p.title.en}
                   {p.system && <span className="ml-2 rounded bg-brand-soft px-1.5 py-0.5 text-[10px] font-semibold text-brand">SYSTEM</span>}
                   {p.mode === "html" && <span className="ml-2 rounded bg-accent-soft px-1.5 py-0.5 text-[10px] font-semibold text-accent-dark">HTML</span>}
-                  {p.status === "draft" && <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">DRAFT</span>}
+                  {!p.trashed && p.status === "draft" && !p.publishAt && <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">DRAFT</span>}
+                  {!p.trashed && p.status === "draft" && p.publishAt && (
+                    <span className="ml-2 rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700" title={new Date(p.publishAt).toLocaleString()}>
+                      {p.publishAt <= new Date().toISOString() ? "LIVE · SCHEDULED" : "SCHEDULED"}
+                    </span>
+                  )}
                 </p>
                 <p className="text-xs text-ink-soft">/{p.slug || "(home)"} · {p.mode === "html" ? "imported HTML" : `${p.blocks.length} blocks`} · updated {new Date(p.updatedAt).toLocaleDateString()}</p>
               </div>
-              <a href={`/${locale}/${p.slug}`} target="_blank" rel="noopener noreferrer" className="hidden rounded p-2 text-ink-soft hover:text-brand sm:block" title="View">
-                <Icon name="arrow-up-right" size={16} />
-              </a>
-              <Link href={`/${locale}/admin/pages/${p.id}`} className="btn-secondary py-1.5 text-sm">
-                <Icon name="edit" size={15} /> Edit
-              </Link>
-              {!p.system && (
-                <button onClick={() => remove(p.id, p.title[locale] || p.title.en)} className="rounded p-2 text-ink-soft hover:text-red-600" title="Delete">
-                  <Icon name="trash" size={16} />
-                </button>
+              {p.trashed ? (
+                <>
+                  <button onClick={() => restore(p.id)} className="btn-secondary py-1.5 text-sm">Restore</button>
+                  <button onClick={() => deleteForever(p.id, p.title[locale] || p.title.en)} className="rounded p-2 text-ink-soft hover:text-red-600" title="Delete forever">
+                    <Icon name="trash" size={16} />
+                  </button>
+                </>
+              ) : (
+                <>
+                  <a href={`/${locale}/${p.slug}`} target="_blank" rel="noopener noreferrer" className="hidden rounded p-2 text-ink-soft hover:text-brand sm:block" title="View">
+                    <Icon name="arrow-up-right" size={16} />
+                  </a>
+                  <button onClick={() => duplicate(p.id)} className="hidden rounded p-2 text-ink-soft hover:text-brand sm:block" title="Duplicate">
+                    <Icon name="grip" size={16} />
+                  </button>
+                  <Link href={`/${locale}/admin/pages/${p.id}`} className="btn-secondary py-1.5 text-sm">
+                    <Icon name="edit" size={15} /> Edit
+                  </Link>
+                  {!p.system && (
+                    <button onClick={() => remove(p.id, p.title[locale] || p.title.en)} className="rounded p-2 text-ink-soft hover:text-red-600" title="Move to Trash">
+                      <Icon name="trash" size={16} />
+                    </button>
+                  )}
+                </>
               )}
             </div>
           ))}
-          {pages.length === 0 && <p className="p-6 text-center text-sm text-ink-soft">Loading…</p>}
+          {visiblePages.length === 0 && <p className="p-6 text-center text-sm text-ink-soft">{showTrash ? "Trash is empty." : "Loading…"}</p>}
         </div>
       </div>
       <p className="mt-3 text-xs text-ink-soft">Tip: drag &amp; drop a <code>.html</code> file anywhere on this list to import it as a page — its own styles and scripts are kept.</p>
@@ -309,6 +361,20 @@ export function MenuPanel({ locale }: { locale: Locale }) {
   };
   const set = (i: number, patch: Partial<NavItem>) => setNav(nav.map((n, k) => (k === i ? { ...n, ...patch } : n)));
 
+  // Sub-link ops (one level deep).
+  const setChild = (i: number, ci: number, patch: Partial<NavItem>) =>
+    set(i, { children: (nav[i].children ?? []).map((c, k) => (k === ci ? { ...c, ...patch } : c)) });
+  const addChild = (i: number) =>
+    set(i, { children: [...(nav[i].children ?? []), { id: uid(), label: { en: "New sub-link", fr: "Nouveau sous-lien" }, href: "" }] });
+  const removeChild = (i: number, ci: number) => set(i, { children: (nav[i].children ?? []).filter((_, k) => k !== ci) });
+  const moveChild = (i: number, ci: number, dir: -1 | 1) => {
+    const kids = (nav[i].children ?? []).slice();
+    const j = ci + dir;
+    if (j < 0 || j >= kids.length) return;
+    [kids[ci], kids[j]] = [kids[j], kids[ci]];
+    set(i, { children: kids });
+  };
+
   async function save() {
     await fetch("/api/admin/nav", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ nav }) });
     setSaved(true);
@@ -323,15 +389,30 @@ export function MenuPanel({ locale }: { locale: Locale }) {
       </div>
       <div className="space-y-3">
         {nav.map((item, i) => (
-          <div key={item.id} className="card grid gap-3 p-4 sm:grid-cols-[1fr_1fr_1fr_auto]">
-            <label className="block"><span className="mb-1 block text-xs text-ink-soft">Label (EN)</span><input className="field" value={item.label.en} onChange={(e) => set(i, { label: { ...item.label, en: e.target.value } })} /></label>
-            <label className="block"><span className="mb-1 block text-xs text-ink-soft">Label (FR)</span><input className="field" value={item.label.fr} onChange={(e) => set(i, { label: { ...item.label, fr: e.target.value } })} /></label>
-            <label className="block"><span className="mb-1 block text-xs text-ink-soft">Link (slug or URL)</span><input className="field" value={item.href} onChange={(e) => set(i, { href: e.target.value })} /></label>
-            <div className="flex items-end gap-1">
-              <button onClick={() => move(i, -1)} className="rounded p-2 hover:bg-sand"><Icon name="arrow-left" size={15} className="rotate-90" /></button>
-              <button onClick={() => move(i, 1)} className="rounded p-2 hover:bg-sand"><Icon name="arrow-right" size={15} className="rotate-90" /></button>
-              <button onClick={() => setNav(nav.filter((_, k) => k !== i))} className="rounded p-2 text-red-600 hover:bg-sand"><Icon name="trash" size={15} /></button>
+          <div key={item.id} className="card space-y-3 p-4">
+            <div className="grid gap-3 sm:grid-cols-[1fr_1fr_1fr_auto]">
+              <label className="block"><span className="mb-1 block text-xs text-ink-soft">Label (EN)</span><input className="field" value={item.label.en} onChange={(e) => set(i, { label: { ...item.label, en: e.target.value } })} /></label>
+              <label className="block"><span className="mb-1 block text-xs text-ink-soft">Label (FR)</span><input className="field" value={item.label.fr} onChange={(e) => set(i, { label: { ...item.label, fr: e.target.value } })} /></label>
+              <label className="block"><span className="mb-1 block text-xs text-ink-soft">Link (slug or URL)</span><input className="field" value={item.href} onChange={(e) => set(i, { href: e.target.value })} /></label>
+              <div className="flex items-end gap-1">
+                <button onClick={() => move(i, -1)} className="rounded p-2 hover:bg-sand"><Icon name="arrow-left" size={15} className="rotate-90" /></button>
+                <button onClick={() => move(i, 1)} className="rounded p-2 hover:bg-sand"><Icon name="arrow-right" size={15} className="rotate-90" /></button>
+                <button onClick={() => setNav(nav.filter((_, k) => k !== i))} className="rounded p-2 text-red-600 hover:bg-sand"><Icon name="trash" size={15} /></button>
+              </div>
             </div>
+            {(item.children ?? []).map((c, ci) => (
+              <div key={c.id} className="ml-6 grid gap-3 border-l-2 border-line pl-4 sm:grid-cols-[1fr_1fr_1fr_auto]">
+                <label className="block"><span className="mb-1 block text-xs text-ink-soft">Sub-label (EN)</span><input className="field" value={c.label.en} onChange={(e) => setChild(i, ci, { label: { ...c.label, en: e.target.value } })} /></label>
+                <label className="block"><span className="mb-1 block text-xs text-ink-soft">Sub-label (FR)</span><input className="field" value={c.label.fr} onChange={(e) => setChild(i, ci, { label: { ...c.label, fr: e.target.value } })} /></label>
+                <label className="block"><span className="mb-1 block text-xs text-ink-soft">Link (slug or URL)</span><input className="field" value={c.href} onChange={(e) => setChild(i, ci, { href: e.target.value })} /></label>
+                <div className="flex items-end gap-1">
+                  <button onClick={() => moveChild(i, ci, -1)} className="rounded p-2 hover:bg-sand"><Icon name="arrow-left" size={15} className="rotate-90" /></button>
+                  <button onClick={() => moveChild(i, ci, 1)} className="rounded p-2 hover:bg-sand"><Icon name="arrow-right" size={15} className="rotate-90" /></button>
+                  <button onClick={() => removeChild(i, ci)} className="rounded p-2 text-red-600 hover:bg-sand"><Icon name="trash" size={15} /></button>
+                </div>
+              </div>
+            ))}
+            <button onClick={() => addChild(i)} className="ml-6 text-xs font-semibold text-brand">+ Add sub-link</button>
           </div>
         ))}
         <button onClick={() => setNav([...nav, { id: uid(), label: { en: "New link", fr: "Nouveau lien" }, href: "" }])} className="btn-secondary py-2 text-sm">
@@ -353,6 +434,7 @@ export function BlogPanel({ locale }: { locale: Locale }) {
   const ui = useAdminUI();
   const [posts, setPosts] = useState<Post[]>([]);
   const [err, setErr] = useState("");
+  const [showPostTrash, setShowPostTrash] = useState(false);
 
   useEffect(() => {
     fetch("/api/admin/posts").then(async (r) => r.ok && setPosts((await r.json()).posts));
@@ -394,12 +476,41 @@ export function BlogPanel({ locale }: { locale: Locale }) {
     } else ui.toast(data.error || "Bulk generation failed", "error");
   }
 
-  async function remove(id: string, title: string) {
-    if (!(await ui.confirm({ title: "Delete post?", message: `“${title}” will be permanently removed.`, confirmLabel: "Delete", danger: true }))) return;
-    setPosts((p) => p.filter((x) => x.id !== id));
-    await fetch(`/api/admin/posts/${id}`, { method: "DELETE" });
-    ui.toast("Post deleted", "success");
+  async function reloadPosts() {
+    setPosts((await (await fetch("/api/admin/posts")).json()).posts);
   }
+
+  async function remove(id: string, title: string) {
+    if (!(await ui.confirm({ title: "Move to Trash?", message: `“${title}” is hidden from the site but can be restored.`, confirmLabel: "Move to Trash" }))) return;
+    await fetch(`/api/admin/posts/${id}`, { method: "DELETE" });
+    ui.toast("Moved to Trash", "success");
+    reloadPosts();
+  }
+
+  async function restorePost(id: string) {
+    await fetch(`/api/admin/posts/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ trashed: false }) });
+    ui.toast("Restored", "success");
+    reloadPosts();
+  }
+
+  async function deletePostForever(id: string, title: string) {
+    if (!(await ui.confirm({ title: "Delete forever?", message: `“${title}” will be permanently removed. This cannot be undone.`, confirmLabel: "Delete forever", danger: true }))) return;
+    await fetch(`/api/admin/posts/${id}?force=1`, { method: "DELETE" });
+    ui.toast("Deleted forever", "success");
+    reloadPosts();
+  }
+
+  async function duplicatePost(id: string) {
+    const res = await fetch(`/api/admin/posts/${id}/duplicate`, { method: "POST" });
+    const d = await res.json().catch(() => ({}));
+    if (res.ok) {
+      ui.toast("Duplicated as a draft", "success");
+      router.push(`/${locale}/admin/posts/${d.post.id}`);
+    } else ui.toast(d.error || "Duplicate failed", "error");
+  }
+
+  const trashedPosts = posts.filter((p) => p.trashed).length;
+  const visiblePosts = posts.filter((p) => (showPostTrash ? p.trashed : !p.trashed));
 
   return (
     <div>
@@ -415,18 +526,42 @@ export function BlogPanel({ locale }: { locale: Locale }) {
         </div>
       </div>
       {err && <p className="mb-3 text-sm text-red-600">{err}</p>}
+      {trashedPosts > 0 && (
+        <div className="mb-3 flex gap-2 text-sm">
+          <button onClick={() => setShowPostTrash(false)} className={`rounded-full px-3 py-1 font-semibold ${!showPostTrash ? "bg-brand text-white" : "bg-surface-soft text-ink-soft"}`}>Posts</button>
+          <button onClick={() => setShowPostTrash(true)} className={`rounded-full px-3 py-1 font-semibold ${showPostTrash ? "bg-brand text-white" : "bg-surface-soft text-ink-soft"}`}>Trash ({trashedPosts})</button>
+        </div>
+      )}
       <div className="card divide-y divide-line">
-        {posts.map((p) => (
+        {visiblePosts.map((p) => (
           <div key={p.id} className="flex items-center gap-3 p-4">
             <div className="flex-1">
-              <p className="font-semibold text-brand">{p.title[locale] || p.title.en}{p.status === "draft" && <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">DRAFT</span>}</p>
+              <p className="font-semibold text-brand">
+                {p.title[locale] || p.title.en}
+                {!p.trashed && p.status === "draft" && !p.publishAt && <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">DRAFT</span>}
+                {!p.trashed && p.status === "draft" && p.publishAt && (
+                  <span className="ml-2 rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700" title={new Date(p.publishAt).toLocaleString()}>
+                    {p.publishAt <= new Date().toISOString() ? "LIVE · SCHEDULED" : "SCHEDULED"}
+                  </span>
+                )}
+              </p>
               <p className="text-xs text-ink-soft">/blog/{p.slug} · {p.date}</p>
             </div>
-            <Link href={`/${locale}/admin/posts/${p.id}`} className="btn-secondary py-1.5 text-sm"><Icon name="edit" size={15} /> Edit</Link>
-            <button onClick={() => remove(p.id, p.title[locale] || p.title.en)} className="rounded p-2 text-ink-soft hover:text-red-600"><Icon name="trash" size={16} /></button>
+            {p.trashed ? (
+              <>
+                <button onClick={() => restorePost(p.id)} className="btn-secondary py-1.5 text-sm">Restore</button>
+                <button onClick={() => deletePostForever(p.id, p.title[locale] || p.title.en)} className="rounded p-2 text-ink-soft hover:text-red-600" title="Delete forever"><Icon name="trash" size={16} /></button>
+              </>
+            ) : (
+              <>
+                <button onClick={() => duplicatePost(p.id)} className="rounded p-2 text-ink-soft hover:text-brand" title="Duplicate"><Icon name="grip" size={16} /></button>
+                <Link href={`/${locale}/admin/posts/${p.id}`} className="btn-secondary py-1.5 text-sm"><Icon name="edit" size={15} /> Edit</Link>
+                <button onClick={() => remove(p.id, p.title[locale] || p.title.en)} className="rounded p-2 text-ink-soft hover:text-red-600" title="Move to Trash"><Icon name="trash" size={16} /></button>
+              </>
+            )}
           </div>
         ))}
-        {posts.length === 0 && <p className="p-6 text-center text-sm text-ink-soft">No posts yet.</p>}
+        {visiblePosts.length === 0 && <p className="p-6 text-center text-sm text-ink-soft">{showPostTrash ? "Trash is empty." : "No posts yet."}</p>}
       </div>
     </div>
   );

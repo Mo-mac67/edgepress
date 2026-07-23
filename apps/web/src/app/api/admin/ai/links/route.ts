@@ -3,7 +3,7 @@ import { isAuthed } from "@/lib/admin-auth";
 import { aiReady } from "@/lib/ai/engine";
 import { internalLinkIdeas } from "@/lib/ai/features";
 import { getPages } from "@/lib/cms-store";
-import { tx } from "@/lib/cms-types";
+import { isLive, tx } from "@/lib/cms-types";
 
 export async function POST(request: Request) {
   if (!(await isAuthed())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -13,7 +13,7 @@ export async function POST(request: Request) {
   if (!text) return NextResponse.json({ error: "Paste some content first" }, { status: 422 });
 
   const pages = (await getPages())
-    .filter((p) => p.status === "published")
+    .filter((p) => isLive(p))
     .map((p) => ({ slug: p.slug, title: tx(p.title, "en") || p.slug || "Home" }));
 
   try {

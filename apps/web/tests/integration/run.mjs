@@ -208,6 +208,93 @@ async function main() {
     const files = readdirSync(DATA_DIR);
     check("events write to weekly shard, not a global doc", files.some((f) => f.startsWith("events-w-")) && !files.includes("events.json"));
 
+    // ── Publishing workflow: schedule / trash / duplicate / preview ──
+    console.log("▸ publishing workflow");
+    const past = new Date(Date.now() - 60_000).toISOString();
+    const future = new Date(Date.now() + 86_400_000).toISOString();
+    const schedPage = (await api("POST", "/api/admin/pages", { slug: "sched-test", title: "Scheduled" })).json.page;
+    await api("PUT", `/api/admin/pages/${schedPage.id}`, { ...schedPage, status: "draft", publishAt: future, blocks: [{ id: "s1", type: "header", data: { title: { en: "Sched Header", fr: "" } } }] });
+    check("future-scheduled draft stays hidden", (await fetchT(`${B}/en/sched-test`)).status === 404);
+    await api("PUT", `/api/admin/pages/${schedPage.id}`, { publishAt: past });
+    check("past-scheduled draft is live (no cron)", (await (await fetchT(`${B}/en/sched-test`)).text()).includes("Sched Header"));
+
+    const dup = await api("POST", `/api/admin/pages/${schedPage.id}/duplicate`);
+    check("duplicate creates a -copy draft", dup.status === 201 && dup.json.page.slug.includes("copy") && dup.json.page.status === "draft");
+
+    const draftPage = (await api("POST", "/api/admin/pages", { slug: "preview-test", title: "Preview" })).json.page;
+    await api("PUT", `/api/admin/pages/${draftPage.id}`, { ...draftPage, blocks: [{ id: "p1", type: "header", data: { title: { en: "Preview Header", fr: "" } } }] });
+    const pl = (await api("GET", `/api/admin/pages/${draftPage.id}/preview-link`)).json;
+    check("preview link issued for draft", typeof pl?.token === "string" && pl.token.length >= 10);
+    const previewHtml = await (await fetchT(`${B}/en/${pl.path.replace(/^\//, "")}`)).text();
+    check("preview token shows draft to logged-out visitor", previewHtml.includes("Preview Header") && previewHtml.includes("Draft preview"));
+    check("wrong preview token stays hidden", (await fetchT(`${B}/en/preview-test?preview=not-the-token`)).status === 404);
+
+    await api("DELETE", `/api/admin/pages/${draftPage.id}`);
+    const afterTrash = (await api("GET", "/api/admin/pages")).json.pages.find((p) => p.id === draftPage.id);
+    check("delete soft-trashes (restorable)", afterTrash?.trashed === true);
+    await api("PUT", `/api/admin/pages/${draftPage.id}`, { trashed: false });
+    check("restore clears the trashed flag", !(await api("GET", "/api/admin/pages")).json.pages.find((p) => p.id === draftPage.id)?.trashed);
+    await api("DELETE", `/api/admin/pages/${draftPage.id}?force=1`);
+    check("force delete removes for good", !(await api("GET", "/api/admin/pages")).json.pages.some((p) => p.id === draftPage.id));
+
+    const post = (await api("POST", "/api/admin/posts", { slug: "wf-post", title: "WF Post" })).json.post;
+    await api("DELETE", `/api/admin/posts/${post.id}`);
+    check("post delete soft-trashes too", (await api("GET", "/api/admin/posts")).json.posts.find((p) => p.id === post.id)?.trashed === true);
+    await api("PUT", `/api/admin/posts/${post.id}`, { trashed: false });
+    check("post restore works", !(await api("GET", "/api/admin/posts")).json.posts.find((p) => p.id === post.id)?.trashed);
+
+    // ── Public site search ─────────────────────────────────
+    console.log("▸ site search");
+    check("query under 2 chars rejected", (await api("GET", "/api/search?q=x", null, { auth: false })).status === 400);
+    const found = (await api("GET", "/api/search?q=Live+Header&lang=en", null, { auth: false })).json;
+    check("search finds the published page", found?.results?.some((r) => r.path === "int-test"));
+    check("search never returns drafts/trashed", !found?.results?.some((r) => r.path.includes("preview-test") || r.path.includes("copy")));
+    check("search page renders results", (await (await fetchT(`${B}/en/search?q=Live+Header`)).text()).includes("int-test"));
+
+    // ── Form validation rules + per-form notification ─────
+    console.log("▸ form validation rules");
+    await api("POST", "/api/admin/forms", {
+      name: "Rules", notifyEmail: "owner@example.com",
+      fields: [
+        { label: "Code", type: "text", pattern: "^[A-Z]{2}\\d{4}$", required: true },
+        { label: "Qty", type: "number", min: 1, max: 10 },
+        { label: "Email", type: "email" },
+      ],
+    });
+    const rulesForm = (await api("GET", "/api/admin/forms")).json.forms.find((f) => f.slug === "rules");
+    check("rules + notifyEmail persist on the form", rulesForm?.notifyEmail === "owner@example.com" && rulesForm?.fields[0]?.pattern === "^[A-Z]{2}\\d{4}$");
+    const okSub = await api("POST", "/api/forms/rules", { code: "AB1234", qty: 5, email: "a@b.co" }, { auth: false, headers: { "x-forwarded-for": "10.4.0.1" } });
+    check("valid submission passes all rules", okSub.status === 201);
+    check("pattern violation rejected", (await api("POST", "/api/forms/rules", { code: "bad" }, { auth: false, headers: { "x-forwarded-for": "10.4.0.2" } })).status === 422);
+    check("number over max rejected", (await api("POST", "/api/forms/rules", { code: "AB1234", qty: 99 }, { auth: false, headers: { "x-forwarded-for": "10.4.0.3" } })).status === 422);
+    check("malformed email rejected", (await api("POST", "/api/forms/rules", { code: "AB1234", email: "nope" }, { auth: false, headers: { "x-forwarded-for": "10.4.0.4" } })).status === 422);
+
+    // ── Collection relations + expand ──────────────────────
+    console.log("▸ relations");
+    const bookSlug = (await api("GET", "/api/content/books", null, { auth: false })).json.entries[0].slug;
+    await api("POST", "/api/admin/content-types", {
+      name: "Reviews",
+      fields: [{ label: "Quote", type: "text", required: true }, { label: "Book", type: "relation", relatesTo: "books" }],
+    });
+    await api("POST", "/api/admin/content-types/reviews/entries", { status: "published", data: { quote: "A classic.", book: bookSlug } });
+    const flatRel = (await api("GET", "/api/content/reviews", null, { auth: false })).json;
+    check("relation stays a slug without expand", flatRel.entries[0].book === bookSlug);
+    const expanded = (await api("GET", "/api/content/reviews?expand=1", null, { auth: false })).json;
+    check("?expand=1 embeds the related entry", expanded.entries[0].book?.title === "Dune" && expanded.entries[0].book?.slug === bookSlug);
+
+    // ── Nested menus ───────────────────────────────────────
+    console.log("▸ nested menus");
+    await api("POST", "/api/admin/nav", {
+      nav: [{
+        id: "n1", label: { en: "Work", fr: "Travaux" }, href: "int-test",
+        children: [{ id: "n2", label: { en: "Sub Nine", fr: "" }, href: "sched-test", children: [{ id: "n3", label: { en: "TooDeep", fr: "" }, href: "x" }] }],
+      }],
+    });
+    const savedNav = (await api("GET", "/api/admin/nav")).json.nav;
+    check("sub-links persist", savedNav[0]?.children?.[0]?.label?.en === "Sub Nine");
+    check("depth caps at one sub-level", savedNav[0]?.children?.[0]?.children === undefined);
+    check("sub-link renders in the site menu", (await (await fetchT(`${B}/en`)).text()).includes("Sub Nine"));
+
     // ── Rate limiting (in-memory path in fs mode) ──────────
     console.log("▸ rate limiting");
     cookie = "";
@@ -242,6 +329,9 @@ async function main() {
     if (process.env.CI) console.log("\n--- server log tail ---\n" + serverLog.slice(-3000));
     process.exit(1);
   }
+  // Windows: the dev server's surviving pipe handles can keep this process
+  // alive after a successful run — exit explicitly so pipelines see EOF.
+  process.exit(0);
 }
 
 main().catch((e) => {

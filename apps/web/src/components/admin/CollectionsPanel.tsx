@@ -3,12 +3,12 @@
 import { useEffect, useState } from "react";
 import { useAdminUI } from "./ui";
 
-type FieldType = "text" | "textarea" | "richtext" | "number" | "boolean" | "date" | "image" | "select";
-interface Field { key: string; label: string; type: FieldType; required?: boolean; options?: string[] }
+type FieldType = "text" | "textarea" | "richtext" | "number" | "boolean" | "date" | "image" | "select" | "relation";
+interface Field { key: string; label: string; type: FieldType; required?: boolean; options?: string[]; relatesTo?: string }
 interface ContentType { id: string; slug: string; name: string; fields: Field[] }
 interface Entry { id: string; slug: string; status: "draft" | "published"; data: Record<string, unknown>; updatedAt: string }
 
-const FIELD_TYPES: FieldType[] = ["text", "textarea", "richtext", "number", "boolean", "date", "image", "select"];
+const FIELD_TYPES: FieldType[] = ["text", "textarea", "richtext", "number", "boolean", "date", "image", "select", "relation"];
 
 export function CollectionsPanel({ isSuper }: { isSuper: boolean }) {
   const ui = useAdminUI();
@@ -57,7 +57,7 @@ export function CollectionsPanel({ isSuper }: { isSuper: boolean }) {
       {loading && <p className="text-sm text-ink-soft">Loading…</p>}
 
       {building && isSuper && (
-        <TypeBuilder onDone={(slug) => { setBuilding(false); loadTypes().then(() => slug && setActive(slug)); }} onCancel={() => setBuilding(false)} />
+        <TypeBuilder existingTypes={types} onDone={(slug) => { setBuilding(false); loadTypes().then(() => slug && setActive(slug)); }} onCancel={() => setBuilding(false)} />
       )}
 
       {!building && !loading && types.length === 0 && (
@@ -79,7 +79,7 @@ export function CollectionsPanel({ isSuper }: { isSuper: boolean }) {
 }
 
 // ─── Type builder (define fields) ───────────────────────
-function TypeBuilder({ onDone, onCancel }: { onDone: (slug?: string) => void; onCancel: () => void }) {
+function TypeBuilder({ existingTypes, onDone, onCancel }: { existingTypes: ContentType[]; onDone: (slug?: string) => void; onCancel: () => void }) {
   const ui = useAdminUI();
   const [name, setName] = useState("");
   const [fields, setFields] = useState<Field[]>([{ key: "title", label: "Title", type: "text", required: true }]);
@@ -127,6 +127,12 @@ function TypeBuilder({ onDone, onCancel }: { onDone: (slug?: string) => void; on
             {f.type === "select" && (
               <input className="field sm:col-span-4" placeholder="Options, comma-separated (e.g. Small, Medium, Large)" defaultValue={(f.options ?? []).join(", ")}
                 onChange={(e) => setField(i, { options: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) })} />
+            )}
+            {f.type === "relation" && (
+              <select className="field sm:col-span-4" value={f.relatesTo ?? ""} onChange={(e) => setField(i, { relatesTo: e.target.value || undefined })}>
+                <option value="">Links to… (pick a content type)</option>
+                {existingTypes.map((t) => <option key={t.slug} value={t.slug}>{t.name}</option>)}
+              </select>
             )}
           </div>
         ))}
@@ -223,6 +229,27 @@ function EntriesManager({ type, isSuper, onDeleteType, onReloadTypes }: { type: 
   );
 }
 
+/** Dropdown of the target type's entries (value = entry slug). */
+function RelationSelect({ target, value, onChange }: { target: string; value: string; onChange: (v: string) => void }) {
+  const [options, setOptions] = useState<{ slug: string; status: string }[]>([]);
+  useEffect(() => {
+    if (!target) return;
+    fetch(`/api/admin/content-types/${target}/entries`)
+      .then((r) => (r.ok ? r.json() : { entries: [] }))
+      .then((d) => setOptions((d.entries ?? []).map((e: Entry) => ({ slug: e.slug, status: e.status }))))
+      .catch(() => setOptions([]));
+  }, [target]);
+  if (!target) return <p className="text-xs text-red-600">This relation field has no target type — edit the schema.</p>;
+  return (
+    <select className="field" value={value} onChange={(e) => onChange(e.target.value)}>
+      <option value="">—</option>
+      {options.map((o) => (
+        <option key={o.slug} value={o.slug}>{o.slug}{o.status === "draft" ? " (draft)" : ""}</option>
+      ))}
+    </select>
+  );
+}
+
 // ─── Entry editor (renders inputs from the schema) ──────
 function EntryEditor({ type, entry, onSaved, onCancel }: { type: ContentType; entry: Entry | null; onSaved: () => void; onCancel: () => void }) {
   const ui = useAdminUI();
@@ -260,6 +287,8 @@ function EntryEditor({ type, entry, onSaved, onCancel }: { type: ContentType; en
                 <option value="">—</option>
                 {(f.options ?? []).map((o) => <option key={o} value={o}>{o}</option>)}
               </select>
+            ) : f.type === "relation" ? (
+              <RelationSelect target={f.relatesTo ?? ""} value={String(data[f.key] ?? "")} onChange={(v) => set(f.key, v)} />
             ) : (
               <input className="field" type={f.type === "number" ? "number" : f.type === "date" ? "date" : "text"} value={String(data[f.key] ?? "")}
                 placeholder={f.type === "image" ? "Image URL or /media/…" : undefined} onChange={(e) => set(f.key, f.type === "number" ? Number(e.target.value) : e.target.value)} />

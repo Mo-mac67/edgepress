@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getPages, getSettings } from "@/lib/cms-store";
+import { isLive } from "@/lib/cms-types";
 import { getAIConfig } from "@/lib/ai/engine";
 import { assistantReply, rankContext } from "@/lib/ai/features";
 import { createLead } from "@/lib/leads-store";
@@ -55,7 +56,7 @@ export async function POST(request: Request) {
 
   const [pages, settings] = await Promise.all([getPages(), getSettings()]);
   const corpus = pages
-    .filter((p) => p.status === "published")
+    .filter((p) => isLive(p))
     .map((p) => ({ title: p.title[locale] || p.title.en, text: pageText(p, locale), slug: p.slug }))
     .filter((p) => p.text.length > 20);
   const context = rankContext(message, corpus);

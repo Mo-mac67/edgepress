@@ -41,7 +41,11 @@ export function Header({
   settings: SiteSettings;
 }) {
   const base = `/${locale}`;
-  const links = nav.map((item) => ({ href: href(item, locale), label: tx(item.label, locale) }));
+  const links = nav.map((item) => ({
+    href: href(item, locale),
+    label: tx(item.label, locale),
+    children: (item.children ?? []).map((c) => ({ href: href(c, locale), label: tx(c.label, locale) })),
+  }));
   const tel = settings.phone.replace(/[^\d+]/g, "");
   const tagline = tx(settings.headerTagline, locale);
 

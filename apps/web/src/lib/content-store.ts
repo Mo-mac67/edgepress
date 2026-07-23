@@ -8,7 +8,7 @@ import { readJsonDoc, writeJsonDoc } from "./storage";
  * published and served through the public Content API (see api/content).
  */
 
-export type FieldType = "text" | "textarea" | "richtext" | "number" | "boolean" | "date" | "image" | "select";
+export type FieldType = "text" | "textarea" | "richtext" | "number" | "boolean" | "date" | "image" | "select" | "relation";
 
 export interface Field {
   key: string;
@@ -16,6 +16,8 @@ export interface Field {
   type: FieldType;
   required?: boolean;
   options?: string[]; // for "select"
+  /** for "relation": slug of the target content type. Value = target entry slug. */
+  relatesTo?: string;
 }
 
 export interface ContentType {
@@ -91,12 +93,17 @@ function normalizeFields(raw: unknown): Field[] {
   for (const f of raw) {
     const key = slugify(String((f as Field)?.key || (f as Field)?.label || "")).replace(/-/g, "_");
     const label = String((f as Field)?.label || key).slice(0, 60);
-    const type = (["text", "textarea", "richtext", "number", "boolean", "date", "image", "select"] as FieldType[]).includes((f as Field)?.type) ? (f as Field).type : "text";
+    const type = (["text", "textarea", "richtext", "number", "boolean", "date", "image", "select", "relation"] as FieldType[]).includes((f as Field)?.type) ? (f as Field).type : "text";
     if (!key || seen.has(key)) continue;
     seen.add(key);
     const field: Field = { key, label, type };
     if ((f as Field)?.required) field.required = true;
     if (type === "select" && Array.isArray((f as Field).options)) field.options = (f as Field).options!.map((o) => String(o)).filter(Boolean).slice(0, 40);
+    if (type === "relation") {
+      const target = slugify(String((f as Field)?.relatesTo ?? ""));
+      if (!target) continue; // a relation without a target is meaningless
+      field.relatesTo = target;
+    }
     out.push(field);
   }
   return out.slice(0, 40);
@@ -176,6 +183,36 @@ export async function updateEntry(typeSlug: string, id: string, patch: { slug?: 
   await writeJsonDoc(entriesKey(typeSlug), entries);
   return e;
 }
+/**
+ * Replaces relation-field values (target entry slugs/ids) with the embedded
+ * published target entry. One storage read per distinct target type; drafts
+ * never leak through expansion. Unresolvable values stay as the raw slug.
+ */
+export async function expandRelations(type: ContentType, entries: Entry[]): Promise<Entry[]> {
+  const relFields = type.fields.filter((f) => f.type === "relation" && f.relatesTo);
+  if (relFields.length === 0) return entries;
+  const targets = new Map<string, Map<string, Entry>>();
+  for (const f of relFields) {
+    const t = f.relatesTo!;
+    if (targets.has(t)) continue;
+    const m = new Map<string, Entry>();
+    for (const e of await getPublishedEntries(t)) {
+      m.set(e.slug, e);
+      m.set(e.id, e);
+    }
+    targets.set(t, m);
+  }
+  return entries.map((e) => {
+    const data = { ...e.data };
+    for (const f of relFields) {
+      const raw = data[f.key];
+      const hit = typeof raw === "string" ? targets.get(f.relatesTo!)?.get(raw) : undefined;
+      if (hit) data[f.key] = { ...hit.data, id: hit.id, slug: hit.slug, type: hit.type };
+    }
+    return { ...e, data };
+  });
+}
+
 export async function deleteEntry(typeSlug: string, id: string): Promise<boolean> {
   const entries = await readJsonDoc<Entry[]>(entriesKey(typeSlug), []);
   const next = entries.filter((e) => e.id !== id);

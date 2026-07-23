@@ -20,15 +20,23 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     date: body.date ?? existing.date,
     author: body.author ?? existing.author,
     slug: body.slug ?? existing.slug,
-    status: body.status === "published" ? "published" : "draft",
+    // Partial updates (e.g. restore, schedule) must not flip publish state.
+    status: body.status === "published" ? "published" : body.status === "draft" ? "draft" : existing.status,
+    publishAt: body.publishAt === null ? undefined : typeof body.publishAt === "string" && body.publishAt ? body.publishAt : existing.publishAt,
   };
+  // Restore from Trash via trashed:false.
+  if ((body as { trashed?: boolean }).trashed === false) {
+    merged.trashed = undefined;
+    merged.trashedAt = undefined;
+  }
   await savePost(merged);
   if (merged.status === "published") await pingIndexNow(`blog/${merged.slug}`);
   return NextResponse.json({ post: merged });
 }
 
-export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   if (!(await isAuthed())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await params;
-  return NextResponse.json({ ok: await deletePost(id) });
+  const force = new URL(req.url).searchParams.get("force") === "1";
+  return NextResponse.json({ ok: await deletePost(id, force) });
 }

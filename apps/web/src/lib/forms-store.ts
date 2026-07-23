@@ -19,6 +19,11 @@ export interface FormField {
   required?: boolean;
   placeholder?: string;
   options?: string[];
+  /** Regex the value must match (text/tel/textarea/email). */
+  pattern?: string;
+  /** number type: value bounds. String types: length bounds. */
+  min?: number;
+  max?: number;
 }
 
 export interface FormDef {
@@ -29,6 +34,8 @@ export interface FormDef {
   submitLabel: string;
   successMessage: string;
   createdAt: string;
+  /** Each new submission is emailed here (falls back to LEAD_NOTIFY_TO when unset). */
+  notifyEmail?: string;
 }
 
 export interface Submission {
@@ -56,6 +63,14 @@ function normalizeFields(raw: unknown): FormField[] {
     if ((f as FormField)?.required) field.required = true;
     if ((f as FormField)?.placeholder) field.placeholder = String((f as FormField).placeholder).slice(0, 120);
     if (type === "select" && Array.isArray((f as FormField).options)) field.options = (f as FormField).options!.map(String).filter(Boolean).slice(0, 40);
+    const pattern = (f as FormField)?.pattern;
+    if (typeof pattern === "string" && pattern && pattern.length <= 200) {
+      try { new RegExp(pattern); field.pattern = pattern; } catch { /* invalid regex — drop */ }
+    }
+    const num = (v: unknown) => (v === undefined || v === null || String(v).trim() === "" || !Number.isFinite(Number(v)) ? undefined : Number(v));
+    const min = num((f as FormField)?.min), max = num((f as FormField)?.max);
+    if (min !== undefined) field.min = min;
+    if (max !== undefined) field.max = max;
     out.push(field);
   }
   return out.slice(0, 40);
@@ -68,7 +83,9 @@ export async function getForms(): Promise<FormDef[]> {
 export async function getForm(slug: string): Promise<FormDef | null> {
   return (await getForms()).find((f) => f.slug === slug) ?? null;
 }
-export async function createForm(input: { name: string; slug?: string; fields: FormField[]; submitLabel?: string; successMessage?: string }): Promise<FormDef | { error: string }> {
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+export async function createForm(input: { name: string; slug?: string; fields: FormField[]; submitLabel?: string; successMessage?: string; notifyEmail?: string }): Promise<FormDef | { error: string }> {
   const name = String(input.name ?? "").trim().slice(0, 80);
   const slug = slugify(input.slug || name);
   if (!name || !slug) return { error: "Name required" };
@@ -82,11 +99,12 @@ export async function createForm(input: { name: string; slug?: string; fields: F
     successMessage: String(input.successMessage ?? "Thanks — we'll be in touch.").slice(0, 200),
     createdAt: new Date().toISOString(),
   };
+  if (typeof input.notifyEmail === "string" && EMAIL_RE.test(input.notifyEmail.trim())) form.notifyEmail = input.notifyEmail.trim().slice(0, 120);
   forms.push(form);
   await writeJsonDoc(FORMS_KEY, forms);
   return form;
 }
-export async function updateForm(slug: string, patch: Partial<Pick<FormDef, "name" | "submitLabel" | "successMessage">> & { fields?: FormField[] }): Promise<FormDef | null> {
+export async function updateForm(slug: string, patch: Partial<Pick<FormDef, "name" | "submitLabel" | "successMessage" | "notifyEmail">> & { fields?: FormField[] }): Promise<FormDef | null> {
   const forms = await getForms();
   const f = forms.find((x) => x.slug === slug);
   if (!f) return null;
@@ -94,6 +112,10 @@ export async function updateForm(slug: string, patch: Partial<Pick<FormDef, "nam
   if (patch.submitLabel) f.submitLabel = String(patch.submitLabel).slice(0, 40);
   if (patch.successMessage !== undefined) f.successMessage = String(patch.successMessage).slice(0, 200);
   if (patch.fields) f.fields = normalizeFields(patch.fields);
+  if (patch.notifyEmail !== undefined) {
+    const v = String(patch.notifyEmail).trim();
+    f.notifyEmail = EMAIL_RE.test(v) ? v.slice(0, 120) : undefined; // empty/invalid clears
+  }
   await writeJsonDoc(FORMS_KEY, forms);
   return f;
 }
@@ -139,9 +161,28 @@ export function validateSubmission(form: FormDef, raw: Record<string, unknown>):
       return { ok: false, error: `${f.label} is required` };
     }
     if (v === undefined) continue;
-    if (f.type === "number") data[f.key] = Number(v);
-    else if (f.type === "checkbox") data[f.key] = !!v;
-    else data[f.key] = String(v).slice(0, 5000);
+    if (f.type === "number") {
+      const n = Number(v);
+      if (String(v).trim() !== "" && !Number.isFinite(n)) return { ok: false, error: `${f.label} must be a number` };
+      if (f.min !== undefined && n < f.min) return { ok: false, error: `${f.label} must be at least ${f.min}` };
+      if (f.max !== undefined && n > f.max) return { ok: false, error: `${f.label} must be at most ${f.max}` };
+      data[f.key] = n;
+    } else if (f.type === "checkbox") {
+      data[f.key] = !!v;
+    } else {
+      const s = String(v).slice(0, 5000);
+      if (s.trim() !== "") {
+        if (f.type === "email" && !EMAIL_RE.test(s.trim())) return { ok: false, error: `${f.label} must be a valid email` };
+        if (f.min !== undefined && s.length < f.min) return { ok: false, error: `${f.label} must be at least ${f.min} characters` };
+        if (f.max !== undefined && s.length > f.max) return { ok: false, error: `${f.label} must be at most ${f.max} characters` };
+        if (f.pattern) {
+          try {
+            if (!new RegExp(f.pattern).test(s)) return { ok: false, error: `${f.label} has an invalid format` };
+          } catch { /* invalid stored regex — skip rule */ }
+        }
+      }
+      data[f.key] = s;
+    }
   }
   return { ok: true, data };
 }

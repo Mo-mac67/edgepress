@@ -11,7 +11,7 @@ export async function GET() {
 export async function POST(request: Request) {
   if (!(await isAuthed())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const body = await request.json().catch(() => ({}));
-  const result = await createForm({ name: body.name, slug: body.slug, fields: body.fields, submitLabel: body.submitLabel, successMessage: body.successMessage });
+  const result = await createForm({ name: body.name, slug: body.slug, fields: body.fields, submitLabel: body.submitLabel, successMessage: body.successMessage, notifyEmail: body.notifyEmail });
   if ("error" in result) return NextResponse.json(result, { status: 422 });
   await logAudit({ action: "form_create", role: await getRole(), detail: result.slug });
   return NextResponse.json({ form: result }, { status: 201 });
