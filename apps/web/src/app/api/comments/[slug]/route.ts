@@ -8,7 +8,10 @@ import { isSpam } from "@/lib/spam";
 export const dynamic = "force-dynamic";
 
 /** Approved comments for a post (public, oldest first). */
-export async function GET(_req: Request, { params }: { params: Promise<{ slug: string }> }) {
+export async function GET(req: Request, { params }: { params: Promise<{ slug: string }> }) {
+  if (!rateLimit(`commentsq:${clientIp(req)}`, 60, 60_000)) {
+    return NextResponse.json({ comments: [] }, { status: 429 });
+  }
   const { slug } = await params;
   const comments = (await getApprovedComments(slug)).map(({ author, body, createdAt }) => ({ author, body, createdAt }));
   return NextResponse.json({ comments });

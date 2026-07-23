@@ -7,6 +7,9 @@ export const dynamic = "force-dynamic";
 
 /** Free slots for a date: GET /api/booking?date=YYYY-MM-DD */
 export async function GET(request: Request) {
+  if (!rateLimit(`bookingq:${clientIp(request)}`, 60, 60_000)) {
+    return NextResponse.json({ slots: [] }, { status: 429 });
+  }
   const date = new URL(request.url).searchParams.get("date") ?? "";
   return NextResponse.json({ slots: await freeSlots(date) });
 }

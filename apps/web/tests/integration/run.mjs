@@ -303,7 +303,7 @@ async function main() {
     const r1 = await fetchT(`${B}/old-page.html`, { redirect: "manual" });
     check("old URL 30x-redirects to the new page", [301, 302, 307, 308].includes(r1.status) && (r1.headers.get("location") ?? "").includes("/en/int-test"));
     const r2 = await fetchT(`${B}/legacy/deep/post`, { redirect: "manual" });
-    check("wildcard rule carries the tail over", [301, 302, 307, 308].includes(r2.status) && (r2.headers.get("location") ?? "").includes("/en/blog"));
+    check("wildcard rule carries the FULL tail over", [301, 302, 307, 308].includes(r2.status) && (r2.headers.get("location") ?? "").includes("/en/blog/deep/post"), `got ${r2.status} → ${r2.headers.get("location")}`);
     check("unknown paths still 404", (await fetchT(`${B}/definitely-not-here`)).status === 404);
 
     // ── Post categories/tags + comments ────────────────────
