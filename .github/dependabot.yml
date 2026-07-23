@@ -1,17 +1,37 @@
-# Keep dependencies patched — especially the Next→postcss moderate chain noted
-# in docs/LAUNCH-CHECKLIST.md, which clears when Next ships a patched postcss.
+# Keep dependencies patched with MINIMAL noise: everything is grouped into a
+# single weekly PR per ecosystem (security fixes still open immediately).
+# NOTE: next + @opennextjs/cloudflare must be bumped TOGETHER (peer-locked
+# pair — see CONTRIBUTING) so they're excluded from auto-PRs.
 version: 2
 updates:
   - package-ecosystem: npm
     directory: /apps/web
     schedule:
       interval: weekly
-    open-pull-requests-limit: 5
+      day: monday
+    open-pull-requests-limit: 2
+    groups:
+      all-weekly:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+    ignore:
+      # Version-locked pair — upgrade manually together (peer dependency).
+      - dependency-name: "next"
+      - dependency-name: "@opennextjs/cloudflare"
+      # Majors are deliberate decisions, not auto-PRs.
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: npm
     directory: /packages/create-edgepress
     schedule:
-      interval: weekly
+      interval: monthly
+    groups:
+      all-monthly:
+        patterns: ["*"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: weekly
+      interval: monthly
+    groups:
+      actions-monthly:
+        patterns: ["*"]
