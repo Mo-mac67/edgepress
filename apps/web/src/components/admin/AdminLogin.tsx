@@ -19,13 +19,13 @@ export function AdminLogin() {
   }, []);
 
   if (mode === "loading") {
-    return <section className="container-page flex min-h-[70vh] items-center justify-center">{hideChrome}<p className="text-sm text-ink-soft">Loading…</p></section>;
+    return <section className="admin-ui container-page flex min-h-[70vh] items-center justify-center">{hideChrome}<p className="text-sm text-ink-soft">Loading…</p></section>;
   }
   return (
-    <>
+    <div className="admin-ui contents">
       {hideChrome}
       {mode === "setup" ? <SetupWizard /> : <LoginForm />}
-    </>
+    </div>
   );
 }
 
