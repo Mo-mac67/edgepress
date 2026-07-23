@@ -77,6 +77,8 @@ function LoginForm() {
           {loading ? "Signing in…" : needsCode ? "Verify" : "Sign in"}
         </button>
         {sso && (
+          // OAuth needs a full-page navigation to the API route — <Link> would be wrong here.
+          // eslint-disable-next-line @next/next/no-html-link-for-pages
           <a href="/api/auth/oauth/google/start" className="btn-secondary mt-3 flex w-full items-center justify-center gap-2">
             <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden><path fill="currentColor" d="M21.35 11.1H12v2.9h5.3c-.5 2.5-2.6 3.9-5.3 3.9a6 6 0 1 1 0-12c1.5 0 2.9.5 4 1.5l2.2-2.2A9 9 0 1 0 12 21c5.2 0 8.9-3.6 8.9-8.9 0-.3 0-.7-.1-1z"/></svg>
             Sign in with Google
