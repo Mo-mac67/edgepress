@@ -126,7 +126,10 @@ export default async function LangLayout({
 
   return (
     <html lang={lang} dir={dir(lang)} className={`${fonts} h-full`}>
-      <body className="flex min-h-full flex-col">
+      {/* suppressHydrationWarning: browser extensions (Grammarly & co.) inject
+          data-* attributes into <body> before React hydrates — that mismatch
+          is theirs, not ours, and shouldn't scare every site owner in dev. */}
+      <body suppressHydrationWarning className="flex min-h-full flex-col">
         {/* Live theme from the CMS Appearance panel — served by the dynamic
             /theme.css route so accent/fonts/radius edits apply without a
             redeploy. Falls back to the on-brand @theme defaults in globals. */}
