@@ -83,7 +83,9 @@ export function AdminDashboard({
       title: "Insights",
       items: [
         { id: "overview", label: "Dashboard", icon: "chart" },
-        { id: "copilot", label: "Copilot", icon: "star" },
+        // Neutral name: "Copilot" reads as a Microsoft brand (and assumes
+        // which AI the owner uses) — the id stays for saved tab permissions.
+        { id: "copilot", label: "Assistant", icon: "star" },
         { id: "leads", label: "Leads", icon: "user", badge: unread || undefined },
         { id: "marketplace", label: "Marketplace", icon: "gavel" },
         { id: "activity", label: "Activity", icon: "refresh" },
