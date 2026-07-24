@@ -68,8 +68,18 @@ const TITLE = "EdgePress — the AI-native CMS that runs free on the edge";
 const DESCRIPTION =
   "A block-based site builder, CRM, automated SEO and a full AI suite in one self-hostable app. This is the default EdgePress site — edit everything in the admin panel.";
 
+/** Never let a missing/placeholder SITE_URL crash every page (a fresh install
+ *  ships a template value) — fall back to localhost when it isn't a valid URL. */
+function metadataBaseUrl(): URL {
+  try {
+    return new URL(process.env.SITE_URL || "http://localhost:3000");
+  } catch {
+    return new URL("http://localhost:3000");
+  }
+}
+
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.SITE_URL ?? "http://localhost:3000"),
+  metadataBase: metadataBaseUrl(),
   title: TITLE,
   description: DESCRIPTION,
   alternates: { languages: { en: "/en", fr: "/fr" } },

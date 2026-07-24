@@ -40,7 +40,7 @@
   },
   "workers_dev": true,
   "vars": {
-    "SITE_URL": "https://<your-worker>.<your-subdomain>.workers.dev",
+    "SITE_URL": "http://localhost:3000",
     "EDGEPRESS_STORAGE": "kv",
     "EDGEPRESS_MEDIA": "r2"
   },

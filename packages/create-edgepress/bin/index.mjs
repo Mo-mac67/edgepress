@@ -115,17 +115,32 @@ async function cloudflareWizard(destApp, name, { domain, noDeploy }) {
     return false;
   }
 
-  // 1) KV namespace
+  // 1) KV namespace — idempotent + REMOTE. Reuse an existing namespace with
+  // this title (re-runs shouldn't spawn duplicates), else create it remotely.
+  // `--remote` matters: recent wrangler can otherwise create a LOCAL-only
+  // namespace whose id doesn't exist on your account → deploy fails 10041.
   const kvTitle = `${name.replace(/-/g, "_")}_kv`;
-  log(`${c.dim}Creating KV namespace ${kvTitle}…${c.reset}`);
-  const kv = wr(["kv", "namespace", "create", kvTitle]);
-  // Output formats vary by wrangler version: `id = "…"` (TOML) or `"id": "…"` (JSONC).
-  const kvId = kv.out.match(/"?id"?\s*[=:]\s*"?([0-9a-f]{32})"?/i)?.[1];
-  if (!kvId) {
-    log(`${c.red}✖ Couldn't create the KV namespace:${c.reset}\n${kv.out.slice(0, 400)}`);
-    return false;
+  let kvId;
+  const listed = wr(["kv", "namespace", "list"]);
+  if (listed.ok) {
+    try {
+      const arr = JSON.parse((listed.out.match(/\[[\s\S]*\]/) || ["[]"])[0]);
+      kvId = arr.find((n) => n.title === kvTitle)?.id;
+    } catch { /* fall through to create */ }
   }
-  log(`${c.green}✔ KV namespace ${kvId}${c.reset}`);
+  if (kvId) {
+    log(`${c.green}✔ Reusing KV namespace ${kvId}${c.reset}`);
+  } else {
+    log(`${c.dim}Creating KV namespace ${kvTitle}…${c.reset}`);
+    const kv = wr(["kv", "namespace", "create", kvTitle, "--remote"]);
+    // Output formats vary by wrangler version: `id = "…"` (TOML) or `"id": "…"` (JSONC).
+    kvId = kv.out.match(/"?id"?\s*[=:]\s*"?([0-9a-f]{32})"?/i)?.[1];
+    if (!kvId) {
+      log(`${c.red}✖ Couldn't create the KV namespace:${c.reset}\n${kv.out.slice(0, 400)}`);
+      return false;
+    }
+    log(`${c.green}✔ KV namespace ${kvId}${c.reset}`);
+  }
 
   // 2) R2 bucket
   const bucket = `${name}-media`;
@@ -185,15 +200,35 @@ async function cloudflareWizard(destApp, name, { domain, noDeploy }) {
 }
 
 async function copyLocalTemplate(src, destApp) {
-  const appSrc = existsSync(join(src, APP_SUBDIR)) ? join(src, APP_SUBDIR) : src;
-  await cp(appSrc, destApp, {
-    recursive: true,
-    filter: (p) =>
-      // Skip build output + runtime data…
-      !/[\\/](node_modules|\.next|\.open-next|\.wrangler|data|backups)([\\/]|$)/.test(p) &&
-      // …and never copy anyone's PERSONAL deploy config (keep the .example ones).
-      !/[\\/](wrangler\.jsonc|\.env|\.env\.local|\.env\.production)$/.test(p),
-  });
+  const skip = (p) =>
+    // Skip build output + runtime data…
+    !/[\\/](node_modules|\.next|\.open-next|\.wrangler|data|backups)([\\/]|$)/.test(p) &&
+    // …and never copy anyone's PERSONAL deploy config (keep the .example ones).
+    !/[\\/](wrangler\.jsonc|\.env|\.env\.local|\.env\.production)$/.test(p);
+
+  const hasMonorepo = existsSync(join(src, APP_SUBDIR));
+  const appSrc = hasMonorepo ? join(src, APP_SUBDIR) : src;
+  await cp(appSrc, destApp, { recursive: true, filter: skip });
+
+  // The app consumes @edgepress/core + @edgepress/ai as SOURCE from
+  // ../../packages (monorepo layout). A scaffold is flat, so bundle the
+  // packages INSIDE the project at ./packages and repoint the aliases —
+  // otherwise `next build` can't resolve @edgepress/* and the deploy fails.
+  const packagesSrc = join(src, "packages");
+  if (hasMonorepo && existsSync(packagesSrc)) {
+    // Only the runtime packages the app aliases — not the scaffolder itself.
+    for (const pkg of ["core", "ai"]) {
+      const from = join(packagesSrc, pkg);
+      if (existsSync(from)) await cp(from, join(destApp, "packages", pkg), { recursive: true, filter: skip });
+    }
+    for (const cfg of ["tsconfig.json", "next.config.ts", "vitest.config.ts"]) {
+      const f = join(destApp, cfg);
+      if (existsSync(f)) {
+        const txt = await readFile(f, "utf8");
+        await writeFile(f, txt.replaceAll("../../packages", "./packages"));
+      }
+    }
+  }
 }
 
 async function downloadTemplate(destApp) {
