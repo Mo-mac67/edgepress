@@ -248,6 +248,15 @@ export function PagesPanel({ locale }: { locale: Locale }) {
     } else ui.toast(d.error || "Duplicate failed", "error");
   }
 
+  /** One-click publish/unpublish straight from the list — no need to open the
+   *  editor. Clears any schedule so the toggle is authoritative. */
+  async function togglePublish(p: Page) {
+    const next = p.status === "published" ? "draft" : "published";
+    const res = await fetch(`/api/admin/pages/${p.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: next, publishAt: null }) });
+    if (res.ok) { ui.toast(next === "published" ? "Published — live now" : "Unpublished — hidden from the site", "success"); load(); }
+    else ui.toast("Couldn't change status", "error");
+  }
+
   const trashedCount = pages.filter((p) => p.trashed).length;
   const visiblePages = pages.filter((p) => (showTrash ? p.trashed : !p.trashed));
 
@@ -342,14 +351,19 @@ export function PagesPanel({ locale }: { locale: Locale }) {
                   <button onClick={() => duplicate(p.id)} className="hidden rounded p-2 text-ink-soft hover:text-brand sm:block" title="Duplicate">
                     <Icon name="grip" size={16} />
                   </button>
+                  <button
+                    onClick={() => togglePublish(p)}
+                    className={`rounded-full px-2.5 py-1 text-xs font-semibold ${p.status === "published" ? "bg-accent-soft text-accent-dark" : "border border-line text-ink-soft hover:text-brand"}`}
+                    title={p.status === "published" ? "Published — click to unpublish" : "Draft — click to publish now"}
+                  >
+                    {p.status === "published" ? "Live" : "Publish"}
+                  </button>
                   <Link href={`/${locale}/admin/pages/${p.id}`} className="btn-secondary py-1.5 text-sm">
                     <Icon name="edit" size={15} /> Edit
                   </Link>
-                  {!p.system && (
-                    <button onClick={() => remove(p.id, p.title[locale] || p.title.en)} className="rounded p-2 text-ink-soft hover:text-red-600" title="Move to Trash">
-                      <Icon name="trash" size={16} />
-                    </button>
-                  )}
+                  <button onClick={() => remove(p.id, p.title[locale] || p.title.en)} className="rounded p-2 text-ink-soft hover:text-red-600" title="Move to Trash">
+                    <Icon name="trash" size={16} />
+                  </button>
                 </>
               )}
             </div>

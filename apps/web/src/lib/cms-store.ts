@@ -54,7 +54,10 @@ export async function savePage(page: Page): Promise<void> {
 export async function deletePage(id: string, force = false): Promise<boolean> {
   const pages = await getPages();
   const target = pages.find((p) => p.id === id);
-  if (!target || target.system) return false;
+  // System/seed pages (home, contact, privacy…) are deletable too — it's the
+  // owner's site. The admin confirms first; a deleted system page simply 404s
+  // (or falls back, e.g. legal pages) until recreated.
+  if (!target) return false;
   if (force) {
     await writeJsonDoc(PAGES, pages.filter((p) => p.id !== id));
   } else {
