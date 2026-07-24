@@ -8,7 +8,7 @@ import { importSiteBatch } from "@/lib/site-import";
  *  Reads the target site's sitemap.xml and rebuilds each page as a draft. */
 export async function POST(request: Request) {
   if (!(await isAuthed())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!(await aiReady())) return NextResponse.json({ error: "AI is not configured" }, { status: 400 });
+  if (!(await aiReady())) return NextResponse.json({ error: "AI isn't available yet. On Cloudflare, activate Workers AI once in your dashboard (Workers & Pages → AI) — it's free — then redeploy. Or add your own AI key in the AI tab. Site import needs AI to rebuild each page." }, { status: 400 });
   const body = await request.json().catch(() => ({}));
   const url = String(body.url ?? "").trim();
   const locale = String(body.locale ?? "en");

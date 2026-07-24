@@ -13,6 +13,62 @@ export function DeveloperPanel() {
       <ApiKeysCard />
       <WebhooksCard />
       <PaymentsCard />
+      <PluginsCard />
+    </div>
+  );
+}
+
+/** Declarative plugins: install a manifest that bundles snippets, settings and
+ *  an AI-agent skill. No third-party code runs — see RFC-002. */
+function PluginsCard() {
+  const ui = useAdminUI();
+  interface Plugin { id: string; name: string; version: string; description?: string; ownedSnippets: string[]; skill?: string }
+  const [plugins, setPlugins] = useState<Plugin[]>([]);
+  const [manifest, setManifest] = useState("");
+
+  async function load() {
+    const res = await fetch("/api/admin/plugins");
+    if (res.ok) setPlugins((await res.json()).plugins ?? []);
+  }
+  useEffect(() => { load(); }, []);
+
+  async function install() {
+    let parsed: unknown;
+    try { parsed = JSON.parse(manifest); } catch { return ui.toast("That isn't valid JSON", "error"); }
+    const res = await fetch("/api/admin/plugins", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ manifest: parsed }) });
+    const d = await res.json().catch(() => ({}));
+    if (res.ok) { ui.toast(`Installed ${d.plugin.name}`, "success"); setManifest(""); load(); }
+    else ui.toast(d.error || "Install failed", "error");
+  }
+  async function remove(id: string) {
+    if (!(await ui.confirm({ title: "Uninstall this plugin?", message: "Its snippets are removed too.", danger: true, confirmLabel: "Uninstall" }))) return;
+    await fetch(`/api/admin/plugins?id=${id}`, { method: "DELETE" });
+    load();
+  }
+
+  return (
+    <div className="card p-5 lg:col-span-2">
+      <h3 className="font-display font-bold text-brand">Plugins</h3>
+      <p className="mt-1 text-xs text-ink-soft">
+        Paste a plugin manifest (JSON) to install reusable snippets, settings and an AI-agent skill. Plugins are <b>declarative</b> — no third-party code runs on your site (edge-safe). See RFC-002.
+      </p>
+      <textarea className="field mt-3 min-h-[120px] font-mono text-xs" placeholder={'{\n  "name": "Testimonials Pack",\n  "version": "1.0.0",\n  "snippets": [{ "name": "quote", "html": "<blockquote>…</blockquote>" }],\n  "skill": "Use [snippet testimonials-pack-quote] to drop a styled quote."\n}'} value={manifest} onChange={(e) => setManifest(e.target.value)} />
+      <button onClick={install} className="btn-secondary mt-2">Install plugin</button>
+
+      {plugins.length > 0 && (
+        <ul className="mt-4 divide-y divide-line">
+          {plugins.map((p) => (
+            <li key={p.id} className="flex items-start justify-between gap-3 py-3 text-sm">
+              <div className="min-w-0">
+                <p className="font-semibold text-brand">{p.name} <span className="text-xs font-normal text-ink-soft">v{p.version}</span>{p.skill && <span className="ml-2 rounded bg-accent-soft px-1.5 py-0.5 text-[10px] font-bold uppercase text-accent-dark">AI skill</span>}</p>
+                {p.description && <p className="text-xs text-ink-soft">{p.description}</p>}
+                {p.ownedSnippets.length > 0 && <p className="mt-1 text-xs text-ink-soft">Snippets: {p.ownedSnippets.map((s) => `[snippet ${s}]`).join("  ")}</p>}
+              </div>
+              <button onClick={() => remove(p.id)} className="shrink-0 text-xs font-semibold text-red-600">Uninstall</button>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
