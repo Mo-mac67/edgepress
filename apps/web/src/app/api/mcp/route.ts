@@ -1,4 +1,5 @@
 import { callMcpTool, getMcpConfig, MCP_TOOLS } from "@/lib/mcp";
+import { getPluginSkills } from "@/lib/plugins-store";
 
 /**
  * EdgePress MCP server (Streamable HTTP, JSON-RPC 2.0). Lets external agents
@@ -33,13 +34,19 @@ export async function POST(request: Request) {
   const { id, method, params } = body;
 
   switch (method) {
-    case "initialize":
+    case "initialize": {
+      // Installed plugins can teach the agent how to use them (SKILL.md).
+      const skills = await getPluginSkills().catch(() => []);
+      const skillText = skills.length
+        ? "\n\nInstalled plugin skills:\n" + skills.map((s) => `### ${s.name}\n${s.skill}`).join("\n\n")
+        : "";
       return rpc(id, {
         protocolVersion: PROTOCOL_VERSION,
         capabilities: { tools: {} },
         serverInfo: { name: "EdgePress", version: "1.0.0" },
-        instructions: "Manage an EdgePress website: list/create/translate/publish pages and read CRM leads.",
+        instructions: "Manage an EdgePress website: list/create/translate/publish pages and read CRM leads." + skillText,
       });
+    }
 
     case "notifications/initialized":
     case "notifications/cancelled":

@@ -46,6 +46,8 @@ Create from the **Pages** tab:
   `sitemap.xml` and rebuilds *every* page as a draft (batched + resumable;
   localized sitemaps are deduped). **Import screenshot** — rebuild from an
   image of a page. **Import HTML** — drop a `.html` file.
+  **Blank HTML page** — start an empty page in Custom-HTML mode for full pixel
+  control (better than AI import when you want an exact design).
 
 In the editor:
 
@@ -377,3 +379,12 @@ Build video + text courses under **Content → Courses**:
   the body, prev/next navigation, and a **Mark complete** button.
 - Progress is tracked in the visitor's browser (localStorage) — no
   accounts needed; the course page shows a progress bar and checkmarks.
+
+## 25. Plugins (Developer → Plugins)
+
+EdgePress plugins are **declarative** — a JSON manifest that bundles reusable
+snippets, a settings bag, and an optional **AI-agent skill** — so no
+third-party code ever runs on your edge site (safe + portable). Paste a
+manifest to install; its snippets become `[snippet …]` tokens usable on any
+page, and its skill is taught to any AI agent connected via the MCP server.
+Uninstall removes exactly what it added. Full design: [RFC-002](RFC-002-plugins.md).

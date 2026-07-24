@@ -6,7 +6,7 @@ import { optimizeForIntent } from "@/lib/ai/features";
 /** Optimize a piece of content for a target search intent. */
 export async function POST(request: Request) {
   if (!(await isAuthed())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!(await aiReady())) return NextResponse.json({ error: "AI is not configured" }, { status: 400 });
+  if (!(await aiReady())) return NextResponse.json({ error: "AI isn't available yet. On Cloudflare, activate Workers AI once in your dashboard (Workers & Pages → AI) — it's free — then redeploy, or add your own AI key in the AI tab." }, { status: 400 });
   const body = await request.json().catch(() => ({}));
   const text = String(body.text ?? "").trim();
   const intent = String(body.intent ?? "").trim();

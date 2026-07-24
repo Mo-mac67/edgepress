@@ -54,6 +54,22 @@ export function PagesPanel({ locale }: { locale: Locale }) {
     await createPage({ title, slug: slugify(title) });
   }
 
+  /** Blank Custom-HTML page — the fastest path to a fully bespoke page (paste
+   *  your own HTML, edit the source directly). Better than AI import when you
+   *  want pixel control. */
+  async function createHtmlPage() {
+    const title = await ui.prompt({
+      title: "New blank HTML page",
+      message: "Starts an empty page in Custom HTML mode — write or paste your own HTML, full control.",
+      label: "Page title",
+      placeholder: "e.g. Landing",
+      confirmLabel: "Create HTML page",
+      validate: (v) => (v.trim() ? null : "Enter a title"),
+    });
+    if (!title) return;
+    await createPage({ title, slug: slugify(title), rawHtml: "<section>\n  <h1>New page</h1>\n  <p>Write your HTML here.</p>\n</section>" });
+  }
+
   async function importFromUrl() {
     const url = await ui.prompt({ title: "Import from a URL", message: "EdgePress will read the page and rebuild it as an editable draft.", label: "Page URL", placeholder: "https://example.com/about", confirmLabel: "Import", validate: (v) => (/^https?:\/\//.test(v) ? null : "Enter a full URL") });
     if (!url) return;
@@ -260,6 +276,9 @@ export function PagesPanel({ locale }: { locale: Locale }) {
           </label>
           <button onClick={generateWithAI} className="btn-secondary py-2 text-sm" title="Generate a page with AI" aria-label="Generate a page with AI">
             <Icon name="star" size={16} /> Generate with AI
+          </button>
+          <button onClick={createHtmlPage} className="btn-secondary py-2 text-sm" title="Blank Custom-HTML page — full control" aria-label="New blank HTML page">
+            <Icon name="code" size={16} /> Blank HTML page
           </button>
           <button onClick={create} className="btn-primary py-2 text-sm">
             <Icon name="check" size={16} /> New page

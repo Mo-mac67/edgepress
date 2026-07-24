@@ -9,7 +9,7 @@ import { getActiveLocales, getPages, savePage } from "@/lib/cms-store";
  *  locales are untouched). Best-effort per page so one failure doesn't abort. */
 export async function POST(request: Request) {
   if (!(await isAuthed())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!(await aiReady())) return NextResponse.json({ error: "AI is not configured" }, { status: 400 });
+  if (!(await aiReady())) return NextResponse.json({ error: "AI isn't available yet. On Cloudflare, activate Workers AI once in your dashboard (Workers & Pages → AI) — it's free — then redeploy, or add your own AI key in the AI tab." }, { status: 400 });
   const body = await request.json().catch(() => ({}));
   const to = String(body.to ?? "");
   const from = String(body.from ?? "en");
