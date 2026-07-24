@@ -9,6 +9,29 @@ Upgrade with `npx create-edgepress upgrade` (scaffolded sites) or `git pull`
 (clones) — your content lives in your storage and is never touched by code
 updates.
 
+## [1.1.0] — 2026-07-24
+
+### Added
+- **Plugins (RFC-002)** — declarative, edge-safe plugins: a JSON manifest
+  bundles reusable snippets + settings + an optional **AI-agent skill** that
+  the MCP server teaches any connected agent. Install/uninstall in
+  Developer → Plugins. No third-party code runs on your site.
+
+### Fixed (found by installing from scratch on a real domain)
+- `create-edgepress` produced an unbuildable project after the core/ai
+  package split — the scaffold now bundles `packages/{core,ai}` and rewrites
+  the aliases, so `next build` passes.
+- The `--cloudflare` wizard could create a local-only KV namespace →
+  deploy failed 10041. Now idempotent (reuse by name) + `--remote`.
+- A fresh install 500'd on every page when `SITE_URL` was still a template
+  placeholder — the layout now guards `metadataBase` and never crashes.
+- Clearer "activate Workers AI / add a key" guidance across all AI features.
+
+### Changed
+- Professional graphite **admin theme** with crisp focus/hover/disabled
+  states, always-visible keyboard focus, and quiet data tables.
+- "Blank HTML page" quick action in Pages for fully bespoke pages.
+
 ## [1.0.0] — 2026-07-23
 
 First public release. 🎉
