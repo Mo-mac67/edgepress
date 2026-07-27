@@ -4,10 +4,11 @@ import { notFound } from "next/navigation";
 import { redirectOrNotFound } from "@/lib/redirect-guard";
 import type { Metadata } from "next";
 import { PageView } from "@/components/blocks/PageView";
+import { AdminApp } from "@/components/admin/AdminApp";
 import { Comments } from "@/components/Comments";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
-import { isAuthed } from "@/lib/admin-auth";
+import { getAdminPath, isAuthed } from "@/lib/admin-auth";
 import { getPage, getPost, getPosts } from "@/lib/cms-store";
 import { isLive, tx } from "@/lib/cms-types";
 import { isValidPreview } from "@/lib/preview";
@@ -45,6 +46,11 @@ export default async function CmsPage({ params, searchParams }: { params: Promis
   if (!isLocale(lang)) return redirectOrNotFound(`/${[lang, ...slug].join("/")}`);
   const dict = getDictionary(lang);
   const path = slug.join("/");
+
+  // Custom admin path: when the owner moved the admin off the default /admin,
+  // serve the admin app here at the configured path.
+  const adminPath = await getAdminPath();
+  if (adminPath !== "admin" && path === adminPath) return <AdminApp lang={lang} />;
 
   // Blog
   if (slug[0] === "blog") {

@@ -31,6 +31,7 @@ export function AdminLogin() {
 
 function LoginForm() {
   const router = useRouter();
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
   const [needsCode, setNeedsCode] = useState(false);
@@ -51,7 +52,7 @@ function LoginForm() {
     const res = await fetch("/api/admin/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password, code: code || undefined }),
+      body: JSON.stringify({ username: username || undefined, password, code: code || undefined }),
     });
     const data = await res.json().catch(() => ({}));
     setLoading(false);
@@ -71,8 +72,12 @@ function LoginForm() {
         <h1 className="mt-4 font-display text-xl font-bold text-brand">EdgePress Admin</h1>
         <p className="mt-1 text-sm text-ink-soft">Sign in to manage your site.</p>
         <label className="mt-5 block">
+          <span className="mb-1.5 block text-sm font-medium text-ink-soft">Username <span className="font-normal text-ink-soft/70">(optional)</span></span>
+          <input type="text" autoComplete="username" className="field" value={username} placeholder="owner or team name" onChange={(e) => setUsername(e.target.value)} disabled={needsCode} />
+        </label>
+        <label className="mt-3 block">
           <span className="mb-1.5 block text-sm font-medium text-ink-soft">Password</span>
-          <input type="password" className="field" value={password} placeholder="••••••••" onChange={(e) => setPassword(e.target.value)} autoFocus disabled={needsCode} />
+          <input type="password" autoComplete="current-password" className="field" value={password} placeholder="••••••••" onChange={(e) => setPassword(e.target.value)} autoFocus disabled={needsCode} />
         </label>
         {needsCode && (
           <label className="mt-3 block">

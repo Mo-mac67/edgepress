@@ -9,6 +9,22 @@ Upgrade with `npx create-edgepress upgrade` (scaffolded sites) or `git pull`
 (clones) — your content lives in your storage and is never touched by code
 updates.
 
+## [1.4.0] — 2026-07-26
+
+### Added
+- **Username sign-in** — the login screen now takes an optional username. Team
+  members sign in with their name + password; the owner can set a login
+  username (Settings → “Sign-in & admin URL”). Backward-compatible: the owner
+  can always sign in with just the password, so no one is ever locked out.
+- **Changeable admin URL** — move the admin off the guessable default `/admin`
+  to any path (Settings, owner only). The default is then disabled; recovery
+  escape hatch is the `ADMIN_PATH` env var. Reserved routes are rejected.
+
+### Note
+- Multi-user with per-tab permissions, a super-admin/owner role, and optional
+  TOTP 2FA already shipped in 1.0 (Settings → team + 2FA); sessions expire
+  after 8 hours.
+
 ## [1.3.0] — 2026-07-26
 
 ### Added

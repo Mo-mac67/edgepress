@@ -583,11 +583,25 @@ function Settings({
   channels: NotificationChannels;
   adminUsers: AdminUser[];
 }) {
+  const ui = useAdminUI();
   const [pw, setPw] = useState("");
   const [msg, setMsg] = useState("");
   const [users, setUsers] = useState<AdminUser[]>(adminUsers);
   const [uLabel, setULabel] = useState("");
   const [uPass, setUPass] = useState("");
+  // Owner-only security: login username + custom admin URL.
+  const [ownerName, setOwnerName] = useState("");
+  const [adminPath, setAdminPath] = useState("admin");
+  const [secMsg, setSecMsg] = useState("");
+  useEffect(() => {
+    if (!isSuper) return;
+    fetch("/api/admin/security").then((r) => (r.ok ? r.json() : null)).then((d) => { if (d) { setOwnerName(d.ownerUsername || ""); setAdminPath(d.adminPath || "admin"); } }).catch(() => {});
+  }, [isSuper]);
+  async function saveSecurity(payload: Record<string, string>, ok: string) {
+    const res = await fetch("/api/admin/security", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    const d = await res.json().catch(() => ({}));
+    if (res.ok) { if (d.adminPath) setAdminPath(d.adminPath); setSecMsg(ok); } else setSecMsg(d.error || "Failed.");
+  }
 
   async function manageUsers(payload: Record<string, string>) {
     const res = await fetch("/api/admin/users", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
@@ -631,6 +645,34 @@ function Settings({
           {msg && <p className="mt-3 text-sm text-ink-soft">{msg}</p>}
         </form>
       </div>
+
+      {isSuper && (
+        <div className="card p-6">
+          <h3 className="font-display font-semibold text-brand">Sign-in &amp; admin URL</h3>
+          <label className="mt-4 block">
+            <span className="mb-1 block text-sm font-medium text-ink">Owner username <span className="font-normal text-ink-soft">(optional)</span></span>
+            <div className="flex gap-2">
+              <input className="field" placeholder="e.g. owner" value={ownerName} onChange={(e) => setOwnerName(e.target.value)} />
+              <button type="button" onClick={() => saveSecurity({ ownerUsername: ownerName }, "Username saved.")} className="btn-secondary shrink-0">Save</button>
+            </div>
+            <span className="mt-1 block text-xs text-ink-soft">A username to sign in with. You can always sign in with just your password too.</span>
+          </label>
+          <label className="mt-4 block">
+            <span className="mb-1 block text-sm font-medium text-ink">Admin URL path</span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-ink-soft">/{"{lang}"}/</span>
+              <input className="field" placeholder="admin" value={adminPath} onChange={(e) => setAdminPath(e.target.value.replace(/[^a-z0-9/-]/gi, "-").toLowerCase())} />
+              <button
+                type="button"
+                onClick={async () => { if (await ui.confirm({ title: "Change the admin URL?", message: `The admin will move to /${adminPath}. The default /admin will stop working. Write the new address down — if you forget it, recovery needs KV/env access.`, confirmLabel: "Change URL" })) saveSecurity({ adminPath }, `Admin is now at /${adminPath}. Bookmark it.`); }}
+                className="btn-secondary shrink-0"
+              >Save</button>
+            </div>
+            <span className="mt-1 block text-xs text-ink-soft">Move the admin off the guessable default. Recovery escape hatch: set the <code>ADMIN_PATH</code> env var. Reserved words (blog, search, api…) aren&apos;t allowed.</span>
+          </label>
+          {secMsg && <p className="mt-3 text-sm font-medium text-accent-dark">{secMsg}</p>}
+        </div>
+      )}
 
       <div className="card p-6">
         <h3 className="font-display font-semibold text-brand">Lead notifications</h3>

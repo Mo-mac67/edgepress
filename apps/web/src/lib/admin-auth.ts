@@ -32,7 +32,7 @@ function superHash(): string | null {
 const readJson = <T>(key: string, fallback: T) => readJsonDoc<T>(key, fallback);
 const writeJson = (key: string, data: unknown) => writeJsonDoc(key, data);
 
-type AdminConfig = { passwordHash?: string; tabPermissions?: Record<string, string[]>; setupDone?: boolean; totp?: { secret: string; enabled: boolean } };
+type AdminConfig = { passwordHash?: string; tabPermissions?: Record<string, string[]>; setupDone?: boolean; totp?: { secret: string; enabled: boolean }; ownerUsername?: string; adminPath?: string };
 
 /** First-run detection: true once the owner has completed the setup wizard. */
 export async function isSetupDone(): Promise<boolean> {
@@ -76,6 +76,22 @@ export async function verifyPassword(password: string): Promise<Role | null> {
   if (sh && h === sh) return "super";
   if (h === (await primaryAdminHash())) return "super"; // the owner
   if ((await managedUserHashes()).includes(h)) return "admin";
+  return null;
+}
+
+/**
+ * Username + password sign-in. Username is OPTIONAL and backward-compatible:
+ * with no username this is exactly verifyPassword (owner, or any team member by
+ * password) — so the owner can NEVER be locked out. With a username it must
+ * match a team member's name, or the owner's configured username.
+ */
+export async function verifyCredentials(username: string | undefined, password: string): Promise<Role | null> {
+  const u = (username ?? "").trim().toLowerCase();
+  if (!u) return verifyPassword(password); // safety fallback — password alone always works
+  const member = (await storedUsers()).find((x) => x.label.trim().toLowerCase() === u && x.passwordHash === hash(password));
+  if (member) return "admin";
+  const owner = (await getOwnerUsername()).toLowerCase();
+  if (u === (owner || "owner") && (await verifyPassword(password)) === "super") return "super";
   return null;
 }
 
@@ -129,6 +145,37 @@ export async function setAdminPassword(next: string): Promise<boolean> {
   const cfg = await readJson<AdminConfig>(CONFIG_FILE, {});
   await writeJson(CONFIG_FILE, { ...cfg, passwordHash: hash(next) });
   return true;
+}
+
+/** The owner's optional login username (blank = login with password only). */
+export async function getOwnerUsername(): Promise<string> {
+  const cfg = await readJson<AdminConfig>(CONFIG_FILE, {});
+  return cfg.ownerUsername ?? "";
+}
+export async function setOwnerUsername(name: string): Promise<boolean> {
+  const cfg = await readJson<AdminConfig>(CONFIG_FILE, {});
+  await writeJson(CONFIG_FILE, { ...cfg, ownerUsername: (name ?? "").trim().slice(0, 40) });
+  return true;
+}
+
+const RESERVED_ADMIN_PATHS = ["blog", "search", "learn", "forum", "account", "tenders", "api", "en", "fr"];
+/** The admin URL segment. `ADMIN_PATH` env always wins (recovery escape hatch),
+ *  then the configured value, else the default "admin". */
+export async function getAdminPath(): Promise<string> {
+  const env = (process.env.ADMIN_PATH ?? "").trim().replace(/^\/+|\/+$/g, "");
+  if (env) return env;
+  const cfg = await readJson<AdminConfig>(CONFIG_FILE, {});
+  return ((cfg.adminPath ?? "admin").trim().replace(/^\/+|\/+$/g, "")) || "admin";
+}
+/** Change the admin URL segment (super only — enforced in the route). Reverting
+ *  to "admin" is always allowed; other reserved top-level routes are rejected. */
+export async function setAdminPath(path: string): Promise<{ ok: boolean; error?: string; path?: string }> {
+  const clean = (path ?? "").trim().toLowerCase().replace(/^\/+|\/+$/g, "").replace(/[^a-z0-9/-]/g, "-").replace(/-+/g, "-");
+  if (!clean) return { ok: false, error: "Path required" };
+  if (clean !== "admin" && RESERVED_ADMIN_PATHS.includes(clean.split("/")[0])) return { ok: false, error: "That path is reserved" };
+  const cfg = await readJson<AdminConfig>(CONFIG_FILE, {});
+  await writeJson(CONFIG_FILE, { ...cfg, adminPath: clean });
+  return { ok: true, path: clean };
 }
 
 /** Who is signed in: "super" (the owner) or a managed member's label. */
