@@ -59,17 +59,24 @@ var s=c.querySelector("#ep-edit-style");if(s)s.remove();var sc=c.querySelector("
 parent.postMessage({source:"edgepress",type:"ep-html",locale:loc,value:"<!doctype html>\\n"+c.outerHTML},"*");
 },400);}
 document.addEventListener("input",function(e){var t=e.target;if(t&&t.getAttribute&&t.getAttribute("data-ep-ce"))push();},true);
-// ---- link / button destination editor (floating bar) ----
+// ---- floating bar: edit a link/button destination (href) OR an image (src) ----
 var bar=document.createElement("div");bar.id="ep-edit-linkbar";bar.setAttribute("contenteditable","false");
 bar.style.cssText="position:fixed;left:12px;bottom:12px;z-index:2147483647;display:none;align-items:center;gap:8px;background:#12171f;color:#eef2f6;border:1px solid #2a333f;border-radius:10px;padding:9px 11px;font:13px system-ui,sans-serif;box-shadow:0 12px 34px rgba(0,0,0,.55)";
-bar.innerHTML='<span style="color:#7ff5c8">&#128279; link</span><input id="ep-href" style="width:320px;background:#0a0c10;color:#eef2f6;border:1px solid #2a333f;border-radius:7px;padding:7px 9px;font:13px system-ui,sans-serif;outline:none" placeholder="https://…  /path  mailto:…  tel:…"><button id="ep-href-x" style="background:none;border:0;color:#9fb4ab;cursor:pointer;font-size:15px">&#10005;</button>';
+bar.innerHTML='<span id="ep-bar-label" style="color:#7ff5c8;white-space:nowrap"></span><input id="ep-bar-input" style="width:340px;background:#0a0c10;color:#eef2f6;border:1px solid #2a333f;border-radius:7px;padding:7px 9px;font:13px system-ui,sans-serif;outline:none"><button id="ep-bar-x" style="background:none;border:0;color:#9fb4ab;cursor:pointer;font-size:15px">&#10005;</button>';
 document.body.appendChild(bar);
-var curLink=null,hrefInput=bar.querySelector("#ep-href");
-function showBar(a){curLink=a;hrefInput.value=a.getAttribute("href")||"";bar.style.display="flex";}
-function hideBar(){bar.style.display="none";curLink=null;}
-hrefInput.addEventListener("input",function(){if(curLink){curLink.setAttribute("href",hrefInput.value);push();}});
-bar.querySelector("#ep-href-x").addEventListener("mousedown",function(e){e.preventDefault();hideBar();});
-document.addEventListener("click",function(e){if(bar.contains(e.target))return;var a=e.target&&e.target.closest?e.target.closest("a[href],button"):null;if(a){showBar(a);}else{hideBar();}},true);
+var curEl=null,curAttr="href",input=bar.querySelector("#ep-bar-input"),label=bar.querySelector("#ep-bar-label");
+function showBar(el,attr,text,ph){curEl=el;curAttr=attr;input.value=el.getAttribute(attr)||"";label.textContent=text;input.placeholder=ph;bar.style.display="flex";input.focus();}
+function hideBar(){bar.style.display="none";curEl=null;}
+input.addEventListener("input",function(){if(curEl){curEl.setAttribute(curAttr,input.value);push();}});
+bar.querySelector("#ep-bar-x").addEventListener("mousedown",function(e){e.preventDefault();hideBar();});
+document.addEventListener("click",function(e){
+  if(bar.contains(e.target))return;
+  var img=e.target&&e.target.closest?e.target.closest("img"):null;
+  if(img){showBar(img,"src","\\uD83D\\uDDBC image","https://…  image URL (paste from Media)");return;}
+  var a=e.target&&e.target.closest?e.target.closest("a[href],button"):null;
+  if(a){showBar(a,"href","\\uD83D\\uDD17 link","https://…  /path  mailto:…  tel:…");return;}
+  hideBar();
+},true);
 })();<\/script>`;
   return html.includes("</body>") ? html.replace("</body>", script + "</body>") : html + script;
 }

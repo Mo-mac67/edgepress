@@ -9,6 +9,13 @@ Upgrade with `npx create-edgepress upgrade` (scaffolded sites) or `git pull`
 (clones) — your content lives in your storage and is never touched by code
 updates.
 
+## [1.9.0] — 2026-07-27
+
+### Added
+- **Edit images in place** — in "Edit on page", click any image and the floating
+  bar lets you set a new image URL (paste one from the Media library). Works on
+  Custom-HTML pages, design preserved; the change is saved into the page HTML.
+
 ## [1.8.0] — 2026-07-27
 
 ### Added
