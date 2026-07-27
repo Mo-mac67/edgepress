@@ -33,6 +33,7 @@ export function BlockRenderer({
   first,
   pageDate,
   pageId,
+  edit,
 }: {
   blocks: Block[];
   locale: Locale;
@@ -43,11 +44,13 @@ export function BlockRenderer({
   pageDate?: string;
   /** Page id — payment blocks reference it so prices are read server-side. */
   pageId?: string;
+  /** Inline-edit mode: tag text with data-ep-* so the editor can edit on-page. */
+  edit?: boolean;
 }) {
   return (
     <>
       {blocks.map((block, i) => (
-        <BlockView key={block.id} block={block} locale={locale} dict={dict} settings={settings} priority={first && i === 0} pageDate={pageDate} pageId={pageId} />
+        <BlockView key={block.id} block={block} locale={locale} dict={dict} settings={settings} priority={first && i === 0} pageDate={pageDate} pageId={pageId} edit={edit} />
       ))}
     </>
   );
@@ -101,6 +104,7 @@ function BlockView({
   priority,
   pageDate,
   pageId,
+  edit,
 }: {
   block: Block;
   locale: Locale;
@@ -109,9 +113,15 @@ function BlockView({
   priority?: boolean;
   pageDate?: string;
   pageId?: string;
+  edit?: boolean;
 }) {
   const d = block.data;
   const t = (k: string) => tx(d[k], locale);
+  // Inline-edit tag: mark a text element as editable for a given field path.
+  // `path` is a field key ("title") or a nested item path ("items.0.title").
+  // Returns nothing outside edit mode, so normal renders are untouched.
+  const ed = (path: string, rich = false): Record<string, string> =>
+    edit ? { "data-ep-b": block.id, "data-ep-f": path, ...(rich ? { "data-ep-rich": "1" } : {}) } : {};
 
   switch (block.type) {
     case "slideshow": {
@@ -226,16 +236,17 @@ function BlockView({
               {!!d.stars && <div className="mb-3 tracking-[3px] text-accent">★★★★★</div>}
               <div className="rule-accent mb-4" />
               {t("eyebrow") && (
-                <span className="text-xs font-extrabold uppercase tracking-[0.12em] text-accent">{t("eyebrow")}</span>
+                <span {...ed("eyebrow")} className="text-xs font-extrabold uppercase tracking-[0.12em] text-accent">{t("eyebrow")}</span>
               )}
               <h1
+                {...ed("title")}
                 className={`mt-4 max-w-[720px] font-display font-extrabold leading-[0.98] tracking-[-0.03em] ${
                   hasButtons ? "text-4xl md:text-6xl" : "text-3xl md:text-5xl"
                 }`}
               >
                 {t("title")}
               </h1>
-              {t("subtitle") && <p className="mt-5 max-w-xl text-base leading-relaxed text-white/80 md:text-lg">{t("subtitle")}</p>}
+              {t("subtitle") && <p {...ed("subtitle")} className="mt-5 max-w-xl text-base leading-relaxed text-white/80 md:text-lg">{t("subtitle")}</p>}
               {hasButtons && (
                 <div className="mt-8 flex flex-wrap items-center gap-x-7 gap-y-3">
                   {t("primaryLabel") && (
@@ -268,10 +279,10 @@ function BlockView({
           <section className="bg-white">
             <div className="container-page grid items-end gap-4 pt-16 md:grid-cols-[minmax(0,1fr)_minmax(280px,440px)] md:gap-10">
               <div>
-                {t("eyebrow") && <span className="eyebrow">{t("eyebrow")}</span>}
-                <h2 className="section-title mt-2">{t("title")}</h2>
+                {t("eyebrow") && <span {...ed("eyebrow")} className="eyebrow">{t("eyebrow")}</span>}
+                <h2 {...ed("title")} className="section-title mt-2">{t("title")}</h2>
               </div>
-              {t("subtitle") && <p className="text-[1.05rem] leading-relaxed text-ink-soft md:pb-1.5">{t("subtitle")}</p>}
+              {t("subtitle") && <p {...ed("subtitle")} className="text-[1.05rem] leading-relaxed text-ink-soft md:pb-1.5">{t("subtitle")}</p>}
             </div>
           </section>
         );
@@ -280,9 +291,9 @@ function BlockView({
         <section className="bg-white">
           <div className="container-page pt-16 text-center">
             <div className="mx-auto max-w-2xl">
-              {t("eyebrow") && <span className="eyebrow">{t("eyebrow")}</span>}
-              <h2 className="section-title mt-3">{t("title")}</h2>
-              {t("subtitle") && <p className="mt-4 text-ink-soft">{t("subtitle")}</p>}
+              {t("eyebrow") && <span {...ed("eyebrow")} className="eyebrow">{t("eyebrow")}</span>}
+              <h2 {...ed("title")} className="section-title mt-3">{t("title")}</h2>
+              {t("subtitle") && <p {...ed("subtitle")} className="mt-4 text-ink-soft">{t("subtitle")}</p>}
             </div>
           </div>
         </section>
@@ -292,6 +303,7 @@ function BlockView({
       return (
         <section className="bg-white">
           <div
+            {...ed("html", true)}
             className="container-page prose max-w-3xl py-8 prose-headings:font-display prose-headings:text-brand prose-a:text-accent-dark"
             dangerouslySetInnerHTML={{ __html: t("html") }}
           />
@@ -320,8 +332,8 @@ function BlockView({
             </div>
             <div>
               {t("eyebrow") && <span className="eyebrow"><Icon name="hammer" size={15} />{t("eyebrow")}</span>}
-              <h2 className="section-title mt-3">{t("title")}</h2>
-              {t("body") && <p className="mt-4 whitespace-pre-line text-ink-soft">{t("body")}</p>}
+              <h2 {...ed("title")} className="section-title mt-3">{t("title")}</h2>
+              {t("body") && <p {...ed("body")} className="mt-4 whitespace-pre-line text-ink-soft">{t("body")}</p>}
               {bullets.length > 0 && (
                 <ul className="mt-6 grid gap-3 sm:grid-cols-2">
                   {bullets.map((it, i) => (
@@ -357,8 +369,8 @@ function BlockView({
           <div className="container-page py-16">
             {(t("title") || t("subtitle")) && (
               <div className="mx-auto mb-10 max-w-2xl text-center">
-                {t("title") && <h2 className="section-title">{t("title")}</h2>}
-                {t("subtitle") && <p className="mt-4 text-ink-soft">{t("subtitle")}</p>}
+                {t("title") && <h2 {...ed("title")} className="section-title">{t("title")}</h2>}
+                {t("subtitle") && <p {...ed("subtitle")} className="mt-4 text-ink-soft">{t("subtitle")}</p>}
               </div>
             )}
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -367,8 +379,8 @@ function BlockView({
                   <span className="grid h-11 w-11 place-items-center ch-sm bg-brand-soft text-brand">
                     <Icon name={(it.icon as IconName) || "check"} size={22} />
                   </span>
-                  <h3 className="mt-4 font-display font-bold text-brand">{tx(it.title, locale)}</h3>
-                  <p className="mt-1.5 text-sm leading-relaxed text-ink-soft">{tx(it.text, locale)}</p>
+                  <h3 {...ed(`items.${i}.title`)} className="mt-4 font-display font-bold text-brand">{tx(it.title, locale)}</h3>
+                  <p {...ed(`items.${i}.text`)} className="mt-1.5 text-sm leading-relaxed text-ink-soft">{tx(it.text, locale)}</p>
                 </div>
               ))}
             </div>
@@ -437,8 +449,8 @@ function BlockView({
           <div className="container-page py-16">
             {(t("title") || t("subtitle")) && (
               <div className="mb-10 max-w-2xl">
-                {t("title") && <h2 className="section-title">{t("title")}</h2>}
-                {t("subtitle") && <p className="mt-4 text-ink-soft">{t("subtitle")}</p>}
+                {t("title") && <h2 {...ed("title")} className="section-title">{t("title")}</h2>}
+                {t("subtitle") && <p {...ed("subtitle")} className="mt-4 text-ink-soft">{t("subtitle")}</p>}
               </div>
             )}
             <YouTubeFeed channelId={channelId} count={count} locale={locale} channelUrl={settings.social.youtube || undefined} />
@@ -479,14 +491,14 @@ function BlockView({
                     {t("statusLabel")}
                   </span>
                 )}
-                <h2 className="section-title mt-5 text-white">{t("title")}</h2>
+                <h2 {...ed("title")} className="section-title mt-5 text-white">{t("title")}</h2>
                 {t("location") && (
                   <p className="mt-2 flex items-center gap-2 text-sm text-white/60">
                     <Icon name="map-pin" size={16} className="text-accent" />
                     {t("location")}
                   </p>
                 )}
-                {t("body") && <p className="mt-5 max-w-xl whitespace-pre-line leading-relaxed text-white/75">{t("body")}</p>}
+                {t("body") && <p {...ed("body")} className="mt-5 max-w-xl whitespace-pre-line leading-relaxed text-white/75">{t("body")}</p>}
                 {hasLink && (
                   <Link
                     href={href(d.href as string, locale)}
@@ -511,8 +523,8 @@ function BlockView({
           <div className="container-page py-16">
             {(t("title") || t("subtitle")) && (
               <div className="mx-auto mb-10 max-w-2xl text-center">
-                {t("title") && <h2 className="section-title">{t("title")}</h2>}
-                {t("subtitle") && <p className="mt-4 text-ink-soft">{t("subtitle")}</p>}
+                {t("title") && <h2 {...ed("title")} className="section-title">{t("title")}</h2>}
+                {t("subtitle") && <p {...ed("subtitle")} className="mt-4 text-ink-soft">{t("subtitle")}</p>}
               </div>
             )}
             <div className={`grid gap-4 md:grid-cols-2 ${cols}`}>
@@ -522,8 +534,8 @@ function BlockView({
                     {it.step}
                   </span>
                   <div>
-                    <h3 className="font-display text-lg font-bold tracking-[-0.02em] text-brand">{tx(it.title, locale)}</h3>
-                    <p className="mt-1.5 text-sm leading-relaxed text-ink-soft">{tx(it.text, locale)}</p>
+                    <h3 {...ed(`items.${i}.title`)} className="font-display text-lg font-bold tracking-[-0.02em] text-brand">{tx(it.title, locale)}</h3>
+                    <p {...ed(`items.${i}.text`)} className="mt-1.5 text-sm leading-relaxed text-ink-soft">{tx(it.text, locale)}</p>
                   </div>
                 </div>
               ))}
@@ -549,8 +561,8 @@ function BlockView({
           <div className={`container-page ${hasHead ? "py-16" : "pt-10 pb-16"}`}>
             {hasHead && (
               <div className="mx-auto mb-10 max-w-2xl text-center">
-                {t("title") && <h2 className="section-title">{t("title")}</h2>}
-                {t("subtitle") && <p className="mt-4 text-ink-soft">{t("subtitle")}</p>}
+                {t("title") && <h2 {...ed("title")} className="section-title">{t("title")}</h2>}
+                {t("subtitle") && <p {...ed("subtitle")} className="mt-4 text-ink-soft">{t("subtitle")}</p>}
               </div>
             )}
             <div className={`grid gap-6 sm:grid-cols-2 ${cols}`}>
@@ -565,8 +577,8 @@ function BlockView({
                       </span>
                     </div>
                     <div className="p-5">
-                      <h3 className="font-display text-lg font-bold tracking-[-0.02em] text-brand">{tx(it.title, locale)}</h3>
-                      {tx(it.caption, locale) && <p className="mt-1.5 text-sm leading-relaxed text-ink-soft">{tx(it.caption, locale)}</p>}
+                      <h3 {...ed(`items.${i}.title`)} className="font-display text-lg font-bold tracking-[-0.02em] text-brand">{tx(it.title, locale)}</h3>
+                      {tx(it.caption, locale) && <p {...ed(`items.${i}.caption`)} className="mt-1.5 text-sm leading-relaxed text-ink-soft">{tx(it.caption, locale)}</p>}
                       {it.href && (
                         <span className="mt-3.5 inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-[0.1em] text-accent-dark opacity-0 transition-opacity duration-300 group-hover:opacity-100">
                           {locale === "fr" ? "Voir le projet" : "View project"} <Icon name="arrow-right" size={14} />
@@ -622,18 +634,18 @@ function BlockView({
             {(t("title") || t("subtitle")) && (
               <div className="mx-auto mb-10 max-w-2xl text-center">
                 <span className="eyebrow">★★★★★</span>
-                {t("title") && <h2 className="section-title mt-3">{t("title")}</h2>}
-                {t("subtitle") && <p className="mt-4 text-ink-soft">{t("subtitle")}</p>}
+                {t("title") && <h2 {...ed("title")} className="section-title mt-3">{t("title")}</h2>}
+                {t("subtitle") && <p {...ed("subtitle")} className="mt-4 text-ink-soft">{t("subtitle")}</p>}
               </div>
             )}
             <div className="grid gap-6 md:grid-cols-2">
               {items.map((it, i) => (
                 <figure key={i} className="card flex flex-col p-7 shadow-sm">
                   <Icon name="quote" size={30} className="text-accent" />
-                  <blockquote className="mt-4 flex-1 text-[1.02rem] leading-relaxed text-ink">“{tx(it.quote, locale)}”</blockquote>
+                  <blockquote className="mt-4 flex-1 text-[1.02rem] leading-relaxed text-ink">“<span {...ed(`items.${i}.quote`)}>{tx(it.quote, locale)}</span>”</blockquote>
                   <figcaption className="mt-6 border-t border-line pt-4">
                     <p className="font-display font-bold text-brand">{it.author}</p>
-                    <p className="text-sm text-ink-soft">{tx(it.role, locale)}</p>
+                    <p {...ed(`items.${i}.role`)} className="text-sm text-ink-soft">{tx(it.role, locale)}</p>
                   </figcaption>
                 </figure>
               ))}
@@ -648,15 +660,15 @@ function BlockView({
       return (
         <section className="bg-white">
           <div className="container-page max-w-3xl py-16">
-            {t("title") && <h2 className="section-title mb-8 text-center">{t("title")}</h2>}
+            {t("title") && <h2 {...ed("title")} className="section-title mb-8 text-center">{t("title")}</h2>}
             <div className="divide-y divide-line ch-lg border border-line">
               {items.map((it, i) => (
                 <details key={i} className="group p-5">
                   <summary className="flex cursor-pointer items-center justify-between font-display font-semibold text-brand">
-                    {tx(it.q, locale)}
+                    <span {...ed(`items.${i}.q`)}>{tx(it.q, locale)}</span>
                     <Icon name="chevron-down" size={18} className="transition group-open:rotate-180" />
                   </summary>
-                  <p className="mt-3 whitespace-pre-line text-ink-soft">{tx(it.a, locale)}</p>
+                  <p {...ed(`items.${i}.a`)} className="mt-3 whitespace-pre-line text-ink-soft">{tx(it.a, locale)}</p>
                 </details>
               ))}
             </div>
@@ -671,9 +683,9 @@ function BlockView({
       const tel = settings.phone.replace(/[^\d+]/g, "");
       const body = (centered = false) => (
         <>
-          {t("eyebrow") && <span className="text-xs font-extrabold uppercase tracking-[0.12em] text-accent">{t("eyebrow")}</span>}
-          <h2 className="section-title mt-2 text-white">{t("title")}</h2>
-          {t("subtitle") && <p className={`mt-4 max-w-xl text-white/75 ${centered ? "mx-auto" : ""}`}>{t("subtitle")}</p>}
+          {t("eyebrow") && <span {...ed("eyebrow")} className="text-xs font-extrabold uppercase tracking-[0.12em] text-accent">{t("eyebrow")}</span>}
+          <h2 {...ed("title")} className="section-title mt-2 text-white">{t("title")}</h2>
+          {t("subtitle") && <p {...ed("subtitle")} className={`mt-4 max-w-xl text-white/75 ${centered ? "mx-auto" : ""}`}>{t("subtitle")}</p>}
         </>
       );
       const action = (t("buttonLabel") || showContact) && (
@@ -729,8 +741,8 @@ function BlockView({
       return (
         <section className="bg-white">
           <div className="container-page py-14 text-center md:py-16">
-            {t("title") && <h2 className="section-title text-brand">{t("title")}</h2>}
-            {t("subtitle") && <p className="mx-auto mt-3 max-w-xl text-ink-soft">{t("subtitle")}</p>}
+            {t("title") && <h2 {...ed("title")} className="section-title text-brand">{t("title")}</h2>}
+            {t("subtitle") && <p {...ed("subtitle")} className="mx-auto mt-3 max-w-xl text-ink-soft">{t("subtitle")}</p>}
             <p className="mt-4 font-display text-3xl font-bold text-brand">{amount ? `${amount} ${currency}` : ""}</p>
             {pageId ? (
               <div className="flex justify-center"><PayButton pageId={pageId} blockId={block.id} locale={locale} label={t("buttonLabel") || "Buy now"} /></div>
@@ -746,8 +758,8 @@ function BlockView({
       return (
         <section className="bg-sand">
           <div className="container-page py-14 text-center md:py-16">
-            {t("title") && <h2 className="section-title text-brand">{t("title")}</h2>}
-            {t("subtitle") && <p className="mx-auto mt-3 max-w-xl text-ink-soft">{t("subtitle")}</p>}
+            {t("title") && <h2 {...ed("title")} className="section-title text-brand">{t("title")}</h2>}
+            {t("subtitle") && <p {...ed("subtitle")} className="mx-auto mt-3 max-w-xl text-ink-soft">{t("subtitle")}</p>}
             <BookingWidget locale={locale} />
           </div>
         </section>
@@ -757,8 +769,8 @@ function BlockView({
       return (
         <section className="bg-cream">
           <div className="container-page py-14 text-center md:py-16">
-            {t("title") && <h2 className="section-title text-brand">{t("title")}</h2>}
-            {t("subtitle") && <p className="mx-auto mt-3 max-w-xl text-ink-soft">{t("subtitle")}</p>}
+            {t("title") && <h2 {...ed("title")} className="section-title text-brand">{t("title")}</h2>}
+            {t("subtitle") && <p {...ed("subtitle")} className="mx-auto mt-3 max-w-xl text-ink-soft">{t("subtitle")}</p>}
             <NewsletterSignup locale={locale} placeholder={t("placeholder")} buttonLabel={t("buttonLabel")} />
           </div>
         </section>
@@ -769,8 +781,8 @@ function BlockView({
         <section className="bg-sand">
           <div className="container-page grid gap-10 py-16 lg:grid-cols-[1fr_1.15fr]">
             <div>
-              {t("title") && <h2 className="section-title text-brand">{t("title")}</h2>}
-              {t("subtitle") && <p className="mt-4 text-ink-soft">{t("subtitle")}</p>}
+              {t("title") && <h2 {...ed("title")} className="section-title text-brand">{t("title")}</h2>}
+              {t("subtitle") && <p {...ed("subtitle")} className="mt-4 text-ink-soft">{t("subtitle")}</p>}
               <ul className="mt-7 space-y-3.5 text-[15px]">
                 <li className="flex items-center gap-2.5"><Icon name="phone" size={17} className="shrink-0 text-accent-dark" /><a href={`tel:${settings.phone.replace(/[^\d+]/g, "")}`} className="hover:text-brand">{settings.phone}</a></li>
                 <li className="flex items-center gap-2.5"><Icon name="mail" size={17} className="shrink-0 text-accent-dark" /><a href={`mailto:${settings.email}`} className="hover:text-brand">{settings.email}</a></li>

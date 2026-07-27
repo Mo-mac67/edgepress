@@ -1,4 +1,5 @@
 import { BlockRenderer } from "./BlockRenderer";
+import { InlineEditBridge } from "./InlineEditBridge";
 import { AbTrack } from "@/components/AbTrack";
 import { getSettings } from "@/lib/cms-store";
 import { getSnippets, hasSnippetTokens, renderSnippets } from "@/lib/snippets-store";
@@ -40,7 +41,7 @@ async function expandSnippets(page: Page): Promise<Page> {
  *   CSS/JS stay isolated); fragments are injected inline. With hideChrome the
  *   site header/footer are hidden so the import is standalone.
  */
-export async function PageView({ page: rawPage, locale, dict }: { page: Page; locale: Locale; dict: Dictionary }) {
+export async function PageView({ page: rawPage, locale, dict, edit }: { page: Page; locale: Locale; dict: Dictionary; edit?: boolean }) {
   const page = await expandSnippets(rawPage);
   if (page.mode === "html") {
     const raw = pickRawHtml(page, locale);
@@ -83,7 +84,8 @@ export async function PageView({ page: rawPage, locale, dict }: { page: Page; lo
   return (
     <>
       {ab && <AbTrack slug={page.slug} variant={ab.variant} />}
-      <BlockRenderer blocks={blocks} locale={locale} dict={dict} settings={settings} first pageDate={page.updatedAt} pageId={page.id} />
+      <BlockRenderer blocks={blocks} locale={locale} dict={dict} settings={settings} first pageDate={page.updatedAt} pageId={page.id} edit={edit} />
+      {edit && <InlineEditBridge locale={locale} />}
     </>
   );
 }

@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { PageView } from "@/components/blocks/PageView";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
+import { isAuthed } from "@/lib/admin-auth";
 import { getPage } from "@/lib/cms-store";
 import { tx } from "@/lib/cms-types";
 
@@ -25,11 +26,14 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
   };
 }
 
-export default async function HomePage({ params }: { params: Promise<{ lang: string }> }) {
+export default async function HomePage({ params, searchParams }: { params: Promise<{ lang: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { lang } = await params;
   if (!isLocale(lang)) return redirectOrNotFound(`/${lang}`);
   const dict = getDictionary(lang);
   const page = await getPage("");
   if (!page) notFound();
-  return <PageView page={page} locale={lang} dict={dict} />;
+  // Inline visual editing: only for a signed-in admin with ?epedit=1.
+  const sp = await searchParams;
+  const edit = sp.epedit === "1" && (await isAuthed());
+  return <PageView page={page} locale={lang} dict={dict} edit={edit} />;
 }

@@ -103,17 +103,21 @@ export default async function CmsPage({ params, searchParams }: { params: Promis
   }
   // Drafts render for signed-in admins, or for anyone holding a signed
   // preview link (?preview=<token>) an admin shared.
+  const authed = await isAuthed();
   const previewParam = typeof sp.preview === "string" ? sp.preview : undefined;
-  const previewing = !isLive(page) && (isValidPreview(page.id, previewParam) || (await isAuthed()));
+  const previewing = !isLive(page) && (isValidPreview(page.id, previewParam) || authed);
   if (!isLive(page) && !previewing) notFound();
+  // Inline visual editing: only for a signed-in admin loading the page with
+  // ?epedit=1 (the editor's preview iframe sets this). Never for visitors.
+  const edit = sp.epedit === "1" && authed;
   return (
     <>
-      {previewing && (
+      {previewing && !edit && (
         <div className="fixed inset-x-0 top-0 z-[100] bg-amber-500 py-1.5 text-center text-xs font-bold text-white">
           Draft preview — this page is not published yet
         </div>
       )}
-      <PageView page={page} locale={lang} dict={dict} />
+      <PageView page={page} locale={lang} dict={dict} edit={edit} />
     </>
   );
 }

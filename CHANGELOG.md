@@ -12,10 +12,20 @@ updates.
 ## [Unreleased]
 
 ### Added
+- **Inline visual editing (“Edit on page”)** — for block pages, toggle *Edit on
+  page* in the editor and edit text directly on the live preview: click any
+  heading, paragraph, card, step, FAQ or CTA text and type. Edits post back to
+  the editor and autosave. Only a signed-in admin loading `?epedit=1` gets edit
+  affordances — never a visitor.
 - **Per-language Custom HTML** — a `mode:"html"` page can now hold different
   HTML per language (checkbox “Different HTML per language” in the editor;
   switch languages with the tabs above). Rendering falls back to the shared
   HTML for any locale you leave blank, so existing pages are unchanged.
+- **Dashboard traffic charts** — a “Page views over time” timeline + “Top
+  pages”, so analytics show life even on a site with visitors but no leads yet;
+  every chart now has a friendly empty state instead of a blank card.
+- **Find & Replace in the code editor** — Ctrl+F / Ctrl+H, visible match
+  highlighting, and Replace / Replace-all to change a word everywhere at once.
 
 ### Changed
 - **AI Site Builder** now gets stronger design + copy direction (section

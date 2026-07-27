@@ -44,6 +44,7 @@ export function PageEditor({ initial, uiLocale, contentLocales = ["en", "fr"], s
   const [showAdd, setShowAdd] = useState(false);
   const [preview, setPreview] = useState(true);
   const [previewKey, setPreviewKey] = useState(0);
+  const [inlineEdit, setInlineEdit] = useState(false);
   const [autosave, setAutosave] = useState(true);
   const [history, setHistory] = useState<{ id: string; at: string; title: string }[] | null>(null);
 
@@ -59,6 +60,41 @@ export function PageEditor({ initial, uiLocale, contentLocales = ["en", "fr"], s
     perLocale ? patch({ rawHtmlI18n: { ...page.rawHtmlI18n, [loc]: v } }) : patch({ rawHtml: v });
   const setBlocks = (blocks: Block[]) => setPage((p) => ({ ...p, blocks }));
   const patch = (p: Partial<Page>) => setPage((prev) => ({ ...prev, ...p }));
+
+  // Inline visual editing: the preview iframe (loaded with ?epedit=1) posts
+  // {blockId, field, locale, value} whenever a tagged element is edited on the
+  // page. Patch the matching block's localized field; autosave persists it.
+  useEffect(() => {
+    if (!inlineEdit) return;
+    function onMsg(e: MessageEvent) {
+      if (e.origin !== window.location.origin) return;
+      const m = e.data as { source?: string; type?: string; blockId?: string; field?: string; locale?: string; value?: string };
+      if (m?.source !== "edgepress" || m.type !== "ep-edit" || !m.blockId || !m.field) return;
+      const loc = m.locale || "en";
+      const value = String(m.value ?? "");
+      const setLoc = (target: Record<string, unknown>, key: string) => {
+        const cur = target[key];
+        target[key] = cur && typeof cur === "object" && !Array.isArray(cur) ? { ...(cur as Record<string, string>), [loc]: value } : { en: "", fr: "", [loc]: value };
+      };
+      setPage((prev) => ({
+        ...prev,
+        blocks: prev.blocks.map((b) => {
+          if (b.id !== m.blockId) return b;
+          const data = structuredClone(b.data) as Record<string, unknown>;
+          const parts = String(m.field).split(".");
+          if (parts.length === 1) setLoc(data, parts[0]);
+          else if (parts.length === 3 && parts[0] === "items") {
+            const arr = data.items as Record<string, unknown>[] | undefined;
+            const idx = Number(parts[1]);
+            if (Array.isArray(arr) && arr[idx]) setLoc(arr[idx], parts[2]);
+          }
+          return { ...b, data };
+        }),
+      }));
+    }
+    window.addEventListener("message", onMsg);
+    return () => window.removeEventListener("message", onMsg);
+  }, [inlineEdit]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -253,6 +289,15 @@ export function PageEditor({ initial, uiLocale, contentLocales = ["en", "fr"], s
             <button onClick={() => setPreview((p) => !p)} className={`hidden py-2 text-sm lg:inline-flex ${preview ? "btn-dark" : "btn-secondary"}`}>
               <Icon name="image" size={15} /> Preview
             </button>
+            {!isHtml && (
+              <button
+                onClick={() => { setInlineEdit((v) => !v); setPreview(true); setPreviewKey((k) => k + 1); }}
+                className={`hidden py-2 text-sm lg:inline-flex ${inlineEdit ? "btn-dark" : "btn-secondary"}`}
+                title="Edit text directly on the live preview — click any text and type"
+              >
+                <Icon name="edit" size={15} /> Edit on page
+              </button>
+            )}
             <a href={publicPath} target="_blank" rel="noopener noreferrer" className="btn-secondary py-2 text-sm">
               <Icon name="arrow-up-right" size={15} /> View
             </a>
@@ -480,12 +525,14 @@ export function PageEditor({ initial, uiLocale, contentLocales = ["en", "fr"], s
           <div className="hidden border-l border-line bg-white lg:block">
             <div className="sticky top-16 h-[calc(100vh-4rem)]">
               <div className="flex items-center justify-between border-b border-line px-4 py-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">Live preview — saved version</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
+                  {inlineEdit ? <span className="text-accent-dark">✎ Editing on page — click any text</span> : "Live preview — saved version"}
+                </p>
                 <button onClick={() => setPreviewKey((k) => k + 1)} className="inline-flex items-center gap-1 text-xs font-semibold text-accent-dark hover:underline">
                   <Icon name="refresh" size={13} /> Refresh
                 </button>
               </div>
-              <iframe key={previewKey} src={publicPath} title="Preview" className="h-[calc(100%-2.4rem)] w-full border-0" />
+              <iframe key={`${previewKey}-${inlineEdit ? "e" : "v"}`} src={inlineEdit ? `${publicPath}?epedit=1` : publicPath} title="Preview" className="h-[calc(100%-2.4rem)] w-full border-0" />
             </div>
           </div>
         )}
