@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { addAdminUser, getRole, listAdminUsers, removeAdminUser } from "@/lib/admin-auth";
+import { addAdminUser, disableMemberTotp, getRole, listAdminUsers, removeAdminUser } from "@/lib/admin-auth";
 import { logAudit } from "@/lib/audit-store";
 
 export async function GET() {
@@ -25,6 +25,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
     await logAudit({ action: "remove_admin_user", role: "super" });
+  } else if (action === "reset2fa") {
+    if (!(await disableMemberTotp(String(id ?? "")))) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+    await logAudit({ action: "reset_member_2fa", role: "super", detail: String(id) });
   } else {
     return NextResponse.json({ error: "Bad action" }, { status: 400 });
   }

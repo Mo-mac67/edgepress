@@ -9,6 +9,8 @@ export interface AdminUser {
   id: string;
   label: string;
   createdAt: string;
+  /** Whether this team member has their own 2FA enabled (shown in the list). */
+  has2fa?: boolean;
 }
 
 const COOKIE_NAME = "ms_admin";
@@ -52,9 +54,21 @@ async function primaryAdminHash(): Promise<string> {
   return cfg.passwordHash ?? hash(process.env.ADMIN_PASSWORD ?? "admin");
 }
 
-type StoredUser = AdminUser & { passwordHash: string };
+type StoredUser = AdminUser & { passwordHash: string; totp?: { secret: string; enabled: boolean } };
 async function storedUsers(): Promise<StoredUser[]> {
   return readJson<StoredUser[]>(USERS_FILE, []);
+}
+async function updateMember(id: string, patch: Partial<StoredUser>): Promise<void> {
+  await writeJson(USERS_FILE, (await storedUsers()).map((u) => (u.id === id ? { ...u, ...patch } : u)));
+}
+/** The team member matching these credentials (username+password, or password
+ *  alone). Used by the login flow to check that member's 2FA. */
+async function memberByCreds(username: string | undefined, password: string): Promise<StoredUser | null> {
+  const h = hash(password);
+  const users = await storedUsers();
+  const u = (username ?? "").trim().toLowerCase();
+  if (u) return users.find((x) => x.label.trim().toLowerCase() === u && x.passwordHash === h) ?? null;
+  return users.find((x) => x.passwordHash === h) ?? null;
 }
 
 /** Hashes for managed team members (NOT the owner). */
@@ -232,7 +246,7 @@ export async function getAllowedTabs(): Promise<string[] | null> {
 
 // ---- managed admin users (super only) ----
 export async function listAdminUsers(): Promise<AdminUser[]> {
-  return (await storedUsers()).map(({ id, label, createdAt }) => ({ id, label, createdAt }));
+  return (await storedUsers()).map(({ id, label, createdAt, totp }) => ({ id, label, createdAt, has2fa: !!totp?.enabled }));
 }
 
 export async function addAdminUser(label: string, password: string): Promise<boolean> {
@@ -287,4 +301,55 @@ export async function confirmTotp(code: string): Promise<boolean> {
 export async function disableTotp(): Promise<void> {
   const cfg = await readJson<AdminConfig>(CONFIG_FILE, {});
   await writeJson(CONFIG_FILE, { ...cfg, totp: undefined });
+}
+
+// ---- Team-member 2FA (each member can enable their own; owner can reset it) ----
+/** The signed-in team member (null for the owner/super or when not signed in). */
+async function currentMember(): Promise<StoredUser | null> {
+  const value = (await cookies()).get(COOKIE_NAME)?.value;
+  if (!value) return null;
+  const [role, h] = value.split(".");
+  if (role !== "admin") return null;
+  return (await storedUsers()).find((x) => x.passwordHash === h) ?? null;
+}
+/** Login-time check: does this member have 2FA turned on? */
+export async function memberNeeds2fa(username: string | undefined, password: string): Promise<boolean> {
+  return !!(await memberByCreds(username, password))?.totp?.enabled;
+}
+export async function verifyMemberTotp(username: string | undefined, password: string, code: string): Promise<boolean> {
+  const m = await memberByCreds(username, password);
+  if (!m?.totp?.enabled || !m.totp.secret) return false;
+  return verifyTotp(m.totp.secret, code);
+}
+/** 2FA management for whoever is signed in — owner (config) or a team member
+ *  (their own user record). Lets the same Settings card serve both. */
+export async function getTotpStatusForCurrent(): Promise<{ enabled: boolean }> {
+  if ((await getRole()) === "super") return { enabled: await isTotpEnabled() };
+  return { enabled: !!(await currentMember())?.totp?.enabled };
+}
+export async function startTotpForCurrent(): Promise<{ secret: string; uri: string } | null> {
+  if ((await getRole()) === "super") return startTotpSetup("owner");
+  const m = await currentMember();
+  if (!m) return null;
+  const secret = generateSecret();
+  await updateMember(m.id, { totp: { secret, enabled: false } });
+  return { secret, uri: totpUri(secret, m.label) };
+}
+export async function confirmTotpForCurrent(code: string): Promise<boolean> {
+  if ((await getRole()) === "super") return confirmTotp(code);
+  const m = await currentMember();
+  if (!m?.totp?.secret || !verifyTotp(m.totp.secret, code)) return false;
+  await updateMember(m.id, { totp: { secret: m.totp.secret, enabled: true } });
+  return true;
+}
+export async function disableTotpForCurrent(): Promise<void> {
+  if ((await getRole()) === "super") return disableTotp();
+  const m = await currentMember();
+  if (m) await updateMember(m.id, { totp: undefined });
+}
+/** Owner recovery: turn OFF a team member's 2FA (e.g. they lost their phone). */
+export async function disableMemberTotp(id: string): Promise<boolean> {
+  if (!(await storedUsers()).some((u) => u.id === id)) return false;
+  await updateMember(id, { totp: undefined });
+  return true;
 }

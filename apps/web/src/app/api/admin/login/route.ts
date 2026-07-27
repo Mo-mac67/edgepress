@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { hashPassword, isTotpEnabled, setAuthCookie, verifyCredentials, verifyOwnerTotp } from "@/lib/admin-auth";
+import { hashPassword, isTotpEnabled, memberNeeds2fa, setAuthCookie, verifyCredentials, verifyMemberTotp, verifyOwnerTotp } from "@/lib/admin-auth";
 import { logAudit } from "@/lib/audit-store";
 import { clientIp, rateLimitDurable } from "@/lib/rate-limit";
 
@@ -15,10 +15,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid username or password" }, { status: 401 });
   }
 
-  // Second factor — only the owner can enable 2FA, so only they are challenged.
+  const uname = username ? String(username) : undefined;
+  const pw = String(password ?? "");
+  // Second factor. The owner uses config 2FA; a team member can enable their own.
   if (role === "super" && (await isTotpEnabled())) {
     if (!code) return NextResponse.json({ needsCode: true }); // password OK, ask for the code
     if (!(await verifyOwnerTotp(String(code)))) {
+      await logAudit({ action: "login_2fa_failed", role });
+      return NextResponse.json({ error: "Invalid authentication code", needsCode: true }, { status: 401 });
+    }
+  } else if (role === "admin" && (await memberNeeds2fa(uname, pw))) {
+    if (!code) return NextResponse.json({ needsCode: true });
+    if (!(await verifyMemberTotp(uname, pw, String(code)))) {
       await logAudit({ action: "login_2fa_failed", role });
       return NextResponse.json({ error: "Invalid authentication code", needsCode: true }, { status: 401 });
     }

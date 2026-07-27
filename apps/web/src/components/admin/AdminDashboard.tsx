@@ -725,7 +725,8 @@ function Settings({
         </p>
       </div>
 
-      {isSuper && <TwoFactorCard />}
+      {/* Any admin (owner or team member) can manage their OWN 2FA. */}
+      <TwoFactorCard />
       {isSuper && <BackupCard />}
       {isSuper && <TemplateCard />}
 
@@ -735,9 +736,10 @@ function Settings({
           <ul className="mt-4 space-y-2 text-sm">
             {users.map((u) => (
               <li key={u.id} className="flex items-center justify-between border-b border-line pb-2 last:border-0">
-                <span>{u.label}</span>
+                <span className="flex items-center gap-2">{u.label}{u.has2fa && <span className="rounded bg-accent-soft px-1.5 py-0.5 text-[10px] font-semibold text-accent-dark">2FA</span>}</span>
                 <span className="flex items-center gap-3">
                   <span className="text-ink-soft">{new Date(u.createdAt).toLocaleDateString()}</span>
+                  {u.has2fa && <button onClick={() => manageUsers({ action: "reset2fa", id: u.id })} className="text-xs font-semibold text-ink-soft hover:text-brand" title="Turn off this member's 2FA (e.g. they lost their phone)">Reset 2FA</button>}
                   <button onClick={() => manageUsers({ action: "remove", id: u.id })} className="text-xs font-semibold text-red-600">Remove</button>
                 </span>
               </li>

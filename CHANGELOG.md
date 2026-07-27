@@ -9,6 +9,15 @@ Upgrade with `npx create-edgepress upgrade` (scaffolded sites) or `git pull`
 (clones) — your content lives in your storage and is never touched by code
 updates.
 
+## [1.13.0] — 2026-07-27
+
+### Added
+- **Two-factor authentication for team members** — each team member can now turn
+  on their own TOTP 2FA (Settings → Two-factor), and it's enforced at their
+  login (previously owner-only). The owner sees a 2FA badge next to each member
+  in Admin users and can **Reset 2FA** for anyone who loses their device.
+  Backward-compatible; the owner's own sign-in is unaffected.
+
 ## [1.12.0] — 2026-07-27
 
 ### Added
