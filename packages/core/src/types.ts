@@ -700,6 +700,10 @@ export interface ThemeColors {
   accent: string;
   accentDark: string;
   accentSoft: string;
+  /** Page background — the canvas behind all content (body). */
+  bg: string;
+  /** Surface — cards, panels, inputs and "white" sections sit on this. */
+  surface: string;
   sand: string;
   cream: string;
   ink: string;
@@ -751,6 +755,8 @@ export const DEFAULT_THEME: ThemeSettings = {
     accent: "#6366f1",
     accentDark: "#4f46e5",
     accentSoft: "#e6e7ff",
+    bg: "#ffffff",
+    surface: "#ffffff",
     sand: "#f5f6fb",
     cream: "#fbfbfe",
     ink: "#1a1c2b",
@@ -771,6 +777,7 @@ export const THEME_PRESETS: { id: string; label: string; colors: ThemeColors }[]
     colors: {
       brand: "#3a3632", brandDark: "#282521", brandSoft: "#eae6df",
       accent: "#08b892", accentDark: "#067a63", accentSoft: "#dff6ef",
+      bg: "#ffffff", surface: "#ffffff",
       sand: "#f4f2eb", cream: "#faf9f4", ink: "#3a3632", inkSoft: "#7a736b",
       line: "#e6e1d8", lineDark: "#4a453f",
     },
@@ -781,6 +788,7 @@ export const THEME_PRESETS: { id: string; label: string; colors: ThemeColors }[]
     colors: {
       brand: "#14181a", brandDark: "#0b0e0f", brandSoft: "#ececea",
       accent: "#00b894", accentDark: "#007a5e", accentSoft: "#e3f9f1",
+      bg: "#ffffff", surface: "#ffffff",
       sand: "#f6f6f4", cream: "#fbfbfa", ink: "#14181a", inkSoft: "#676d6a",
       line: "#e4e3e0", lineDark: "#262b2c",
     },
@@ -791,6 +799,7 @@ export const THEME_PRESETS: { id: string; label: string; colors: ThemeColors }[]
     colors: {
       brand: "#111820", brandDark: "#0f1419", brandSoft: "#eceae4",
       accent: "#c9942e", accentDark: "#8c6218", accentSoft: "#f5e8cf",
+      bg: "#ffffff", surface: "#ffffff",
       sand: "#f7f5f0", cream: "#fcfbf8", ink: "#0f1419", inkSoft: "#66717d",
       line: "#e7e2d8", lineDark: "#2a3440",
     },
@@ -801,6 +810,7 @@ export const THEME_PRESETS: { id: string; label: string; colors: ThemeColors }[]
     colors: {
       brand: "#16324f", brandDark: "#0e2438", brandSoft: "#e9eef4",
       accent: "#e0a52e", accentDark: "#c2861a", accentSoft: "#fbeecd",
+      bg: "#ffffff", surface: "#ffffff",
       sand: "#f6f4f0", cream: "#fbfaf8", ink: "#17222e", inkSoft: "#5a6571",
       line: "#e6e2db", lineDark: "#24405c",
     },
@@ -811,6 +821,7 @@ export const THEME_PRESETS: { id: string; label: string; colors: ThemeColors }[]
     colors: {
       brand: "#1e4034", brandDark: "#122b22", brandSoft: "#e8f0ec",
       accent: "#c97e42", accentDark: "#a5602a", accentSoft: "#f7e8da",
+      bg: "#ffffff", surface: "#ffffff",
       sand: "#f4f3ee", cream: "#fbfaf6", ink: "#1b2620", inkSoft: "#5b6a61",
       line: "#e3e2d8", lineDark: "#2e5245",
     },
@@ -821,6 +832,7 @@ export const THEME_PRESETS: { id: string; label: string; colors: ThemeColors }[]
     colors: {
       brand: "#26282c", brandDark: "#17181b", brandSoft: "#ebecee",
       accent: "#d64545", accentDark: "#b32f2f", accentSoft: "#fbe3e3",
+      bg: "#ffffff", surface: "#ffffff",
       sand: "#f5f4f3", cream: "#fbfafa", ink: "#1d1f23", inkSoft: "#5f6368",
       line: "#e5e3e1", lineDark: "#3a3d43",
     },
@@ -831,6 +843,7 @@ export const THEME_PRESETS: { id: string; label: string; colors: ThemeColors }[]
     colors: {
       brand: "#1e293b", brandDark: "#111a2b", brandSoft: "#e8edf5",
       accent: "#2f9dd0", accentDark: "#1f7aa8", accentSoft: "#dcf0f9",
+      bg: "#ffffff", surface: "#ffffff",
       sand: "#f3f5f7", cream: "#fafbfc", ink: "#182030", inkSoft: "#5a6472",
       line: "#e2e5e9", lineDark: "#2c3c55",
     },
@@ -841,6 +854,7 @@ export const THEME_PRESETS: { id: string; label: string; colors: ThemeColors }[]
     colors: {
       brand: "#3d2f27", brandDark: "#291f19", brandSoft: "#f0eae5",
       accent: "#d9a441", accentDark: "#b58328", accentSoft: "#f9eed6",
+      bg: "#ffffff", surface: "#ffffff",
       sand: "#f6f2ec", cream: "#fcfaf6", ink: "#28211c", inkSoft: "#6b5f55",
       line: "#e8e1d7", lineDark: "#544236",
     },
@@ -854,5 +868,9 @@ export function themeCss(t: ThemeSettings): string {
   const r = RADII[t.radius] ?? RADII.soft;
   // :root:root — higher specificity than Tailwind's @theme `:root` fallback so
   // the live CMS theme always wins regardless of stylesheet load order.
-  return `:root:root{--color-brand:${c.brand};--color-brand-dark:${c.brandDark};--color-brand-soft:${c.brandSoft};--color-accent:${c.accent};--color-accent-dark:${c.accentDark};--color-accent-soft:${c.accentSoft};--color-sand:${c.sand};--color-cream:${c.cream};--color-ink:${c.ink};--color-ink-soft:${c.inkSoft};--color-line:${c.line};--color-line-dark:${c.lineDark};--font-display:${f.display};--font-sans:${f.body};--ui-radius:${r.btn};--ui-radius-lg:${r.card}}`;
+  // bg/surface are newer tokens; default to white so themes saved before they
+  // existed keep rendering exactly as they did (light page + white surfaces).
+  const bg = c.bg ?? "#ffffff";
+  const surface = c.surface ?? "#ffffff";
+  return `:root:root{--color-brand:${c.brand};--color-brand-dark:${c.brandDark};--color-brand-soft:${c.brandSoft};--color-accent:${c.accent};--color-accent-dark:${c.accentDark};--color-accent-soft:${c.accentSoft};--color-bg:${bg};--color-surface:${surface};--color-sand:${c.sand};--color-cream:${c.cream};--color-ink:${c.ink};--color-ink-soft:${c.inkSoft};--color-line:${c.line};--color-line-dark:${c.lineDark};--font-display:${f.display};--font-sans:${f.body};--ui-radius:${r.btn};--ui-radius-lg:${r.card}}`;
 }

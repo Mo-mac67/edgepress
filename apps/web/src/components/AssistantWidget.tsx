@@ -41,19 +41,19 @@ export function AssistantWidget({ locale, brandName }: { locale: Locale; brandNa
   return (
     <div className="no-print fixed bottom-5 left-5 z-50">
       {open && (
-        <div className="mb-3 flex h-[28rem] w-[22rem] max-w-[calc(100vw-2.5rem)] flex-col overflow-hidden rounded-2xl border border-line bg-white shadow-2xl">
+        <div className="mb-3 flex h-[28rem] w-[22rem] max-w-[calc(100vw-2.5rem)] flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-2xl">
           <div className="flex items-center justify-between bg-brand px-4 py-3 text-white">
             <span className="font-display text-sm font-bold">{brandName}</span>
             <button onClick={() => setOpen(false)} aria-label="Close" className="text-white/80 hover:text-white">✕</button>
           </div>
           <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto bg-sand/40 p-3">
-            {msgs.length === 0 && <p className="rounded-xl bg-white px-3 py-2 text-sm text-ink shadow-sm">{greeting}</p>}
+            {msgs.length === 0 && <p className="rounded-xl bg-surface px-3 py-2 text-sm text-ink shadow-sm">{greeting}</p>}
             {msgs.map((m, i) => (
               <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-                <p className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-3 py-2 text-sm ${m.role === "user" ? "bg-brand text-white" : "bg-white text-ink shadow-sm"}`}>{m.content}</p>
+                <p className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-3 py-2 text-sm ${m.role === "user" ? "bg-brand text-white" : "bg-surface text-ink shadow-sm"}`}>{m.content}</p>
               </div>
             ))}
-            {busy && <p className="rounded-2xl bg-white px-3 py-2 text-sm text-ink-soft shadow-sm">…</p>}
+            {busy && <p className="rounded-2xl bg-surface px-3 py-2 text-sm text-ink-soft shadow-sm">…</p>}
           </div>
           <form onSubmit={(e) => { e.preventDefault(); send(input); }} className="flex items-center gap-2 border-t border-line p-2">
             <input className="flex-1 rounded-lg bg-sand px-3 py-2 text-sm focus:outline-none" placeholder={locale === "fr" ? "Écrivez un message…" : "Type a message…"} value={input} onChange={(e) => setInput(e.target.value)} />

@@ -146,7 +146,7 @@ export function BusinessHours({ locale = "en", tone = "dark" }: { locale?: strin
   }
 
   const dark = tone === "dark";
-  const dotColor = statusTone === "open" ? "bg-emerald-400" : statusTone === "holiday" ? "bg-amber-400" : dark ? "bg-white/40" : "bg-ink-soft/50";
+  const dotColor = statusTone === "open" ? "bg-emerald-400" : statusTone === "holiday" ? "bg-amber-400" : dark ? "bg-surface/40" : "bg-ink-soft/50";
 
   return (
     <div ref={ref} className="relative">
@@ -165,7 +165,7 @@ export function BusinessHours({ locale = "en", tone = "dark" }: { locale?: strin
       {open && (
         <div
           className={`absolute bottom-full z-30 mb-2 w-72 rounded-lg border p-3 shadow-xl ${
-            dark ? "border-line-dark bg-brand-dark text-white/85" : "border-line bg-white text-ink"
+            dark ? "border-line-dark bg-brand-dark text-white/85" : "border-line bg-surface text-ink"
           }`}
         >
           <ul className="text-sm">
@@ -173,7 +173,7 @@ export function BusinessHours({ locale = "en", tone = "dark" }: { locale?: strin
               <li
                 key={i}
                 className={`flex items-center justify-between gap-4 rounded px-2 py-1.5 ${
-                  now && i === now.dow ? (dark ? "bg-white/10 font-semibold" : "bg-sand font-semibold") : ""
+                  now && i === now.dow ? (dark ? "bg-surface/10 font-semibold" : "bg-sand font-semibold") : ""
                 }`}
               >
                 <span>{names[i]}</span>

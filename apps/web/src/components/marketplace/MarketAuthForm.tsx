@@ -103,7 +103,7 @@ export function MarketAuthForm({ locale, onDone }: { locale: string; onDone?: ()
             type="button"
             onClick={() => setMode(m)}
             className={`flex-1 rounded-lg px-3 py-2 text-sm font-semibold transition ${
-              mode === m ? "bg-white text-ink shadow-sm" : "text-ink-soft"
+              mode === m ? "bg-surface text-ink shadow-sm" : "text-ink-soft"
             }`}
           >
             {m === "signin" ? a.signIn : a.signUp}
@@ -121,7 +121,7 @@ export function MarketAuthForm({ locale, onDone }: { locale: string; onDone?: ()
                 type="button"
                 onClick={() => setRole(rr)}
                 className={`rounded-xl border px-3 py-2.5 text-sm font-medium transition ${
-                  role === rr ? "border-ink bg-black/5 text-ink" : "border-line bg-white text-ink-soft"
+                  role === rr ? "border-ink bg-black/5 text-ink" : "border-line bg-surface text-ink-soft"
                 }`}
               >
                 {rr === "customer" ? a.customer : a.business}

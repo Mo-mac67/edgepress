@@ -47,7 +47,7 @@ export function YouTubeFeed({
             href={v.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="tile group card relative bg-white"
+            className="tile group card relative bg-surface"
           >
             <div className="relative aspect-video overflow-hidden bg-brand-dark">
               {/* eslint-disable-next-line @next/next/no-img-element */}

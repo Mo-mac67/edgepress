@@ -162,7 +162,7 @@ function BlockView({
                         <div className="mt-4 flex flex-wrap items-center gap-3">
                           {certLogos.map((l, i) => {
                             const badge = (
-                              <span className="flex h-[3.4rem] items-center justify-center rounded bg-white/95 px-3.5 shadow-sm md:h-[4rem]">
+                              <span className="flex h-[3.4rem] items-center justify-center rounded bg-surface/95 px-3.5 shadow-sm md:h-[4rem]">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img src={l.image} alt={l.label ?? ""} className="h-[1.9rem] w-auto object-contain md:h-[2.35rem]" />
                               </span>
@@ -280,7 +280,7 @@ function BlockView({
       if ((d.align as string) === "left") {
         // Reference "section head": title left, lead paragraph right, baseline-aligned.
         return (
-          <section className="bg-white">
+          <section className="bg-surface">
             <div className="container-page grid items-end gap-4 pt-16 md:grid-cols-[minmax(0,1fr)_minmax(280px,440px)] md:gap-10">
               <div>
                 {t("eyebrow") && <span {...ed("eyebrow")} className="eyebrow">{t("eyebrow")}</span>}
@@ -292,7 +292,7 @@ function BlockView({
         );
       }
       return (
-        <section className="bg-white">
+        <section className="bg-surface">
           <div className="container-page pt-16 text-center">
             <div className="mx-auto max-w-2xl">
               {t("eyebrow") && <span {...ed("eyebrow")} className="eyebrow">{t("eyebrow")}</span>}
@@ -305,7 +305,7 @@ function BlockView({
 
     case "richtext":
       return (
-        <section className="bg-white">
+        <section className="bg-surface">
           <div
             {...ed("html", true)}
             className="container-page prose max-w-3xl py-8 prose-headings:font-display prose-headings:text-brand prose-a:text-accent-dark"
@@ -316,7 +316,7 @@ function BlockView({
 
     case "image":
       return (
-        <section className="bg-white">
+        <section className="bg-surface">
           <div className="container-page py-8">
             <div className={`relative aspect-[16/9] overflow-hidden ${d.rounded ? "ch-lg" : "ch"}`}>
               <Img src={d.image as string} alt={t("caption")} sizes="100vw" />
@@ -329,7 +329,7 @@ function BlockView({
     case "imageText": {
       const bullets = (d.bullets as { text: unknown }[]) ?? [];
       return (
-        <section className="bg-white">
+        <section className="bg-surface">
           <div className="container-page grid items-center gap-10 py-16 lg:grid-cols-2">
             <div className={`relative aspect-[4/3] overflow-hidden ch-lg ${d.flip ? "lg:order-2" : ""}`}>
               <Img src={d.image as string} alt={t("title")} sizes="(max-width:1024px) 100vw, 50vw" />
@@ -402,7 +402,7 @@ function BlockView({
         return (
           <section className="relative z-10">
             <div className="container-page">
-              <div className={`grid grid-cols-2 bg-white shadow-[0_24px_60px_rgba(15,20,25,0.14)] md:-mt-[66px] md:divide-x md:divide-line ${cols}`}>
+              <div className={`grid grid-cols-2 bg-surface shadow-[0_24px_60px_rgba(15,20,25,0.14)] md:-mt-[66px] md:divide-x md:divide-line ${cols}`}>
                 {items.map((it, i) => (
                   <div key={i} className="border-b border-line px-5 py-7 text-center last:border-b-0 md:border-b-0">
                     <p className="font-display text-[2rem] font-extrabold leading-none text-brand">{it.value}</p>
@@ -415,7 +415,7 @@ function BlockView({
         );
       }
       return (
-        <section className="border-y border-line bg-white">
+        <section className="border-y border-line bg-surface">
           <div className={`container-page grid grid-cols-2 gap-6 py-10 ${cols}`}>
             {items.map((it, i) => (
               <div key={i} className="text-center">
@@ -533,7 +533,7 @@ function BlockView({
             )}
             <div className={`grid gap-4 md:grid-cols-2 ${cols}`}>
               {items.map((it, i) => (
-                <div key={i} className="grid grid-cols-[58px_1fr] gap-4 border border-line bg-white p-5 ch">
+                <div key={i} className="grid grid-cols-[58px_1fr] gap-4 border border-line bg-surface p-5 ch">
                   <span className="grid h-[58px] w-[58px] place-items-center bg-brand font-display text-lg font-black text-accent">
                     {it.step}
                   </span>
@@ -561,7 +561,7 @@ function BlockView({
       // Column count follows the item count so no row is left with an orphan.
       const cols = items.length % 4 === 0 ? "lg:grid-cols-4" : items.length === 2 ? "lg:grid-cols-2" : "lg:grid-cols-3";
       return (
-        <section className="bg-white">
+        <section className="bg-surface">
           <div className={`container-page ${hasHead ? "py-16" : "pt-10 pb-16"}`}>
             {hasHead && (
               <div className="mx-auto mb-10 max-w-2xl text-center">
@@ -592,11 +592,11 @@ function BlockView({
                   </>
                 );
                 return it.href ? (
-                  <Link key={i} href={href(it.href, locale)} id={anchorId(it.title)} className="tile group card relative block scroll-mt-28 bg-white">
+                  <Link key={i} href={href(it.href, locale)} id={anchorId(it.title)} className="tile group card relative block scroll-mt-28 bg-surface">
                     {inner}
                   </Link>
                 ) : (
-                  <article key={i} id={anchorId(it.title)} className="tile group card relative scroll-mt-28 bg-white">
+                  <article key={i} id={anchorId(it.title)} className="tile group card relative scroll-mt-28 bg-surface">
                     {inner}
                   </article>
                 );
@@ -662,7 +662,7 @@ function BlockView({
     case "faq": {
       const items = (d.items as { q: unknown; a: unknown }[]) ?? [];
       return (
-        <section className="bg-white">
+        <section className="bg-surface">
           <div className="container-page max-w-3xl py-16">
             {t("title") && <h2 {...ed("title")} className="section-title mb-8 text-center">{t("title")}</h2>}
             <div className="divide-y divide-line ch-lg border border-line">
@@ -743,7 +743,7 @@ function BlockView({
       const amount = String(block.data.amount ?? "");
       const currency = String(block.data.currency ?? "usd").toUpperCase();
       return (
-        <section className="bg-white">
+        <section className="bg-surface">
           <div className="container-page py-14 text-center md:py-16">
             {t("title") && <h2 {...ed("title")} className="section-title text-brand">{t("title")}</h2>}
             {t("subtitle") && <p {...ed("subtitle")} className="mx-auto mt-3 max-w-xl text-ink-soft">{t("subtitle")}</p>}
@@ -796,7 +796,7 @@ function BlockView({
               {settings.serviceAreas.length > 0 && (
                 <div className="mt-7 flex flex-wrap gap-2">
                   {settings.serviceAreas.map((a) => (
-                    <span key={a} className="border border-line bg-white px-3 py-1 text-xs font-semibold text-brand">{a}</span>
+                    <span key={a} className="border border-line bg-surface px-3 py-1 text-xs font-semibold text-brand">{a}</span>
                   ))}
                 </div>
               )}
@@ -811,7 +811,7 @@ function BlockView({
       if (!src) return null;
       const auto = !!d.autoplay;
       return (
-        <section className="bg-white">
+        <section className="bg-surface">
           <div className="container-page max-w-4xl py-10">
             {t("title") && <h2 className="section-title mb-6 text-center">{t("title")}</h2>}
             <video
@@ -835,7 +835,7 @@ function BlockView({
       if (!embed) return null;
       const ratio = embed.aspect === "video" ? "aspect-video" : embed.aspect === "tall" ? "aspect-[9/14] max-w-md" : "aspect-square max-w-xl";
       return (
-        <section className="bg-white">
+        <section className="bg-surface">
           <VideoLd
             url={d.url as string}
             name={t("title") || t("caption") || `${settings.brandName} — project video`}
@@ -862,7 +862,7 @@ function BlockView({
 
     case "html":
       return (
-        <section className="bg-white">
+        <section className="bg-surface">
           <div className="container-page py-8" dangerouslySetInnerHTML={{ __html: (d.code as string) ?? "" }} />
         </section>
       );

@@ -34,7 +34,7 @@ export function ProjectsGrid({
             className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
               active === c.id
                 ? "bg-brand text-white"
-                : "border border-line bg-white text-ink-soft hover:border-brand hover:text-brand"
+                : "border border-line bg-surface text-ink-soft hover:border-brand hover:text-brand"
             }`}
           >
             {c.label}
@@ -44,7 +44,7 @@ export function ProjectsGrid({
 
       <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {shown.map((p) => (
-          <article key={p.id} className="group overflow-hidden rounded-2xl border border-line bg-white shadow-sm">
+          <article key={p.id} className="group overflow-hidden rounded-2xl border border-line bg-surface shadow-sm">
             <div className="relative aspect-[4/3] overflow-hidden">
               <Image
                 src={p.src}

@@ -9,6 +9,28 @@ Upgrade with `npx create-edgepress upgrade` (scaffolded sites) or `git pull`
 (clones) — your content lives in your storage and is never touched by code
 updates.
 
+## [1.15.0] — 2026-07-27
+
+### Changed
+- **CMS and theme are now cleanly separated** (standard content/presentation
+  split — see docs/architecture-cms-vs-theme.md). The theme owns *all* visual
+  design; content stays presentation-agnostic.
+  - **Surfaces are themeable** — new `bg` (page canvas) and `surface`
+    (cards/panels/inputs) theme tokens. Every block and base style now reads
+    `bg-surface` / `var(--color-bg)` instead of a hardcoded white, so a theme
+    can drive the whole palette — including a fully **dark** site — from the
+    Appearance panel with no hand-edited CSS. Defaults are white, so existing
+    light sites are pixel-identical.
+  - The **admin panel is pinned** to a fixed light workspace regardless of the
+    site theme, so a dark site theme never restyles the dashboard.
+
+### Added
+- **Export / Import theme** (Appearance) — a theme is now a portable
+  `*.edgepress-theme.json` file: colours, fonts, corners and custom CSS, with
+  **no content and no business info**. Export it to reuse a design on another
+  site, or import one someone shared. (Starter kits still bundle theme +
+  seed content together; the theme alone is independently portable.)
+
 ## [1.14.0] — 2026-07-27
 
 ### Fixed

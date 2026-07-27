@@ -60,7 +60,7 @@ export function Testimonials({ dict }: { dict: Dictionary }) {
 export function Credentials({ dict, compact = false }: { dict: Dictionary; compact?: boolean }) {
   const c = dict.credentials;
   return (
-    <section className="bg-white">
+    <section className="bg-surface">
       <div className="container-page py-20">
         <div className="mx-auto max-w-2xl text-center">
           <span className="eyebrow">
@@ -138,7 +138,7 @@ export function Credentials({ dict, compact = false }: { dict: Dictionary; compa
               {c.memberships.items.map((m) => (
                 <span
                   key={m}
-                  className="inline-flex items-center gap-2 rounded-full border border-line bg-white px-4 py-2 text-sm font-semibold text-brand"
+                  className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-4 py-2 text-sm font-semibold text-brand"
                 >
                   <Icon name="star" size={15} className="text-accent" />
                   {m}

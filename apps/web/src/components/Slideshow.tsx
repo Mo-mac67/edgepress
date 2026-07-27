@@ -69,7 +69,7 @@ export function Slideshow({
               aria-current={i === active}
               onClick={() => setActive(i)}
               className={`w-[3px] rounded-full transition-all duration-300 ${
-                i === active ? "h-8 bg-white" : "h-4 bg-white/40 hover:bg-white/70"
+                i === active ? "h-8 bg-surface" : "h-4 bg-surface/40 hover:bg-surface/70"
               }`}
             />
           ))}

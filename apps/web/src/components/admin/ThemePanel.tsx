@@ -33,10 +33,17 @@ const COLOR_GROUPS: { title: string; keys: { key: keyof ThemeColors; label: stri
     ],
   },
   {
+    title: "Surfaces (page & cards)",
+    keys: [
+      { key: "bg", label: "Page background" },
+      { key: "surface", label: "Cards & panels" },
+    ],
+  },
+  {
     title: "Backgrounds & text",
     keys: [
-      { key: "sand", label: "Background A" },
-      { key: "cream", label: "Background B" },
+      { key: "sand", label: "Section tint A" },
+      { key: "cream", label: "Section tint B" },
       { key: "ink", label: "Text" },
       { key: "inkSoft", label: "Muted text" },
       { key: "line", label: "Borders" },
@@ -51,11 +58,49 @@ export function ThemePanel() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
+  const [ioMsg, setIoMsg] = useState("");
+
   useEffect(() => {
-    fetch("/api/admin/theme").then(async (r) => r.ok && setTheme((await r.json()).theme));
+    fetch("/api/admin/theme").then(async (r) => {
+      if (!r.ok) return;
+      const t = (await r.json()).theme as ThemeSettings;
+      // Backfill tokens added after this theme was saved so the color inputs
+      // are always controlled and old sites keep their current look.
+      t.colors = { ...t.colors, bg: t.colors.bg ?? "#ffffff", surface: t.colors.surface ?? "#ffffff" };
+      setTheme(t);
+    });
   }, []);
 
   if (!theme) return <p className="text-sm text-ink-soft">Loading…</p>;
+
+  /** Export the theme (design only — no content) as a portable .json file. */
+  function exportTheme() {
+    if (!theme) return;
+    const blob = new Blob([JSON.stringify({ edgepressTheme: 1, theme }, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `${theme.preset || "custom"}.edgepress-theme.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    setIoMsg("Theme exported — a portable design file, no content included.");
+    setTimeout(() => setIoMsg(""), 4000);
+  }
+
+  /** Import a .edgepress-theme.json — loads it for review; user still hits Save. */
+  async function importTheme(file: File) {
+    setIoMsg("");
+    try {
+      const data = JSON.parse(await file.text());
+      const imported: ThemeSettings | undefined = data?.theme?.colors ? data.theme : data?.colors ? data : undefined;
+      if (!imported?.colors) throw new Error("not a theme file");
+      imported.colors = { ...imported.colors, bg: imported.colors.bg ?? "#ffffff", surface: imported.colors.surface ?? "#ffffff" };
+      setTheme({ ...imported, preset: imported.preset || "custom" });
+      setIoMsg("Theme loaded — review below, then Save & apply.");
+    } catch {
+      setIoMsg("That file isn't a valid EdgePress theme.");
+    }
+    setTimeout(() => setIoMsg(""), 5000);
+  }
 
   const setColors = (patch: Partial<ThemeColors>) =>
     setTheme({ ...theme, preset: "custom", colors: { ...theme.colors, ...patch } });
@@ -205,9 +250,28 @@ export function ThemePanel() {
           <SnippetsCard />
         </section>
 
-        <button onClick={save} disabled={saving} className="btn-primary">
-          {saving ? "Saving…" : saved ? "Saved — site updated ✓" : "Save & apply theme"}
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          <button onClick={save} disabled={saving} className="btn-primary">
+            {saving ? "Saving…" : saved ? "Saved — site updated ✓" : "Save & apply theme"}
+          </button>
+          <span className="mx-1 h-6 w-px bg-line" aria-hidden />
+          <button type="button" onClick={exportTheme} className="btn-secondary text-sm">
+            Export theme
+          </button>
+          <label className="btn-secondary cursor-pointer text-sm">
+            Import theme
+            <input
+              type="file"
+              accept="application/json,.json"
+              className="hidden"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) importTheme(f); e.target.value = ""; }}
+            />
+          </label>
+          {ioMsg && <span className="text-sm font-medium text-accent-dark">{ioMsg}</span>}
+        </div>
+        <p className="-mt-3 text-xs text-ink-soft">
+          A theme is a portable design file — colours, fonts, corners and custom CSS, with <strong>no content</strong>. Export it to reuse on another site, or import one someone shared.
+        </p>
       </div>
 
       {/* Live preview */}
@@ -215,7 +279,7 @@ export function ThemePanel() {
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">Preview</p>
         <div className="overflow-hidden rounded-xl border border-line shadow-sm">
           {/* mini header */}
-          <div className="flex items-center justify-between px-4 py-3" style={{ background: theme.headerStyle === "dark" ? c.brandDark : "#fff", borderBottom: `1px solid ${c.line}` }}>
+          <div className="flex items-center justify-between px-4 py-3" style={{ background: theme.headerStyle === "dark" ? c.brandDark : c.surface, borderBottom: `1px solid ${c.line}` }}>
             <span className="text-sm font-extrabold" style={{ color: theme.headerStyle === "dark" ? "#fff" : c.brand }}>EdgePress</span>
             <span className="rounded px-3 py-1 text-xs font-bold" style={{ background: c.accent, color: c.brandDark, borderRadius: RADII[theme.radius].btn }}>Get a Quote</span>
           </div>
@@ -228,7 +292,7 @@ export function ThemePanel() {
           {/* mini cards */}
           <div className="grid grid-cols-2 gap-3 p-4" style={{ background: c.sand }}>
             {[0, 1].map((i) => (
-              <div key={i} className="border p-3" style={{ background: "#fff", borderColor: c.line, borderRadius: RADII[theme.radius].card }}>
+              <div key={i} className="border p-3" style={{ background: c.surface, borderColor: c.line, borderRadius: RADII[theme.radius].card }}>
                 <span className="inline-grid h-6 w-6 place-items-center rounded" style={{ background: c.brandSoft, color: c.brand }}>
                   <Icon name={i ? "hammer" : "shield"} size={13} />
                 </span>

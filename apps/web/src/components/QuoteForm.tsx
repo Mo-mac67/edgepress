@@ -173,7 +173,7 @@ export function QuoteForm({ locale, form }: { locale: Locale; form: FormDict }) 
               className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${
                 times.includes(t)
                   ? "border-brand bg-brand text-white"
-                  : "border-line bg-white text-ink-soft hover:border-brand"
+                  : "border-line bg-surface text-ink-soft hover:border-brand"
               }`}
             >
               {t}

@@ -69,7 +69,7 @@ export default async function CmsPage({ params, searchParams }: { params: Promis
       mainEntityOfPage: `${site}/${lang}/blog/${post.slug}`,
     };
     return (
-      <article className="bg-white">
+      <article className="bg-surface">
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(postLd) }} />
         {post.cover && (
           <div className="relative aspect-[21/9] w-full">

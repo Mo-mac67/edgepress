@@ -29,7 +29,7 @@ export default async function LessonPage({ params }: { params: Promise<{ lang: s
   const embed = l.videoUrl ? embedSrc(l.videoUrl) : null;
 
   return (
-    <section className="bg-white min-h-screen">
+    <section className="bg-surface min-h-screen">
       <div className="container-page max-w-3xl pb-16 pt-32">
         <Link href={`/${lang}/learn/${c.slug}`} className="text-sm font-semibold text-accent-dark hover:underline">← {tx(c.title, lang)}</Link>
         <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-ink-soft">{fr ? "Leçon" : "Lesson"} {idx + 1} / {c.lessons.length}</p>

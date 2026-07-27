@@ -50,6 +50,8 @@ export async function POST(request: Request) {
         accent,
         accentDark: darken(accent, 0.75),
         accentSoft: mixWhite(accent, 0.18),
+        bg: "#ffffff",
+        surface: "#ffffff",
         sand: "#f6f6fb",
         cream: "#fcfcfe",
         ink: "#161821",
