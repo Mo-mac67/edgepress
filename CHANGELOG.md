@@ -9,6 +9,16 @@ Upgrade with `npx create-edgepress upgrade` (scaffolded sites) or `git pull`
 (clones) — your content lives in your storage and is never touched by code
 updates.
 
+## [1.14.0] — 2026-07-27
+
+### Fixed
+- **Theme is now separate from Custom-HTML content** — a full-document
+  Custom-HTML page renders in an isolated iframe that couldn't see the site
+  theme, so the Appearance panel (e.g. accent colour) had no effect on it. The
+  renderer now injects the CMS theme variables (`:root{--color-*}`) into every
+  Custom-HTML page, so its CSS can reference them (e.g. `--mint: var(--color-accent)`)
+  and the CMS actually drives the design. Content and theme are no longer fused.
+
 ## [1.13.0] — 2026-07-27
 
 ### Added

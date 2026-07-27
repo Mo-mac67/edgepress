@@ -1,11 +1,11 @@
 import { BlockRenderer } from "./BlockRenderer";
 import { InlineEditBridge } from "./InlineEditBridge";
 import { AbTrack } from "@/components/AbTrack";
-import { getSettings } from "@/lib/cms-store";
+import { getSettings, getTheme } from "@/lib/cms-store";
 import { getSnippets, hasSnippetTokens, renderSnippets } from "@/lib/snippets-store";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries";
-import { pickRawHtml } from "@/lib/cms-types";
+import { pickRawHtml, themeCss } from "@/lib/cms-types";
 import type { Block, Page } from "@/lib/cms-types";
 
 /** Expands `[snippet name]` tokens in rawHtml + html/richtext blocks. Loads
@@ -46,6 +46,18 @@ export async function PageView({ page: rawPage, locale, dict, edit }: { page: Pa
   if (page.mode === "html") {
     const raw = pickRawHtml(page, locale);
     const isDocument = /<html[\s>]|<!doctype/i.test(raw);
+    // Separate theme from content: a full-doc Custom-HTML page renders in an
+    // isolated iframe that can't see the site's /theme.css, so its own CSS could
+    // never react to the CMS Appearance settings. Inject the CMS theme variables
+    // (:root{--color-*}) into the document so the page's CSS can reference them
+    // (e.g. --mint: var(--color-accent)) and the CMS actually drives the design.
+    // Fragments already inherit the site theme via the surrounding chrome.
+    const themeVars = `<style id="ep-theme-vars">${themeCss(await getTheme())}</style>`;
+    const doc = isDocument
+      ? raw.includes("</head>")
+        ? raw.replace("</head>", `${themeVars}</head>`)
+        : themeVars + raw
+      : raw;
     return (
       <>
         {page.hideChrome && (
@@ -53,7 +65,7 @@ export async function PageView({ page: rawPage, locale, dict, edit }: { page: Pa
         )}
         {isDocument ? (
           <iframe
-            srcDoc={raw}
+            srcDoc={doc}
             title={page.title[locale] || page.slug}
             className={page.hideChrome ? "block h-screen w-full border-0" : "block h-[calc(100vh-4.75rem)] w-full border-0"}
           />
