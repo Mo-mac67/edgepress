@@ -9,6 +9,15 @@ Upgrade with `npx create-edgepress upgrade` (scaffolded sites) or `git pull`
 (clones) — your content lives in your storage and is never touched by code
 updates.
 
+## [1.11.0] — 2026-07-27
+
+### Added
+- **Site templates (starter kits)** — export a site's design + structure (theme,
+  menus, pages, brand settings) as one JSON, then apply it to a new site to spin
+  up a client project fast (Settings → Developer). Business-specific contact
+  info, leads and users are never included, and applying a template never
+  overwrites the target site's contact info.
+
 ## [1.10.0] — 2026-07-27
 
 ### Added

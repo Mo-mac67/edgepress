@@ -727,6 +727,7 @@ function Settings({
 
       {isSuper && <TwoFactorCard />}
       {isSuper && <BackupCard />}
+      {isSuper && <TemplateCard />}
 
       {isSuper && (
         <div className="card p-6 lg:col-span-2">
@@ -882,7 +883,7 @@ function BackupCard() {
   }
 
   return (
-    <div className="card p-6 lg:col-span-2">
+    <div className="card p-6 lg:col-span-2" id="ep-backup-card">
       <h3 className="font-display font-semibold text-brand">Backup &amp; restore</h3>
       <p className="mt-1 text-sm text-ink-soft">
         Export every document — pages, posts, collections, forms, leads, settings — as one JSON file. Restore it here or on another EdgePress site. <span className="text-ink-soft">(Media files in R2 aren&apos;t included.)</span>
@@ -893,6 +894,44 @@ function BackupCard() {
         <label className={`btn-secondary cursor-pointer ${restoring ? "opacity-60" : ""}`}>
           {restoring ? "Restoring…" : "Restore from file"}
           <input type="file" accept="application/json,.json" className="hidden" onChange={onFile} disabled={restoring} />
+        </label>
+      </div>
+    </div>
+  );
+}
+
+function TemplateCard() {
+  const ui = useAdminUI();
+  const [busy, setBusy] = useState(false);
+  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!(await ui.confirm({ title: "Apply this template?", message: "The template's theme, menus, brand settings and pages are applied to this site (pages with the same id are overwritten). Your contact info, leads and users are untouched.", danger: true, confirmLabel: "Apply template" }))) return;
+    setBusy(true);
+    try {
+      const json = JSON.parse(await file.text());
+      const res = await fetch("/api/admin/template", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(json) });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) ui.toast(`Template applied — ${data.pages} page(s). Reload to see it.`, "success");
+      else ui.toast(data.error || "Import failed", "error");
+    } catch {
+      ui.toast("That doesn't look like a valid template file.", "error");
+    }
+    setBusy(false);
+  }
+  return (
+    <div className="card p-6 lg:col-span-2">
+      <h3 className="font-display font-semibold text-brand">Site template (starter kit)</h3>
+      <p className="mt-1 text-sm text-ink-soft">
+        Save this site&apos;s <strong>design + structure</strong> (theme, menus, pages, brand) as a reusable template, then apply it to a new client site to start fast. Business-specific contact info, leads and users are never included.
+      </p>
+      <div className="mt-4 flex flex-wrap gap-2">
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- API file download, not a page */}
+        <a href="/api/admin/template" className="btn-primary">Download template</a>
+        <label className={`btn-secondary cursor-pointer ${busy ? "opacity-60" : ""}`}>
+          {busy ? "Applying…" : "Apply a template"}
+          <input type="file" accept="application/json,.json" className="hidden" onChange={onFile} disabled={busy} />
         </label>
       </div>
     </div>
