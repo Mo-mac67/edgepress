@@ -9,6 +9,14 @@ Upgrade with `npx create-edgepress upgrade` (scaffolded sites) or `git pull`
 (clones) — your content lives in your storage and is never touched by code
 updates.
 
+## [1.5.0] — 2026-07-26
+
+### Added
+- **Simple / Pro workspace toggle** — a switch in the admin top bar. *Simple*
+  shows only the everyday essentials (Dashboard, Pages, Blog, Media, Menus,
+  Leads, Appearance, Security, Help) and gets the advanced sections out of the
+  way; *Pro* shows everything. The choice is remembered per browser.
+
 ## [1.4.0] — 2026-07-26
 
 ### Added

@@ -66,6 +66,19 @@ export function AdminDashboard({
   const [tab, setTab] = useState<Tab>("overview");
   const [leads, setLeads] = useState(initialLeads);
   const [days, setDays] = useState(30);
+  // Simple vs Pro workspace: Simple shows only the everyday essentials and gets
+  // the advanced sections out of the way; Pro shows everything. Persisted per browser.
+  const SIMPLE_TABS: Set<string> = new Set(["overview", "pages", "blog", "media", "menu", "leads", "appearance", "settings", "help"]);
+  const [mode, setMode] = useState<"simple" | "pro">("pro");
+  useEffect(() => {
+    const m = localStorage.getItem("ep-admin-mode");
+    if (m === "simple" || m === "pro") setMode(m);
+  }, []);
+  const changeMode = (m: "simple" | "pro") => {
+    setMode(m);
+    try { localStorage.setItem("ep-admin-mode", m); } catch {}
+    if (m === "simple" && !SIMPLE_TABS.has(tab)) setTab("overview");
+  };
 
   const isSuper = role === "super";
   const analytics = useMemo(() => computeAnalytics(leads, events, days), [leads, events, days]);
@@ -125,7 +138,7 @@ export function AdminDashboard({
   ];
   // Per-admin tab permissions: hide disallowed tabs (super always sees all).
   const groups = rawGroups
-    .map((g) => ({ ...g, items: g.items.filter((i) => canSee(i.id)) }))
+    .map((g) => ({ ...g, items: g.items.filter((i) => canSee(i.id) && (mode === "pro" || SIMPLE_TABS.has(i.id))) }))
     .filter((g) => g.items.length > 0);
   const active = groups.flatMap((g) => g.items).find((i) => i.id === tab);
 
@@ -186,6 +199,11 @@ export function AdminDashboard({
           <div className="flex h-16 items-center justify-between gap-3 px-4 sm:px-6">
             <h1 className="font-display text-lg font-bold text-brand">{active?.label ?? "Dashboard"}</h1>
             <div className="flex items-center gap-2">
+              {/* Simple / Pro workspace toggle — hides advanced sections in Simple. */}
+              <div className="flex items-center rounded-full border border-line bg-sand p-0.5 text-xs font-semibold" role="group" aria-label="Workspace mode" title="Simple hides advanced sections; Pro shows everything">
+                <button onClick={() => changeMode("simple")} className={`rounded-full px-3 py-1 transition ${mode === "simple" ? "bg-brand text-white" : "text-ink-soft hover:text-brand"}`}>Simple</button>
+                <button onClick={() => changeMode("pro")} className={`rounded-full px-3 py-1 transition ${mode === "pro" ? "bg-brand text-white" : "text-ink-soft hover:text-brand"}`}>Pro</button>
+              </div>
               {tab === "overview" && (
                 <select className="field max-w-[150px] py-2 text-sm" value={days} onChange={(e) => setDays(Number(e.target.value))}>
                   {[7, 14, 30, 90, 3650].map((d) => (
