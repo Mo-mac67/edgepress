@@ -9,6 +9,14 @@ Upgrade with `npx create-edgepress upgrade` (scaffolded sites) or `git pull`
 (clones) — your content lives in your storage and is never touched by code
 updates.
 
+## [1.10.0] — 2026-07-27
+
+### Added
+- **Structural editing on the page** — for block pages, hovering a block in
+  "Edit on page" shows a toolbar to **move it up/down, add a block below, or
+  delete it** — right on the live preview. Changes respect draft mode (Publish
+  to go live). (Block pages only; Custom-HTML pages keep their hand markup.)
+
 ## [1.9.0] — 2026-07-27
 
 ### Added

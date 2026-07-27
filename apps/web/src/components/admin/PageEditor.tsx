@@ -99,6 +99,7 @@ export function PageEditor({ initial, uiLocale, contentLocales = ["en", "fr"], s
 
   const savedRef = useRef(serialize(page));
   const savedPageRef = useRef<Page>(page); // last-published page, for Discard
+  const insertAtRef = useRef<number | null>(null); // where an on-page "add block" inserts
   const dirty = serialize(page) !== savedRef.current;
 
   const isHtml = page.mode === "html";
@@ -129,6 +130,22 @@ export function PageEditor({ initial, uiLocale, contentLocales = ["en", "fr"], s
         const loc = m.locale || "en";
         const html = m.value;
         setPage((prev) => (prev.rawHtmlI18n ? { ...prev, rawHtmlI18n: { ...prev.rawHtmlI18n, [loc]: html } } : { ...prev, rawHtml: html }));
+        return;
+      }
+      // Structural on-page edit: move / delete / add a block.
+      const op = (m as { op?: string }).op;
+      if (m.type === "ep-block-op" && m.blockId && op) {
+        if (op === "add") { insertAtRef.current = null; setPage((prev) => { insertAtRef.current = prev.blocks.findIndex((b) => b.id === m.blockId) + 1; return prev; }); setShowAdd(true); return; }
+        setPage((prev) => {
+          const i = prev.blocks.findIndex((b) => b.id === m.blockId);
+          if (i === -1) return prev;
+          const blocks = prev.blocks.slice();
+          if (op === "delete") blocks.splice(i, 1);
+          else if (op === "up" && i > 0) { [blocks[i - 1], blocks[i]] = [blocks[i], blocks[i - 1]]; }
+          else if (op === "down" && i < blocks.length - 1) { [blocks[i + 1], blocks[i]] = [blocks[i], blocks[i + 1]]; }
+          return { ...prev, blocks };
+        });
+        setPreviewKey((k) => k + 1);
         return;
       }
       if (m.type !== "ep-edit" || !m.blockId || !m.field) return;
@@ -164,7 +181,15 @@ export function PageEditor({ initial, uiLocale, contentLocales = ["en", "fr"], s
   );
 
   function addBlock(type: BlockType) {
-    setBlocks([...page.blocks, newBlock(type)]);
+    const nb = newBlock(type);
+    setPage((prev) => {
+      const at = insertAtRef.current;
+      const blocks = prev.blocks.slice();
+      if (at != null && at >= 0 && at <= blocks.length) blocks.splice(at, 0, nb);
+      else blocks.push(nb);
+      return { ...prev, blocks };
+    });
+    insertAtRef.current = null;
     setShowAdd(false);
   }
   function updateBlock(i: number, b: Block) {

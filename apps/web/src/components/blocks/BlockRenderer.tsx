@@ -49,9 +49,13 @@ export function BlockRenderer({
 }) {
   return (
     <>
-      {blocks.map((block, i) => (
-        <BlockView key={block.id} block={block} locale={locale} dict={dict} settings={settings} priority={first && i === 0} pageDate={pageDate} pageId={pageId} edit={edit} />
-      ))}
+      {blocks.map((block, i) => {
+        const node = <BlockView block={block} locale={locale} dict={dict} settings={settings} priority={first && i === 0} pageDate={pageDate} pageId={pageId} edit={edit} />;
+        // In edit mode, wrap each block so the on-page editor can target it for
+        // reorder/delete. A plain block-level div doesn't affect full-bleed layout.
+        // Outside edit mode, render exactly as before (no wrapper).
+        return edit ? <div key={block.id} data-ep-block-id={block.id}>{node}</div> : <BlockView key={block.id} block={block} locale={locale} dict={dict} settings={settings} priority={first && i === 0} pageDate={pageDate} pageId={pageId} />;
+      })}
     </>
   );
 }
