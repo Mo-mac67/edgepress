@@ -9,7 +9,7 @@ Upgrade with `npx create-edgepress upgrade` (scaffolded sites) or `git pull`
 (clones) — your content lives in your storage and is never touched by code
 updates.
 
-## [Unreleased]
+## [1.2.0] — 2026-07-26
 
 ### Added
 - **Inline visual editing (“Edit on page”)** — for block pages, toggle *Edit on
