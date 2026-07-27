@@ -5,6 +5,17 @@ import { deletePage, getPages, savePage, snapshotRevision } from "@/lib/cms-stor
 import { pingIndexNow } from "@/lib/seo";
 import type { Page } from "@/lib/cms-types";
 
+/** Validate the per-locale HTML map: locale-keyed strings, each capped, at most
+ *  a sane number of locales. Returns undefined when the field wasn't sent. */
+function sanitizeRawI18n(v: unknown): Record<string, string> | undefined {
+  if (v == null || typeof v !== "object" || Array.isArray(v)) return undefined;
+  const out: Record<string, string> = {};
+  for (const [loc, html] of Object.entries(v as Record<string, unknown>).slice(0, 24)) {
+    if (/^[a-z]{2}(-[a-z]{2})?$/i.test(loc) && typeof html === "string") out[loc] = html.slice(0, 900_000);
+  }
+  return Object.keys(out).length ? out : undefined;
+}
+
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   if (!(await isAuthed())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await params;
@@ -24,6 +35,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     blocks: Array.isArray(body.blocks) ? body.blocks : existing.blocks,
     mode: body.mode === "html" ? "html" : body.mode === "blocks" ? "blocks" : existing.mode,
     rawHtml: typeof body.rawHtml === "string" ? body.rawHtml.slice(0, 900_000) : existing.rawHtml,
+    // Per-locale HTML overrides (empty object clears them; absent field keeps them).
+    rawHtmlI18n: "rawHtmlI18n" in body ? sanitizeRawI18n(body.rawHtmlI18n) : existing.rawHtmlI18n,
     hideChrome: typeof body.hideChrome === "boolean" ? body.hideChrome : existing.hideChrome,
     // System pages keep their slug; custom pages may be re-slugged.
     slug: existing.system ? existing.slug : (body.slug ?? existing.slug),

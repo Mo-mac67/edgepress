@@ -19,7 +19,7 @@ const REPO = process.env.EDGEPRESS_REPO || "Mo-mac67/edgepress";
 const BRANCH = process.env.EDGEPRESS_BRANCH || "main";
 const APP_SUBDIR = "apps/web";
 
-const c = { reset: "\x1b[0m", bold: "\x1b[1m", green: "\x1b[32m", cyan: "\x1b[36m", dim: "\x1b[2m", red: "\x1b[31m" };
+const c = { reset: "\x1b[0m", bold: "\x1b[1m", green: "\x1b[32m", cyan: "\x1b[36m", dim: "\x1b[2m", red: "\x1b[31m", yellow: "\x1b[33m" };
 const log = (s = "") => process.stdout.write(s + "\n");
 
 function usage() {
@@ -189,8 +189,18 @@ async function cloudflareWizard(destApp, name, { domain, noDeploy }) {
   const liveUrl = dep.out.match(/https:\/\/[^\s]+\.workers\.dev/)?.[0];
   log(`\n${c.green}${c.bold}✔ Deployed!${c.reset} ${liveUrl ? c.cyan + liveUrl + c.reset : ""}`);
   if (!domain && liveUrl) {
+    // The first deploy shipped with a placeholder SITE_URL (the workers.dev URL
+    // isn't known until Cloudflare assigns it). Bake the real one into the
+    // runtime var (wrangler.jsonc) + .env.production, then redeploy once so
+    // sitemaps, canonical links and OG tags all use the live URL — no manual step.
+    const wp = join(destApp, "wrangler.jsonc");
+    const cfg = (await readFile(wp, "utf8")).replace(/"SITE_URL":\s*"[^"]*"/, `"SITE_URL": "${liveUrl}"`);
+    await writeFile(wp, cfg);
     await writeFile(join(destApp, ".env.production"), `SITE_URL=${liveUrl}\n`);
-    log(`${c.dim}SITE_URL saved (${liveUrl}) — run npm run cf:deploy once more so sitemaps/OG bake the final URL.${c.reset}`);
+    log(`${c.dim}Baking SITE_URL (${liveUrl}) and redeploying once…${c.reset}`);
+    const dep2 = sh("npm", ["run", "cf:deploy"], destApp);
+    if (dep2.ok) log(`${c.green}✔ SITE_URL set to ${liveUrl}${c.reset}`);
+    else log(`${c.yellow}⚠ Couldn't auto-redeploy — run ${c.cyan}npm run cf:deploy${c.yellow} once more to bake SITE_URL (${liveUrl}).${c.reset}`);
   }
   log(`\nNext:`);
   log(`  1. Open ${c.cyan}${domain ? `https://${domain}` : liveUrl || "your site"}/en/admin${c.reset} → the setup wizard creates your Owner account.`);

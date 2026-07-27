@@ -25,8 +25,13 @@ export interface Page {
   blocks: Block[];
   /** "blocks" (default) renders the block list; "html" renders rawHtml as-is. */
   mode?: "blocks" | "html";
-  /** Full HTML document or fragment for mode:"html" (drag-and-drop imports). */
+  /** Full HTML document or fragment for mode:"html" (drag-and-drop imports).
+   *  Used for every locale unless overridden in rawHtmlI18n. */
   rawHtml?: string;
+  /** Optional per-locale HTML for mode:"html". A locale present here overrides
+   *  rawHtml for that language; locales without an entry fall back to rawHtml.
+   *  Lets a Custom-HTML page be genuinely different per language. */
+  rawHtmlI18n?: Record<string, string>;
   /** For mode:"html": hide the site header/footer so the page is standalone. */
   hideChrome?: boolean;
   /** System pages (home, contact) can't be deleted but are fully editable. */
@@ -677,6 +682,14 @@ export const DEFAULT_SEO: SeoSettings = {
 
 export function newBlock(type: BlockType): Block {
   return { id: Math.random().toString(36).slice(2, 10), type, data: BLOCKS[type].defaults() };
+}
+
+/** The HTML to render for a mode:"html" page in a given locale: a per-locale
+ *  override when present, otherwise the shared rawHtml. Empty string if neither
+ *  is set. Keep this the single source of truth for both render and preview. */
+export function pickRawHtml(page: Pick<Page, "rawHtml" | "rawHtmlI18n">, locale: string): string {
+  const localized = page.rawHtmlI18n?.[locale];
+  return (typeof localized === "string" && localized) || page.rawHtml || "";
 }
 
 // ─── Theme (Appearance) ─────────────────────────────────

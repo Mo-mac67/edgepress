@@ -4,6 +4,7 @@ import { getSettings } from "@/lib/cms-store";
 import { getSnippets, hasSnippetTokens, renderSnippets } from "@/lib/snippets-store";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries";
+import { pickRawHtml } from "@/lib/cms-types";
 import type { Block, Page } from "@/lib/cms-types";
 
 /** Expands `[snippet name]` tokens in rawHtml + html/richtext blocks. Loads
@@ -11,12 +12,16 @@ import type { Block, Page } from "@/lib/cms-types";
 async function expandSnippets(page: Page): Promise<Page> {
   const richtextHas = (b: Block) => b.type === "richtext" && Object.values((b.data.html as Record<string, string>) ?? {}).some((v) => typeof v === "string" && hasSnippetTokens(v));
   const htmlHas = (b: Block) => b.type === "html" && typeof b.data.code === "string" && hasSnippetTokens(b.data.code);
-  const rawHas = page.mode === "html" && hasSnippetTokens(page.rawHtml ?? "");
+  const rawHas = page.mode === "html" && (hasSnippetTokens(page.rawHtml ?? "") || Object.values(page.rawHtmlI18n ?? {}).some((v) => typeof v === "string" && hasSnippetTokens(v)));
   if (!rawHas && !page.blocks.some((b) => richtextHas(b) || htmlHas(b))) return page;
   const snippets = await getSnippets();
   return {
     ...page,
     rawHtml: rawHas ? renderSnippets(page.rawHtml ?? "", snippets) : page.rawHtml,
+    rawHtmlI18n:
+      rawHas && page.rawHtmlI18n
+        ? Object.fromEntries(Object.entries(page.rawHtmlI18n).map(([k, v]) => [k, typeof v === "string" ? renderSnippets(v, snippets) : v]))
+        : page.rawHtmlI18n,
     blocks: page.blocks.map((b) => {
       if (htmlHas(b)) return { ...b, data: { ...b.data, code: renderSnippets(b.data.code as string, snippets) } };
       if (richtextHas(b)) {
@@ -38,7 +43,7 @@ async function expandSnippets(page: Page): Promise<Page> {
 export async function PageView({ page: rawPage, locale, dict }: { page: Page; locale: Locale; dict: Dictionary }) {
   const page = await expandSnippets(rawPage);
   if (page.mode === "html") {
-    const raw = page.rawHtml ?? "";
+    const raw = pickRawHtml(page, locale);
     const isDocument = /<html[\s>]|<!doctype/i.test(raw);
     return (
       <>

@@ -10,9 +10,10 @@
     "check:links": "node scripts/check-links.mjs",
     "backup": "node scripts/backup.mjs",
     "smoke": "node scripts/smoke.mjs",
+    "clean": "node scripts/clean-build.mjs",
     "cf:build": "opennextjs-cloudflare build",
-    "cf:preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
-    "cf:deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "cf:preview": "node scripts/clean-build.mjs && opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "cf:deploy": "node scripts/clean-build.mjs && opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:integration": "node tests/integration/run.mjs"

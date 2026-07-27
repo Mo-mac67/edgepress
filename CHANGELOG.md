@@ -9,6 +9,31 @@ Upgrade with `npx create-edgepress upgrade` (scaffolded sites) or `git pull`
 (clones) — your content lives in your storage and is never touched by code
 updates.
 
+## [Unreleased]
+
+### Added
+- **Per-language Custom HTML** — a `mode:"html"` page can now hold different
+  HTML per language (checkbox “Different HTML per language” in the editor;
+  switch languages with the tabs above). Rendering falls back to the shared
+  HTML for any locale you leave blank, so existing pages are unchanged.
+
+### Changed
+- **AI Site Builder** now gets stronger design + copy direction (section
+  rhythm, business-specific copy, cohesive palette/typography), so generated
+  drafts read less generic.
+- `create-edgepress --cloudflare` **auto-bakes `SITE_URL`** after the first
+  deploy (writes the live workers.dev URL into `wrangler.jsonc` + `.env.production`
+  and redeploys once) — sitemaps/OG/canonical URLs are correct with no manual step.
+
+### Fixed
+- `npm run cf:deploy` / `cf:preview` now **wipe `.next` + `.open-next` first**
+  (new `npm run clean`), so a stale incremental cache can never repackage and
+  ship older code.
+- Removed a stray NUL byte embedded in `packages/ai/src/features.ts` — the
+  translation-signature separator is now a Unicode escape instead of a raw
+  null character. Runtime behaviour is identical (signatures are unchanged),
+  but the file is clean UTF-8 and greppable again.
+
 ## [1.1.0] — 2026-07-24
 
 ### Added

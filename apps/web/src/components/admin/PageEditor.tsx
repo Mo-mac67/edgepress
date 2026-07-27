@@ -31,7 +31,7 @@ function toLocalInput(iso: string): string {
   const p = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
 }
-const serialize = (p: Page) => JSON.stringify({ t: p.title, d: p.description, s: p.slug, st: p.status, b: p.blocks, m: p.mode, r: p.rawHtml, h: p.hideChrome, seo: p.seo, ab: p.ab, pa: p.publishAt });
+const serialize = (p: Page) => JSON.stringify({ t: p.title, d: p.description, s: p.slug, st: p.status, b: p.blocks, m: p.mode, r: p.rawHtml, ri: p.rawHtmlI18n, h: p.hideChrome, seo: p.seo, ab: p.ab, pa: p.publishAt });
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 
@@ -51,6 +51,12 @@ export function PageEditor({ initial, uiLocale, contentLocales = ["en", "fr"], s
   const dirty = serialize(page) !== savedRef.current;
 
   const isHtml = page.mode === "html";
+  // Per-locale Custom HTML: when the map exists, each language has its own HTML;
+  // otherwise a single rawHtml is shared across every language.
+  const perLocale = isHtml && !!page.rawHtmlI18n;
+  const htmlFor = (loc: string) => (perLocale ? page.rawHtmlI18n?.[loc] ?? "" : page.rawHtml ?? "");
+  const setHtmlFor = (loc: string, v: string) =>
+    perLocale ? patch({ rawHtmlI18n: { ...page.rawHtmlI18n, [loc]: v } }) : patch({ rawHtml: v });
   const setBlocks = (blocks: Block[]) => setPage((p) => ({ ...p, blocks }));
   const patch = (p: Partial<Page>) => setPage((prev) => ({ ...prev, ...p }));
 
@@ -102,6 +108,8 @@ export function PageEditor({ initial, uiLocale, contentLocales = ["en", "fr"], s
           blocks: page.blocks,
           mode: page.mode ?? "blocks",
           rawHtml: page.rawHtml ?? "",
+          // Empty object (not undefined) so turning per-locale HTML off actually clears it.
+          rawHtmlI18n: page.rawHtmlI18n ?? {},
           hideChrome: !!page.hideChrome,
           seo: page.seo ?? {},
           ab: page.ab ?? { headlines: [] },
@@ -325,6 +333,24 @@ export function PageEditor({ initial, uiLocale, contentLocales = ["en", "fr"], s
                     <span className="text-sm text-ink">Standalone page (hide the site header &amp; footer)</span>
                   </label>
                 )}
+                {isHtml && (
+                  <label className="flex items-center gap-2 sm:col-span-2">
+                    <input
+                      type="checkbox"
+                      checked={perLocale}
+                      onChange={(e) =>
+                        // On: seed each language from the shared HTML so nothing is lost.
+                        // Off: drop the per-locale map back to a single shared rawHtml.
+                        patch(
+                          e.target.checked
+                            ? { rawHtmlI18n: Object.fromEntries(contentLocales.map((l) => [l, page.rawHtml ?? ""])) }
+                            : { rawHtmlI18n: undefined },
+                        )
+                      }
+                    />
+                    <span className="text-sm text-ink">Different HTML per language {perLocale && <span className="text-ink-soft">— editing {locale.toUpperCase()} (switch language above)</span>}</span>
+                  </label>
+                )}
                 {!isHtml && (
                   <label className="block sm:col-span-2">
                     <span className="mb-1 block text-sm font-medium text-ink">A/B headline test</span>
@@ -372,7 +398,7 @@ export function PageEditor({ initial, uiLocale, contentLocales = ["en", "fr"], s
             {isHtml ? (
               <div className="card p-4">
                 <div className="mb-2 flex items-center justify-between">
-                  <h3 className="font-display font-bold text-brand">HTML source</h3>
+                  <h3 className="font-display font-bold text-brand">HTML source{perLocale && <span className="ml-2 rounded bg-accent-soft px-1.5 py-0.5 text-[11px] font-semibold text-accent-dark">{locale.toUpperCase()}</span>}</h3>
                   <label className="btn-secondary cursor-pointer py-1.5 text-xs">
                     <Icon name="download" size={13} /> Replace with file
                     <input
@@ -381,14 +407,15 @@ export function PageEditor({ initial, uiLocale, contentLocales = ["en", "fr"], s
                       hidden
                       onChange={async (e) => {
                         const f = e.target.files?.[0];
-                        if (f) patch({ rawHtml: await f.text() });
+                        if (f) setHtmlFor(locale, await f.text());
                       }}
                     />
                   </label>
                 </div>
                 <CodeEditor
-                  value={page.rawHtml ?? ""}
-                  onChange={(v) => patch({ rawHtml: v })}
+                  key={perLocale ? `html-${locale}` : "html-shared"}
+                  value={htmlFor(locale)}
+                  onChange={(v) => setHtmlFor(locale, v)}
                   minHeight={480}
                   ariaLabel="Page HTML source"
                   placeholder="<!doctype html>… paste or write your HTML here"
