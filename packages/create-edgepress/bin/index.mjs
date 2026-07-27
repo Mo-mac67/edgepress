@@ -31,6 +31,8 @@ function usage() {
   log(`  --cloudflare       Full deploy wizard: creates KV + R2, writes the config, deploys`);
   log(`  --domain <domain>  Custom domain for --cloudflare (must already be on your CF account)`);
   log(`  --no-deploy        With --cloudflare: create resources + config, skip install/deploy`);
+  log(`  --kit <path|url>   With --cloudflare: seed a site starter-kit template (from EdgePress`);
+  log(`                     Settings → Download template) into the new site's KV before first run`);
   log(`  EDGEPRESS_REPO     Override the GitHub repo (default ${REPO})`);
 }
 
@@ -103,7 +105,35 @@ function sh(cmd, args, cwd) {
  * CLOUDFLARE_ACCOUNT_ID set), writes them into wrangler.jsonc, then installs
  * and deploys. Everything lands on the USER's account — nothing is shared.
  */
-async function cloudflareWizard(destApp, name, { domain, noDeploy }) {
+/** Seed a site starter-kit template (from `create-edgepress` / EdgePress
+ *  Settings → "Download template") straight into the new KV namespace, before
+ *  first run, so a new client site opens with that design + pages already in
+ *  place. Values are written via --path files to avoid CLI-escaping limits. */
+async function seedKit(wr, kvId, kitArg, destApp) {
+  let raw;
+  try {
+    raw = /^https?:\/\//.test(kitArg) ? await (await fetch(kitArg)).text() : await readFile(resolve(kitArg), "utf8");
+  } catch {
+    log(`${c.yellow}⚠ Couldn't read --kit ${kitArg} (skipping)${c.reset}`);
+    return;
+  }
+  let tpl;
+  try { tpl = JSON.parse(raw); } catch { log(`${c.yellow}⚠ --kit isn't valid JSON (skipping)${c.reset}`); return; }
+  if (tpl?.edgepressTemplate !== 1) { log(`${c.yellow}⚠ --kit isn't an EdgePress template (skipping)${c.reset}`); return; }
+  const docs = { "cms-theme.json": tpl.theme, "cms-nav.json": tpl.nav, "cms-pages.json": tpl.pages, "cms-settings.json": tpl.settings };
+  log(`${c.dim}Seeding starter kit into KV…${c.reset}`);
+  for (const [key, value] of Object.entries(docs)) {
+    if (value == null) continue;
+    const tmp = join(destApp, `.ep-kit-${key}`);
+    await writeFile(tmp, JSON.stringify(value));
+    const res = wr(["kv", "key", "put", key, "--path", tmp, `--namespace-id=${kvId}`, "--remote"]);
+    try { await rm(tmp); } catch { /* best effort */ }
+    if (!res.ok) log(`${c.yellow}⚠ couldn't seed ${key}: ${res.out.slice(0, 160)}${c.reset}`);
+  }
+  log(`${c.green}✔ Starter kit applied (theme + menus + pages)${c.reset}`);
+}
+
+async function cloudflareWizard(destApp, name, { domain, noDeploy, kit }) {
   const wr = (args) => sh("npx", ["--yes", "wrangler", ...args], destApp);
 
   log(`\n${c.bold}Cloudflare deploy wizard${c.reset}`);
@@ -168,6 +198,9 @@ async function cloudflareWizard(destApp, name, { domain, noDeploy }) {
   await writeFile(wranglerPath, cfgText);
   if (domain) await writeFile(join(destApp, ".env.production"), `SITE_URL=https://${domain}\n`);
   log(`${c.green}✔ wrangler.jsonc configured${c.reset}${domain ? ` ${c.dim}(custom domain ${domain})${c.reset}` : ""}`);
+
+  // Optional: seed a starter-kit template into KV now (before first run).
+  if (kit) await seedKit(wr, kvId, kit, destApp);
 
   if (noDeploy) {
     log(`${c.dim}--no-deploy: resources + config are ready. Deploy with: npm install && npm run cf:deploy${c.reset}`);
@@ -316,8 +349,10 @@ async function main() {
   if (args.includes("--cloudflare")) {
     const dIdx = args.indexOf("--domain");
     const domain = dIdx !== -1 ? String(args[dIdx + 1] ?? "").replace(/^https?:\/\//, "").replace(/\/.*$/, "") : "";
+    const kIdx = args.indexOf("--kit");
     const ok = await cloudflareWizard(destApp, name.replace(/[^a-z0-9-]/gi, "-").toLowerCase(), {
       domain,
+      kit: kIdx !== -1 ? String(args[kIdx + 1] ?? "") : "",
       noDeploy: args.includes("--no-deploy"),
     });
     if (ok) return;
