@@ -64,4 +64,16 @@ describe("computeAnalytics", () => {
     expect(a.kpis.leads).toBe(1);
     expect(a.kpis.conversionRate).toBeCloseTo(0.5);
   });
+
+  it("builds a pageviews-by-day timeline even with zero leads", () => {
+    const a = computeAnalytics([], [pv(1, 1), pv(1, 2), pv(3, 1)], 30);
+    // The traffic timeline is independent of leads, so it has data here.
+    const totalPv = a.pageviewsByDay.reduce((s, d) => s + d.value, 0);
+    expect(totalPv).toBe(3);
+    expect(a.pageviewsByDay.some((d) => d.value > 0)).toBe(true);
+    // Leads timeline is empty (no leads submitted).
+    expect(a.leadsByDay.every((d) => d.value === 0)).toBe(true);
+    // One day has 2 views, another has 1.
+    expect(a.pageviewsByDay.filter((d) => d.value > 0).map((d) => d.value).sort()).toEqual([1, 2]);
+  });
 });

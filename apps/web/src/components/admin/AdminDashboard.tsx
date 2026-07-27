@@ -304,42 +304,93 @@ function Overview({ analytics: a, anomalies = [], base = "" }: { analytics: Retu
         {answer && <p className="mt-3 whitespace-pre-wrap rounded-lg bg-sand p-3 text-sm text-ink">{answer}</p>}
       </div>
 
+      {/* Traffic — driven by pageviews, so the dashboard is alive even with no leads yet. */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className="card p-6">
+          <h3 className="mb-4 font-display font-semibold text-brand">Page views over time</h3>
+          {hasVals(a.pageviewsByDay) ? (
+            <TimeBars items={a.pageviewsByDay.map((d) => ({ label: d.key.slice(5), value: d.value }))} />
+          ) : (
+            <EmptyNote>No traffic in this period yet — views show up here as visitors arrive.</EmptyNote>
+          )}
+        </div>
+        <div className="card p-6">
+          <h3 className="mb-4 font-display font-semibold text-brand">Top pages</h3>
+          {hasVals(a.topPages) ? (
+            <BarList items={a.topPages.map((s) => ({ label: s.key || "/", value: s.value, valueLabel: String(s.value) }))} />
+          ) : (
+            <EmptyNote>No page views recorded yet.</EmptyNote>
+          )}
+        </div>
+      </div>
+
       <div className="card p-6">
         <h3 className="mb-4 font-display font-semibold text-brand">Leads over time</h3>
-        <TimeBars items={a.leadsByDay.map((d) => ({ label: d.key.slice(5), value: d.value }))} />
+        {hasVals(a.leadsByDay) ? (
+          <TimeBars items={a.leadsByDay.map((d) => ({ label: d.key.slice(5), value: d.value }))} />
+        ) : (
+          <EmptyNote>No leads yet. When someone submits a form, it appears here.</EmptyNote>
+        )}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="card p-6">
           <h3 className="mb-4 font-display font-semibold text-brand">By status</h3>
-          <Donut
-            centerLabel={String(a.kpis.leads)}
-            centerSub="leads"
-            segments={a.leadsByStatus.map((s, i) => ({
-              label: STATUS_LABEL[s.key as LeadStatus] ?? s.key,
-              value: s.value,
-              valueLabel: String(s.value),
-              color: PALETTE[i % PALETTE.length],
-            }))}
-          />
+          {hasVals(a.leadsByStatus) ? (
+            <Donut
+              centerLabel={String(a.kpis.leads)}
+              centerSub="leads"
+              segments={a.leadsByStatus.map((s, i) => ({
+                label: STATUS_LABEL[s.key as LeadStatus] ?? s.key,
+                value: s.value,
+                valueLabel: String(s.value),
+                color: PALETTE[i % PALETTE.length],
+              }))}
+            />
+          ) : (
+            <EmptyNote>No leads yet.</EmptyNote>
+          )}
         </div>
         <div className="card p-6">
           <h3 className="mb-4 font-display font-semibold text-brand">By project type</h3>
-          <BarList
-            items={a.leadsByProjectType.map((s) => ({
-              label: s.key.replace(/_/g, " "),
-              value: s.value,
-              valueLabel: String(s.value),
-            }))}
-          />
+          {hasVals(a.leadsByProjectType) ? (
+            <BarList
+              items={a.leadsByProjectType.map((s) => ({
+                label: s.key.replace(/_/g, " "),
+                value: s.value,
+                valueLabel: String(s.value),
+              }))}
+            />
+          ) : (
+            <EmptyNote>No leads yet.</EmptyNote>
+          )}
         </div>
         <div className="card p-6">
           <h3 className="mb-4 font-display font-semibold text-brand">Top cities</h3>
-          <BarList
-            items={a.leadsByCity.slice(0, 6).map((s) => ({ label: s.key, value: s.value, valueLabel: String(s.value) }))}
-          />
+          {hasVals(a.leadsByCity) ? (
+            <BarList
+              items={a.leadsByCity.slice(0, 6).map((s) => ({ label: s.key, value: s.value, valueLabel: String(s.value) }))}
+            />
+          ) : (
+            <EmptyNote>No leads yet.</EmptyNote>
+          )}
         </div>
       </div>
+    </div>
+  );
+}
+
+/** True when a chart series has at least one non-zero value. */
+function hasVals(items: { value: number }[]): boolean {
+  return items.some((x) => x.value > 0);
+}
+
+/** Friendly placeholder shown in a chart card when there's no data yet — so an
+ *  empty dashboard reads as "nothing has happened yet", not "this is broken". */
+function EmptyNote({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex h-28 items-center justify-center rounded-lg bg-sand px-4 text-center text-sm text-ink-soft">
+      {children}
     </div>
   );
 }

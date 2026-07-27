@@ -45,6 +45,8 @@ export interface Analytics {
   leadsByProjectType: KeyValue[];
   leadsByStatus: KeyValue[];
   leadsByDay: KeyValue[];
+  /** Pageviews per day over the window — the traffic timeline (independent of leads). */
+  pageviewsByDay: KeyValue[];
   topPages: KeyValue[];
   funnel: KeyValue[];
 }
@@ -88,6 +90,14 @@ export function computeAnalytics(leads: Lead[], events: SiteEvent[], days?: numb
     const d = l.createdAt.slice(0, 10);
     if (byDayMap.has(d)) byDayMap.set(d, (byDayMap.get(d) ?? 0) + 1);
   }
+  // Pageviews per day — the traffic timeline, so the dashboard shows life even
+  // on a site that has visitors but no submitted leads yet.
+  const pvByDayMap = new Map(dayKeys.map((d) => [d, 0]));
+  for (const e of events) {
+    if (e.type !== "pageview") continue;
+    const d = e.createdAt.slice(0, 10);
+    if (pvByDayMap.has(d)) pvByDayMap.set(d, (pvByDayMap.get(d) ?? 0) + 1);
+  }
 
   return {
     kpis: {
@@ -102,6 +112,7 @@ export function computeAnalytics(leads: Lead[], events: SiteEvent[], days?: numb
     leadsByProjectType: countBy(leads, (l) => l.projectType),
     leadsByStatus: countBy(leads, (l) => l.status),
     leadsByDay: dayKeys.map((d) => ({ key: d, value: byDayMap.get(d) ?? 0 })),
+    pageviewsByDay: dayKeys.map((d) => ({ key: d, value: pvByDayMap.get(d) ?? 0 })),
     topPages: countBy(
       events.filter((e) => e.type === "pageview"),
       (e) => e.path.replace(/^\/(en|fr)/, "") || "/",
