@@ -43,20 +43,33 @@ const serialize = (p: Page) => JSON.stringify({ t: p.title, d: p.description, s:
  */
 function buildHtmlEditDoc(html: string, locale: string): string {
   const script = `
-<style id="ep-edit-style">[data-ep-ce]{outline:1px dashed rgba(79,240,181,.6);outline-offset:2px;border-radius:2px}[data-ep-ce]:hover{outline-color:#4ff0b5;cursor:text}[data-ep-ce]:focus{outline:2px solid #4ff0b5;background:rgba(79,240,181,.10)}</style>
+<style id="ep-edit-style">[data-ep-ce]{outline:1px dashed rgba(79,240,181,.6);outline-offset:2px;border-radius:2px}[data-ep-ce]:hover{outline-color:#4ff0b5;cursor:text}[data-ep-ce]:focus{outline:2px solid #4ff0b5;background:rgba(79,240,181,.10)}#ep-edit-linkbar *{box-sizing:border-box}</style>
 <script id="ep-edit-script">(function(){
 var loc=${JSON.stringify(locale)};
 if(loc==="fr")document.documentElement.classList.add("fr");
 var hasL=document.querySelector("[data-l]");
-var sel=hasL?"[data-l]":"h1,h2,h3,h4,h5,h6,p,li,blockquote,figcaption";
+// Text: bilingual sites edit the [data-l] spans; plain sites edit block text
+// plus link/button labels. Link/button DESTINATIONS are edited via the bar below.
+var sel=hasL?"[data-l]":"h1,h2,h3,h4,h5,h6,p,li,blockquote,figcaption,a,button";
 [].slice.call(document.querySelectorAll(sel)).forEach(function(el){el.setAttribute("contenteditable","true");el.setAttribute("data-ep-ce","1");el.spellcheck=false;});
 var timer;function push(){clearTimeout(timer);timer=setTimeout(function(){
 var c=document.documentElement.cloneNode(true);
 [].slice.call(c.querySelectorAll("[data-ep-ce]")).forEach(function(n){n.removeAttribute("contenteditable");n.removeAttribute("data-ep-ce");n.removeAttribute("spellcheck");});
-var s=c.querySelector("#ep-edit-style");if(s)s.remove();var sc=c.querySelector("#ep-edit-script");if(sc)sc.remove();c.classList.remove("fr");
+var s=c.querySelector("#ep-edit-style");if(s)s.remove();var sc=c.querySelector("#ep-edit-script");if(sc)sc.remove();var lb=c.querySelector("#ep-edit-linkbar");if(lb)lb.remove();c.classList.remove("fr");
 parent.postMessage({source:"edgepress",type:"ep-html",locale:loc,value:"<!doctype html>\\n"+c.outerHTML},"*");
 },400);}
 document.addEventListener("input",function(e){var t=e.target;if(t&&t.getAttribute&&t.getAttribute("data-ep-ce"))push();},true);
+// ---- link / button destination editor (floating bar) ----
+var bar=document.createElement("div");bar.id="ep-edit-linkbar";bar.setAttribute("contenteditable","false");
+bar.style.cssText="position:fixed;left:12px;bottom:12px;z-index:2147483647;display:none;align-items:center;gap:8px;background:#12171f;color:#eef2f6;border:1px solid #2a333f;border-radius:10px;padding:9px 11px;font:13px system-ui,sans-serif;box-shadow:0 12px 34px rgba(0,0,0,.55)";
+bar.innerHTML='<span style="color:#7ff5c8">&#128279; link</span><input id="ep-href" style="width:320px;background:#0a0c10;color:#eef2f6;border:1px solid #2a333f;border-radius:7px;padding:7px 9px;font:13px system-ui,sans-serif;outline:none" placeholder="https://…  /path  mailto:…  tel:…"><button id="ep-href-x" style="background:none;border:0;color:#9fb4ab;cursor:pointer;font-size:15px">&#10005;</button>';
+document.body.appendChild(bar);
+var curLink=null,hrefInput=bar.querySelector("#ep-href");
+function showBar(a){curLink=a;hrefInput.value=a.getAttribute("href")||"";bar.style.display="flex";}
+function hideBar(){bar.style.display="none";curLink=null;}
+hrefInput.addEventListener("input",function(){if(curLink){curLink.setAttribute("href",hrefInput.value);push();}});
+bar.querySelector("#ep-href-x").addEventListener("mousedown",function(e){e.preventDefault();hideBar();});
+document.addEventListener("click",function(e){if(bar.contains(e.target))return;var a=e.target&&e.target.closest?e.target.closest("a[href],button"):null;if(a){showBar(a);}else{hideBar();}},true);
 })();<\/script>`;
   return html.includes("</body>") ? html.replace("</body>", script + "</body>") : html + script;
 }

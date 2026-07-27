@@ -9,6 +9,13 @@ Upgrade with `npx create-edgepress upgrade` (scaffolded sites) or `git pull`
 (clones) — your content lives in your storage and is never touched by code
 updates.
 
+## [1.3.0] — 2026-07-26
+
+### Added
+- **Edit links & buttons in place** — the inline "Edit on page" editor now edits
+  link and button text, and a floating bar lets you change a link/button
+  **destination** (href) — for both block and Custom-HTML pages, design untouched.
+
 ## [1.2.0] — 2026-07-26
 
 ### Added
