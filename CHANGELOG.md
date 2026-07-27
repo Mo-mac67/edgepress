@@ -9,6 +9,14 @@ Upgrade with `npx create-edgepress upgrade` (scaffolded sites) or `git pull`
 (clones) — your content lives in your storage and is never touched by code
 updates.
 
+## [1.8.0] — 2026-07-27
+
+### Added
+- **Draft mode for on-page editing** — while "Edit on page" is active, inline
+  text/link edits are held as an unpublished DRAFT (autosave is suspended). A
+  bar shows "draft (not published)" with **Publish changes** and **Discard** so
+  you review before anything goes live.
+
 ## [1.7.0] — 2026-07-27
 
 ### Added

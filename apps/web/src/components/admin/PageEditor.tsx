@@ -91,6 +91,7 @@ export function PageEditor({ initial, uiLocale, contentLocales = ["en", "fr"], s
   const [history, setHistory] = useState<{ id: string; at: string; title: string }[] | null>(null);
 
   const savedRef = useRef(serialize(page));
+  const savedPageRef = useRef<Page>(page); // last-published page, for Discard
   const dirty = serialize(page) !== savedRef.current;
 
   const isHtml = page.mode === "html";
@@ -186,6 +187,7 @@ export function PageEditor({ initial, uiLocale, contentLocales = ["en", "fr"], s
   const save = useCallback(
     async (opts?: { silent?: boolean }) => {
       const snapshot = serialize(page);
+      const pageSnap = page;
       setSaveState("saving");
       const res = await fetch(`/api/admin/pages/${page.id}`, {
         method: "PUT",
@@ -208,6 +210,7 @@ export function PageEditor({ initial, uiLocale, contentLocales = ["en", "fr"], s
       });
       if (res.ok) {
         savedRef.current = snapshot;
+        savedPageRef.current = pageSnap;
         setSaveState("saved");
         setPreviewKey((k) => k + 1);
         router.refresh();
@@ -221,12 +224,20 @@ export function PageEditor({ initial, uiLocale, contentLocales = ["en", "fr"], s
     [page, router, ui],
   );
 
-  // Debounced autosave.
+  // Debounced autosave — suspended in inline "Edit on page" mode so on-page edits
+  // stay a DRAFT until the owner clicks Publish (or discards them).
   useEffect(() => {
-    if (!autosave || !dirty || saveState === "saving") return;
+    if (!autosave || inlineEdit || !dirty || saveState === "saving") return;
     const t = setTimeout(() => save({ silent: true }), 1400);
     return () => clearTimeout(t);
-  }, [autosave, dirty, saveState, save]);
+  }, [autosave, inlineEdit, dirty, saveState, save]);
+
+  // Discard unpublished inline edits: restore the last-published page.
+  const discardInline = () => {
+    setPage(savedPageRef.current);
+    setPreviewKey((k) => k + 1);
+    ui.toast("Draft changes discarded", "success");
+  };
 
   // Warn before leaving with unsaved changes.
   useEffect(() => {
@@ -576,13 +587,26 @@ export function PageEditor({ initial, uiLocale, contentLocales = ["en", "fr"], s
         {preview && (
           <div className="hidden border-l border-line bg-white lg:block">
             <div className="sticky top-16 h-[calc(100vh-4rem)]">
-              <div className="flex items-center justify-between border-b border-line px-4 py-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
-                  {inlineEdit ? <span className="text-accent-dark">✎ Editing on page — click any text</span> : "Live preview — saved version"}
+              <div className="flex items-center justify-between gap-2 border-b border-line px-4 py-2">
+                <p className="min-w-0 truncate text-xs font-semibold uppercase tracking-wide text-ink-soft">
+                  {inlineEdit ? (
+                    <span className="text-accent-dark">✎ Editing on page{dirty ? " — draft (not published)" : ""}</span>
+                  ) : (
+                    "Live preview — saved version"
+                  )}
                 </p>
-                <button onClick={() => setPreviewKey((k) => k + 1)} className="inline-flex items-center gap-1 text-xs font-semibold text-accent-dark hover:underline">
-                  <Icon name="refresh" size={13} /> Refresh
-                </button>
+                {inlineEdit ? (
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    <button onClick={discardInline} disabled={!dirty} className="rounded px-2 py-1 text-xs font-semibold text-ink-soft hover:bg-sand disabled:opacity-40">Discard</button>
+                    <button onClick={() => save()} disabled={!dirty || saveState === "saving"} className="btn-primary py-1 text-xs disabled:opacity-40">
+                      {saveState === "saving" ? "Publishing…" : "Publish changes"}
+                    </button>
+                  </div>
+                ) : (
+                  <button onClick={() => setPreviewKey((k) => k + 1)} className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-accent-dark hover:underline">
+                    <Icon name="refresh" size={13} /> Refresh
+                  </button>
+                )}
               </div>
               {inlineEdit && isHtml ? (
                 <iframe ref={previewRef} key={`edit-${locale}-${previewKey}`} srcDoc={buildHtmlEditDoc(htmlFor(locale), locale)} title="Preview" className="h-[calc(100%-2.4rem)] w-full border-0" />
