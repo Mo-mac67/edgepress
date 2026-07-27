@@ -1,7 +1,7 @@
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { AdminLogin } from "@/components/admin/AdminLogin";
 import { AdminUIProvider } from "@/components/admin/ui";
-import { getAllowedTabs, getRole, isAuthed, listAdminUsers, type AdminUser } from "@/lib/admin-auth";
+import { getAllowedTabs, getClientMode, getRole, isAuthed, listAdminUsers, type AdminUser } from "@/lib/admin-auth";
 import { getAudit, type AuditEntry } from "@/lib/audit-store";
 import { getEvents } from "@/lib/events-store";
 import { getLeads } from "@/lib/leads-store";
@@ -15,7 +15,7 @@ import { notificationChannels } from "@/lib/notify";
 export async function AdminApp({ lang }: { lang: string }) {
   if (!(await isAuthed())) return <AdminLogin />;
 
-  const [leads, events, role, allowedTabs] = await Promise.all([getLeads(), getEvents(), getRole(), getAllowedTabs()]);
+  const [leads, events, role, allowedTabs, clientMode] = await Promise.all([getLeads(), getEvents(), getRole(), getAllowedTabs(), getClientMode()]);
   const isSuper = role === "super";
   const [audit, adminUsers]: [AuditEntry[], AdminUser[]] = isSuper
     ? await Promise.all([getAudit(), listAdminUsers()])
@@ -32,6 +32,7 @@ export async function AdminApp({ lang }: { lang: string }) {
         adminUsers={adminUsers}
         channels={notificationChannels()}
         allowedTabs={allowedTabs}
+        defaultSimple={clientMode}
       />
     </AdminUIProvider>
   );

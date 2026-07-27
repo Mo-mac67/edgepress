@@ -32,7 +32,7 @@ function superHash(): string | null {
 const readJson = <T>(key: string, fallback: T) => readJsonDoc<T>(key, fallback);
 const writeJson = (key: string, data: unknown) => writeJsonDoc(key, data);
 
-type AdminConfig = { passwordHash?: string; tabPermissions?: Record<string, string[]>; setupDone?: boolean; totp?: { secret: string; enabled: boolean }; ownerUsername?: string; adminPath?: string };
+type AdminConfig = { passwordHash?: string; tabPermissions?: Record<string, string[]>; setupDone?: boolean; totp?: { secret: string; enabled: boolean }; ownerUsername?: string; adminPath?: string; clientMode?: boolean; sessionEpoch?: number };
 
 /** First-run detection: true once the owner has completed the setup wizard. */
 export async function isSetupDone(): Promise<boolean> {
@@ -95,13 +95,38 @@ export async function verifyCredentials(username: string | undefined, password: 
   return null;
 }
 
+/** Session epoch: bumping it (via logoutEverywhere) invalidates every existing
+ *  cookie. 0/undefined means "no forced logout yet" (legacy cookies stay valid). */
+async function currentEpoch(): Promise<number> {
+  const cfg = await readJson<AdminConfig>(CONFIG_FILE, {});
+  return cfg.sessionEpoch ?? 0;
+}
+
 export async function setAuthCookie(role: Role, credentialHash: string): Promise<void> {
-  (await cookies()).set(COOKIE_NAME, `${role}.${credentialHash}`, {
+  const epoch = await currentEpoch();
+  (await cookies()).set(COOKIE_NAME, `${role}.${credentialHash}.${epoch}`, {
     httpOnly: true,
     sameSite: "lax",
     path: "/",
     maxAge: 60 * 60 * 8,
   });
+}
+
+/** Invalidate all sessions everywhere (owner action): bump the epoch so every
+ *  issued cookie stops validating. The owner is signed out too and re-logs in. */
+export async function logoutEverywhere(): Promise<void> {
+  const cfg = await readJson<AdminConfig>(CONFIG_FILE, {});
+  await writeJson(CONFIG_FILE, { ...cfg, sessionEpoch: (cfg.sessionEpoch ?? 0) + 1 });
+}
+
+export async function getClientMode(): Promise<boolean> {
+  const cfg = await readJson<AdminConfig>(CONFIG_FILE, {});
+  return !!cfg.clientMode;
+}
+export async function setClientMode(on: boolean): Promise<boolean> {
+  const cfg = await readJson<AdminConfig>(CONFIG_FILE, {});
+  await writeJson(CONFIG_FILE, { ...cfg, clientMode: !!on });
+  return true;
 }
 
 /** Convenience used by login (knows the plaintext). */
@@ -114,7 +139,12 @@ export async function signIn(password: string): Promise<Role | null> {
 export async function getRole(): Promise<Role | null> {
   const value = (await cookies()).get(COOKIE_NAME)?.value;
   if (!value) return null;
-  const [role, h] = value.split(".");
+  const [role, h, ep] = value.split(".");
+  // Session epoch: once the owner has forced a global logout (epoch > 0), a
+  // cookie must carry the matching epoch. Legacy cookies (no epoch) stay valid
+  // only while epoch is still 0 — so nothing breaks until a logout-everywhere.
+  const epoch = await currentEpoch();
+  if (epoch > 0 && ep !== String(epoch)) return null;
   const sh = superHash();
   if (role === "super" && ((sh && h === sh) || h === (await primaryAdminHash()))) return "super";
   if (role === "admin" && (await managedUserHashes()).includes(h)) return "admin";

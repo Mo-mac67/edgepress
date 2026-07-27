@@ -9,6 +9,17 @@ Upgrade with `npx create-edgepress upgrade` (scaffolded sites) or `git pull`
 (clones) — your content lives in your storage and is never touched by code
 updates.
 
+## [1.7.0] — 2026-07-27
+
+### Added
+- **Client-ready mode** — one toggle (Settings, owner only) makes the admin open
+  in the clean Simple workspace by default for everyone, so a site you hand to a
+  client is uncluttered out of the box (each person can still switch to Pro).
+- **Sign out everywhere** — an owner action that ends every active session at
+  once (bumps a session epoch that invalidates all cookies). For a lost device
+  or a departing team member. Backward-compatible; nobody is locked out (password
+  sign-in still works).
+
 ## [1.6.0] — 2026-07-26
 
 ### Added

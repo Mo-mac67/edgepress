@@ -51,6 +51,7 @@ export function AdminDashboard({
   adminUsers,
   channels,
   allowedTabs = null,
+  defaultSimple = false,
 }: {
   locale: Locale;
   initialLeads: Lead[];
@@ -60,6 +61,7 @@ export function AdminDashboard({
   adminUsers: AdminUser[];
   channels: NotificationChannels;
   allowedTabs?: string[] | null;
+  defaultSimple?: boolean;
 }) {
   const router = useRouter();
   const base = `/${locale}`;
@@ -69,7 +71,8 @@ export function AdminDashboard({
   // Simple vs Pro workspace: Simple shows only the everyday essentials and gets
   // the advanced sections out of the way; Pro shows everything. Persisted per browser.
   const SIMPLE_TABS: Set<string> = new Set(["overview", "pages", "blog", "media", "menu", "leads", "appearance", "settings", "help"]);
-  const [mode, setMode] = useState<"simple" | "pro">("pro");
+  // Server "client-ready" default (defaultSimple), overridable per-browser.
+  const [mode, setMode] = useState<"simple" | "pro">(defaultSimple ? "simple" : "pro");
   useEffect(() => {
     const m = localStorage.getItem("ep-admin-mode");
     if (m === "simple" || m === "pro") setMode(m);
@@ -610,12 +613,13 @@ function Settings({
   // Owner-only security: login username + custom admin URL.
   const [ownerName, setOwnerName] = useState("");
   const [adminPath, setAdminPath] = useState("admin");
+  const [clientMode, setClientMode] = useState(false);
   const [secMsg, setSecMsg] = useState("");
   useEffect(() => {
     if (!isSuper) return;
-    fetch("/api/admin/security").then((r) => (r.ok ? r.json() : null)).then((d) => { if (d) { setOwnerName(d.ownerUsername || ""); setAdminPath(d.adminPath || "admin"); } }).catch(() => {});
+    fetch("/api/admin/security").then((r) => (r.ok ? r.json() : null)).then((d) => { if (d) { setOwnerName(d.ownerUsername || ""); setAdminPath(d.adminPath || "admin"); setClientMode(!!d.clientMode); } }).catch(() => {});
   }, [isSuper]);
-  async function saveSecurity(payload: Record<string, string>, ok: string) {
+  async function saveSecurity(payload: Record<string, string | boolean>, ok: string) {
     const res = await fetch("/api/admin/security", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
     const d = await res.json().catch(() => ({}));
     if (res.ok) { if (d.adminPath) setAdminPath(d.adminPath); setSecMsg(ok); } else setSecMsg(d.error || "Failed.");
@@ -688,6 +692,18 @@ function Settings({
             </div>
             <span className="mt-1 block text-xs text-ink-soft">Move the admin off the guessable default. Recovery escape hatch: set the <code>ADMIN_PATH</code> env var. Reserved words (blog, search, api…) aren&apos;t allowed.</span>
           </label>
+          <label className="mt-4 flex items-start gap-2.5">
+            <input type="checkbox" className="mt-0.5" checked={clientMode} onChange={(e) => { setClientMode(e.target.checked); saveSecurity({ clientMode: e.target.checked }, e.target.checked ? "Client-ready mode on — the admin opens in Simple for everyone." : "Client-ready mode off."); }} />
+            <span className="text-sm text-ink"><span className="font-medium">Client-ready mode</span><span className="mt-0.5 block text-xs text-ink-soft">The admin opens in the clean Simple workspace by default for everyone (each person can still switch to Pro). Ideal for a site you hand to a client.</span></span>
+          </label>
+          <div className="mt-4 border-t border-line pt-4">
+            <button
+              type="button"
+              onClick={async () => { if (await ui.confirm({ title: "Sign out everywhere?", message: "Every signed-in session (yours and any team member's) is ended immediately. You'll need to sign in again.", confirmLabel: "Sign out everywhere" })) { await fetch("/api/admin/security", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "logout-everywhere" }) }); window.location.reload(); } }}
+              className="btn-secondary text-sm text-red-600"
+            ><Icon name="logout" size={14} /> Sign out everywhere</button>
+            <span className="mt-1 block text-xs text-ink-soft">Ends all active sessions — use if a device is lost or a team member leaves.</span>
+          </div>
           {secMsg && <p className="mt-3 text-sm font-medium text-accent-dark">{secMsg}</p>}
         </div>
       )}
