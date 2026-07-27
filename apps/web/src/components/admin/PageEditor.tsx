@@ -33,6 +33,34 @@ function toLocalInput(iso: string): string {
 }
 const serialize = (p: Page) => JSON.stringify({ t: p.title, d: p.description, s: p.slug, st: p.status, b: p.blocks, m: p.mode, r: p.rawHtml, ri: p.rawHtmlI18n, h: p.hideChrome, seo: p.seo, ab: p.ab, pa: p.publishAt });
 
+/**
+ * Build the srcDoc for editing a Custom-HTML page in place. It injects an edit
+ * script that makes the text elements contentEditable and, on each change,
+ * posts the FULL document back (design untouched — only text nodes differ). The
+ * injected style/script + edit attributes are stripped before serializing, so
+ * what's saved is clean HTML. For bilingual embeds it targets [data-l] spans
+ * and shows the right locale; otherwise it targets block-level text elements.
+ */
+function buildHtmlEditDoc(html: string, locale: string): string {
+  const script = `
+<style id="ep-edit-style">[data-ep-ce]{outline:1px dashed rgba(79,240,181,.6);outline-offset:2px;border-radius:2px}[data-ep-ce]:hover{outline-color:#4ff0b5;cursor:text}[data-ep-ce]:focus{outline:2px solid #4ff0b5;background:rgba(79,240,181,.10)}</style>
+<script id="ep-edit-script">(function(){
+var loc=${JSON.stringify(locale)};
+if(loc==="fr")document.documentElement.classList.add("fr");
+var hasL=document.querySelector("[data-l]");
+var sel=hasL?"[data-l]":"h1,h2,h3,h4,h5,h6,p,li,blockquote,figcaption";
+[].slice.call(document.querySelectorAll(sel)).forEach(function(el){el.setAttribute("contenteditable","true");el.setAttribute("data-ep-ce","1");el.spellcheck=false;});
+var timer;function push(){clearTimeout(timer);timer=setTimeout(function(){
+var c=document.documentElement.cloneNode(true);
+[].slice.call(c.querySelectorAll("[data-ep-ce]")).forEach(function(n){n.removeAttribute("contenteditable");n.removeAttribute("data-ep-ce");n.removeAttribute("spellcheck");});
+var s=c.querySelector("#ep-edit-style");if(s)s.remove();var sc=c.querySelector("#ep-edit-script");if(sc)sc.remove();c.classList.remove("fr");
+parent.postMessage({source:"edgepress",type:"ep-html",locale:loc,value:"<!doctype html>\\n"+c.outerHTML},"*");
+},400);}
+document.addEventListener("input",function(e){var t=e.target;if(t&&t.getAttribute&&t.getAttribute("data-ep-ce"))push();},true);
+})();<\/script>`;
+  return html.includes("</body>") ? html.replace("</body>", script + "</body>") : html + script;
+}
+
 type SaveState = "idle" | "saving" | "saved" | "error";
 
 export function PageEditor({ initial, uiLocale, contentLocales = ["en", "fr"], staleLocales = [] }: { initial: Page; uiLocale: Locale; contentLocales?: string[]; staleLocales?: string[] }) {
@@ -45,6 +73,7 @@ export function PageEditor({ initial, uiLocale, contentLocales = ["en", "fr"], s
   const [preview, setPreview] = useState(true);
   const [previewKey, setPreviewKey] = useState(0);
   const [inlineEdit, setInlineEdit] = useState(false);
+  const previewRef = useRef<HTMLIFrameElement>(null);
   const [autosave, setAutosave] = useState(true);
   const [history, setHistory] = useState<{ id: string; at: string; title: string }[] | null>(null);
 
@@ -67,9 +96,21 @@ export function PageEditor({ initial, uiLocale, contentLocales = ["en", "fr"], s
   useEffect(() => {
     if (!inlineEdit) return;
     function onMsg(e: MessageEvent) {
-      if (e.origin !== window.location.origin) return;
+      // Accept only messages from OUR preview iframe. A srcDoc iframe (used for
+      // Custom-HTML editing) has a null origin, so match the source window
+      // rather than the origin.
+      if (e.source !== previewRef.current?.contentWindow) return;
       const m = e.data as { source?: string; type?: string; blockId?: string; field?: string; locale?: string; value?: string };
-      if (m?.source !== "edgepress" || m.type !== "ep-edit" || !m.blockId || !m.field) return;
+      if (m?.source !== "edgepress") return;
+      // Custom-HTML inline edit: the whole design-preserving document comes back
+      // (only text nodes changed). Store it as the raw HTML for this locale.
+      if (m.type === "ep-html" && typeof m.value === "string") {
+        const loc = m.locale || "en";
+        const html = m.value;
+        setPage((prev) => (prev.rawHtmlI18n ? { ...prev, rawHtmlI18n: { ...prev.rawHtmlI18n, [loc]: html } } : { ...prev, rawHtml: html }));
+        return;
+      }
+      if (m.type !== "ep-edit" || !m.blockId || !m.field) return;
       const loc = m.locale || "en";
       const value = String(m.value ?? "");
       const setLoc = (target: Record<string, unknown>, key: string) => {
@@ -289,15 +330,13 @@ export function PageEditor({ initial, uiLocale, contentLocales = ["en", "fr"], s
             <button onClick={() => setPreview((p) => !p)} className={`hidden py-2 text-sm lg:inline-flex ${preview ? "btn-dark" : "btn-secondary"}`}>
               <Icon name="image" size={15} /> Preview
             </button>
-            {!isHtml && (
-              <button
-                onClick={() => { setInlineEdit((v) => !v); setPreview(true); setPreviewKey((k) => k + 1); }}
-                className={`hidden py-2 text-sm lg:inline-flex ${inlineEdit ? "btn-dark" : "btn-secondary"}`}
-                title="Edit text directly on the live preview — click any text and type"
-              >
-                <Icon name="edit" size={15} /> Edit on page
-              </button>
-            )}
+            <button
+              onClick={() => { setInlineEdit((v) => !v); setPreview(true); setPreviewKey((k) => k + 1); }}
+              className={`hidden py-2 text-sm lg:inline-flex ${inlineEdit ? "btn-dark" : "btn-secondary"}`}
+              title="Edit text directly on the live preview — click any text and type. Your design is untouched; only text changes are saved."
+            >
+              <Icon name="edit" size={15} /> Edit on page
+            </button>
             <a href={publicPath} target="_blank" rel="noopener noreferrer" className="btn-secondary py-2 text-sm">
               <Icon name="arrow-up-right" size={15} /> View
             </a>
@@ -532,7 +571,11 @@ export function PageEditor({ initial, uiLocale, contentLocales = ["en", "fr"], s
                   <Icon name="refresh" size={13} /> Refresh
                 </button>
               </div>
-              <iframe key={`${previewKey}-${inlineEdit ? "e" : "v"}`} src={inlineEdit ? `${publicPath}?epedit=1` : publicPath} title="Preview" className="h-[calc(100%-2.4rem)] w-full border-0" />
+              {inlineEdit && isHtml ? (
+                <iframe ref={previewRef} key={`edit-${locale}-${previewKey}`} srcDoc={buildHtmlEditDoc(htmlFor(locale), locale)} title="Preview" className="h-[calc(100%-2.4rem)] w-full border-0" />
+              ) : (
+                <iframe ref={previewRef} key={`${previewKey}-${inlineEdit ? "e" : "v"}`} src={inlineEdit ? `${publicPath}?epedit=1` : publicPath} title="Preview" className="h-[calc(100%-2.4rem)] w-full border-0" />
+              )}
             </div>
           </div>
         )}

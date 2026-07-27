@@ -12,11 +12,13 @@ updates.
 ## [1.2.0] — 2026-07-26
 
 ### Added
-- **Inline visual editing (“Edit on page”)** — for block pages, toggle *Edit on
-  page* in the editor and edit text directly on the live preview: click any
-  heading, paragraph, card, step, FAQ or CTA text and type. Edits post back to
-  the editor and autosave. Only a signed-in admin loading `?epedit=1` gets edit
-  affordances — never a visitor.
+- **Inline visual editing (“Edit on page”)** — toggle *Edit on page* in the
+  editor and edit text directly on the live preview. For block pages, click any
+  heading, paragraph, card, step, FAQ or CTA text and type. For **Custom-HTML
+  pages it edits text in place while preserving the exact design** — only text
+  nodes change; the CSS, layout and markup are saved back untouched, and the
+  other language in a bilingual page is left alone. Only a signed-in admin gets
+  edit affordances — never a visitor.
 - **Per-language Custom HTML** — a `mode:"html"` page can now hold different
   HTML per language (checkbox “Different HTML per language” in the editor;
   switch languages with the tabs above). Rendering falls back to the shared
