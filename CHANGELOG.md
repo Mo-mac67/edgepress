@@ -9,6 +9,15 @@ Upgrade with `npx create-edgepress upgrade` (scaffolded sites) or `git pull`
 (clones) — your content lives in your storage and is never touched by code
 updates.
 
+## [1.12.0] — 2026-07-27
+
+### Added
+- **Scheduled backups** — the backup endpoint can now be called headlessly with
+  a token (`EDGEPRESS_BACKUP_TOKEN`), and `?archive=1` writes a full JSON backup
+  off-site to your R2 bucket (`backups/…json`). Point any scheduler (GitHub
+  Actions, cron-job.org, a Cloudflare cron worker) at it for daily off-site
+  backups — see docs/scheduled-backups.md. Restore stays one-click in Settings.
+
 ## [1.11.0] — 2026-07-27
 
 ### Added
