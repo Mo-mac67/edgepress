@@ -22,12 +22,13 @@ describe("weekKey", () => {
 });
 
 describe("sharded events store (fs adapter)", () => {
-  it("writes only to the current week's shard — never a global history doc", async () => {
+  it("writes to a current-week shard (events-w-<mon>-s<n>) — never a global history doc", async () => {
     await appendEvent({ type: "pageview", path: "/en", locale: "en", sessionId: "s1" });
     await appendEvent({ type: "quiz_start", path: "/en", locale: "en", sessionId: "s1" });
     const files = readdirSync(dataDir);
-    expect(files).toContain(weekKey(new Date()));
-    expect(files).not.toContain("events.json");
+    const weekBase = weekKey(new Date()).replace(".json", ""); // events-w-<mon>
+    expect(files.some((f) => f.startsWith(weekBase + "-s"))).toBe(true); // a shard exists
+    expect(files).not.toContain("events.json"); // no global rewrite
   });
 
   it("getEvents returns newest-first with fields normalized", async () => {

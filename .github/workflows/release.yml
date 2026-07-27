@@ -1,0 +1,40 @@
+name: Release on tag
+
+# Auto-publish a GitHub Release whenever a version tag (v*) is pushed, with
+# notes pulled from CHANGELOG.md. This is what powers the in-admin "update
+# available" banner on every install — no manual release step per version.
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract this version's changelog section
+        run: |
+          VER="${GITHUB_REF_NAME#v}"
+          awk -v v="$VER" '
+            $0 ~ "^## \\[" v "\\]" {f=1; next}
+            /^## \[/ {f=0}
+            f {print}
+          ' CHANGELOG.md > RELEASE_NOTES.md
+          if [ ! -s RELEASE_NOTES.md ]; then
+            echo "See CHANGELOG.md for details." > RELEASE_NOTES.md
+          fi
+
+      - name: Create the release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "EdgePress ${{ github.ref_name }}"
+          body_path: RELEASE_NOTES.md
+          tag_name: ${{ github.ref_name }}

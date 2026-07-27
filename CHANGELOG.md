@@ -9,6 +9,21 @@ Upgrade with `npx create-edgepress upgrade` (scaffolded sites) or `git pull`
 (clones) — your content lives in your storage and is never touched by code
 updates.
 
+## [1.6.0] — 2026-07-26
+
+### Added
+- **Automated releases** — a GitHub Action publishes a GitHub Release (with the
+  matching CHANGELOG section as notes) on every `v*` tag push. This is what
+  powers the in-admin "update available" banner across all installs — no manual
+  release step per version.
+
+### Changed
+- **Analytics events are sharded** across 4 keys per week instead of one weekly
+  doc. Pageviews are high-volume and a single read-modify-write doc raced and
+  throttled under load; sharding cuts write contention and lost-updates ~4x
+  while keeping dashboard reads inside the Workers free-tier subrequest budget.
+  Backward-compatible — existing history (legacy + single-doc weeks) is still read.
+
 ## [1.5.0] — 2026-07-26
 
 ### Added
