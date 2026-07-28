@@ -15,9 +15,11 @@ npx create-edgepress my-site
 - CMS vs. theme, and the contract between them:
   [docs/architecture-cms-vs-theme.md](docs/architecture-cms-vs-theme.md)
 - Product app: `apps/web` (Next.js — public site + admin + Content API)
-- Status: **public beta** — the full v1 feature set ships and is covered by
-  153 unit tests + a 112-check integration suite run against production
-  builds in CI. APIs may still move before 1.0.
+- Status: **stable (2.0)** — the feature set is complete and covered by 166 unit
+  tests plus a 112-check integration suite run against production builds in CI,
+  with a Docker smoke test and an installer check that scaffolds a project and
+  builds it. Storage keys, the Content API and the theme contract are settled;
+  breaking changes get a major version and a migration note.
 
 ## What's inside
 

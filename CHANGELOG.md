@@ -9,6 +9,46 @@ Upgrade with `npx create-edgepress upgrade` (scaffolded sites) or `git pull`
 (clones) — your content lives in your storage and is never touched by code
 updates.
 
+## [2.0.0] — 2026-07-28
+
+**First stable release.** Nothing in your site changes when you upgrade from
+1.x — this marks the end of the beta, not a rewrite.
+
+### What "stable" commits to
+- **Your data stays yours and stays put.** Storage document keys are fixed. An
+  upgrade never migrates, rewrites or deletes content — code and content are
+  separate. Backup/restore round-trips are exercised in CI on the filesystem
+  adapter; KV, Postgres and SQLite go through the same storage interface, but
+  only fs runs on every commit.
+- **The Content API and webhook payloads are settled.** Additive changes only
+  within 2.x.
+- **The theme contract is settled** — `themeCss()` emits the documented
+  `--color-*` / `--font-*` / `--ui-radius` tokens, and a theme exported today
+  will import into any 2.x site.
+- Anything breaking gets a major version and a written migration path.
+
+### Highlights since 1.0
+- **CMS and theme are properly separated** (1.14–1.17). Every colour, font and
+  corner is a token the CMS owns, so one panel restyles the whole site — a
+  fully dark site needs no CSS. Themes are portable files you can carry between
+  projects, with 14 designed ones in the gallery.
+- **Public sandbox mode** (1.18) — run a demo anyone can sign into and change,
+  which puts itself back on its own.
+- **Inline editing on the page**, draft mode, structural block editing, and
+  Custom-HTML pages that stay pixel-exact while still being editable.
+- **Security**: username sign-in, changeable admin URL, per-member 2FA,
+  sign-out-everywhere, theme-colour validation, secret scanning + push
+  protection on the repo.
+- **Operations**: automated releases, scheduled backups to R2, site templates,
+  a CI job that installs the product the way a new user does and builds it.
+
+### Known gaps, stated plainly
+- No WordPress importer yet — migrating an existing WP site is manual. It's the
+  next thing being built.
+- One open advisory (`brace-expansion`, build-time only): the patched release is
+  ESM-only and would break CommonJS build tooling. Tracked, not shipped-around.
+- R2 media isn't included in backups or sandbox resets — only the media index.
+
 ## [1.18.0] — 2026-07-27
 
 ### Added
