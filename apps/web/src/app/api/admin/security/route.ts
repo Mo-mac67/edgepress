@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminPath, getClientMode, getOwnerUsername, getRole, logoutEverywhere, setAdminPath, setClientMode, setOwnerUsername } from "@/lib/admin-auth";
 import { logAudit } from "@/lib/audit-store";
+import { sandboxBlocks, sandboxReason } from "@/lib/sandbox";
 
 /** Owner-only security settings: admin URL path, owner login username,
  *  client-ready mode, and sign-out-everywhere. */
@@ -16,6 +17,18 @@ export async function GET() {
 export async function POST(request: Request) {
   if ((await getRole()) !== "super") return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const body = await request.json().catch(() => ({}));
+
+  // In sandbox mode these three would strand the next visitor outside the demo,
+  // so they're refused with the reason rather than silently ignored.
+  for (const [cond, action] of [
+    [body.action === "logout-everywhere", "logout-everywhere"],
+    [typeof body.ownerUsername === "string", "change-owner-username"],
+    [typeof body.adminPath === "string", "change-admin-path"],
+  ] as const) {
+    if (cond && sandboxBlocks(action)) {
+      return NextResponse.json({ error: sandboxReason(action) }, { status: 403 });
+    }
+  }
 
   if (body.action === "logout-everywhere") {
     await logoutEverywhere();

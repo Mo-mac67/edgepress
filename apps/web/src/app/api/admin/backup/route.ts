@@ -3,6 +3,7 @@ import { getRole } from "@/lib/admin-auth";
 import { logAudit } from "@/lib/audit-store";
 import { exportAll, importAll } from "@/lib/backup";
 import { putMedia } from "@/lib/media-r2";
+import { sandboxBlocks, sandboxReason } from "@/lib/sandbox";
 
 export const dynamic = "force-dynamic";
 
@@ -55,6 +56,11 @@ export async function GET(request: Request) {
 /** Restore from an uploaded backup (overwrites matching documents). */
 export async function POST(request: Request) {
   if (!(await ownerOnly())) return NextResponse.json({ error: "Owner only" }, { status: 403 });
+  // Downloading a backup of the demo is fine; uploading one over it is not —
+  // that's how a visitor would replace the sandbox with arbitrary content.
+  if (sandboxBlocks("restore-backup")) {
+    return NextResponse.json({ error: sandboxReason("restore-backup") }, { status: 403 });
+  }
   const body = await request.json().catch(() => null);
   try {
     const { restored } = await importAll(body);

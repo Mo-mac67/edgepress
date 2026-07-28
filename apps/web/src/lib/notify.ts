@@ -1,6 +1,7 @@
 import "server-only";
 import { notifyNewLead } from "./email";
 import type { Lead } from "./types";
+import { emailApiKey } from "./outbound";
 
 /**
  * Fan-out new-lead notifications. Each channel is independent and pluggable:
@@ -23,7 +24,9 @@ export interface NotificationChannels {
 export function notificationChannels(): NotificationChannels {
   const twilio = !!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN);
   return {
-    email: !!(process.env.RESEND_API_KEY && process.env.LEAD_NOTIFY_TO),
+    // emailApiKey() is withheld in sandbox mode, so the panel reports email as
+    // off there — which is the truth, rather than promising a send that won't happen.
+    email: !!(emailApiKey() && process.env.LEAD_NOTIFY_TO),
     telegram: !!(process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID),
     sms: twilio && !!(process.env.TWILIO_SMS_FROM && process.env.SMS_NOTIFY_TO),
     whatsapp: twilio && !!(process.env.TWILIO_WHATSAPP_FROM && process.env.WHATSAPP_NOTIFY_TO),

@@ -9,6 +9,25 @@ Upgrade with `npx create-edgepress upgrade` (scaffolded sites) or `git pull`
 (clones) — your content lives in your storage and is never touched by code
 updates.
 
+## [1.18.0] — 2026-07-27
+
+### Added
+- **Public sandbox mode** (`EDGEPRESS_SANDBOX=1`, off by default) — run an
+  instance anyone can sign into and change, which puts itself back on a
+  schedule. Capture a snapshot in Settings → Sandbox, point a cron at
+  `/api/cron/sandbox-reset?key=$CRON_SECRET`, and visitors get the real admin
+  panel with no signup. See docs/sandbox.md.
+  - Everything about *building a site* stays editable — that's the product.
+    What's refused is reaching real people (email, outbound webhooks) and
+    locking the next visitor out (password, username, admin URL, sign-out
+    everywhere, 2FA, restoring a backup).
+  - Email is contained by **withholding the API key**, which is the same path
+    every sender already takes when no key is set: it logs what it would have
+    sent and moves on. A sender added later inherits that automatically.
+  - A reset with no snapshot **does nothing** — restoring "nothing" would mean
+    deleting everything, so a cron firing before setup is a no-op, not a wipe.
+  - A non-dismissible banner tells visitors their edits are temporary.
+
 ## [1.17.0] — 2026-07-27
 
 ### Added

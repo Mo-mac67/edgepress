@@ -1,6 +1,7 @@
 import "server-only";
 import { createHmac, randomBytes, randomUUID } from "node:crypto";
 import { readJsonDoc, writeJsonDoc } from "./storage";
+import { sandboxBlocks } from "./sandbox";
 
 /**
  * Outbound webhooks. Register a URL + the events it wants; EdgePress POSTs a
@@ -80,6 +81,10 @@ async function persistResult(id: string, status: number): Promise<void> {
 /** Deliver `event` to every subscribed, active webhook. Fire-and-forget:
  *  failures are recorded but never throw into the caller's request path. */
 export async function dispatchWebhook(event: WebhookEvent, payload: unknown): Promise<void> {
+  // A sandbox visitor can point a webhook anywhere; don't let the demo become
+  // someone's traffic generator. Registering hooks still works, so the feature
+  // is explorable — only the outbound request is withheld.
+  if (sandboxBlocks("deliver-webhook")) return;
   const hooks = (await listWebhooks()).filter((h) => h.active && h.events.includes(event));
   if (hooks.length === 0) return;
   const body = JSON.stringify({ event, at: new Date().toISOString(), data: payload });
@@ -103,6 +108,7 @@ export async function dispatchWebhook(event: WebhookEvent, payload: unknown): Pr
 
 /** Send a sample delivery so the owner can confirm their endpoint works. */
 export async function testWebhook(id: string): Promise<{ ok: boolean; status?: number }> {
+  if (sandboxBlocks("deliver-webhook")) return { ok: false };
   const hook = (await listWebhooks()).find((h) => h.id === id);
   if (!hook) return { ok: false };
   const body = JSON.stringify({ event: "test", at: new Date().toISOString(), data: { message: "EdgePress test event" } });

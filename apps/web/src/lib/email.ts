@@ -1,6 +1,7 @@
 import "server-only";
 import { EMAIL_TEMPLATES } from "./email-templates";
 import type { Lead } from "./types";
+import { emailApiKey } from "./outbound";
 
 /**
  * Lead notification abstraction. If RESEND_API_KEY + LEAD_NOTIFY_TO are set,
@@ -8,7 +9,7 @@ import type { Lead } from "./types";
  * app works end-to-end with no keys during development.
  */
 export async function notifyNewLead(lead: Lead): Promise<void> {
-  const apiKey = process.env.RESEND_API_KEY;
+  const apiKey = emailApiKey();
   const to = process.env.LEAD_NOTIFY_TO;
   const from = process.env.LEAD_NOTIFY_FROM ?? "leads@example.com";
 
@@ -56,7 +57,7 @@ export async function notifyNewLead(lead: Lead): Promise<void> {
  * RESEND_API_KEY is configured, so the app still works with no keys.
  */
 export async function sendLeadConfirmation(lead: Lead): Promise<boolean> {
-  const apiKey = process.env.RESEND_API_KEY;
+  const apiKey = emailApiKey();
   const from = process.env.LEAD_NOTIFY_FROM ?? "leads@example.com";
   const replyTo = process.env.LEAD_NOTIFY_TO;
 
@@ -90,7 +91,7 @@ export async function sendLeadConfirmation(lead: Lead): Promise<boolean> {
  * of sending when RESEND_API_KEY is missing so everything works key-free.
  */
 export async function sendNotification(to: string, subject: string, text: string): Promise<boolean> {
-  const apiKey = process.env.RESEND_API_KEY;
+  const apiKey = emailApiKey();
   const from = process.env.LEAD_NOTIFY_FROM ?? "notifications@example.com";
   if (!apiKey || !to) {
     console.info(`[notify-email] (not sent — ${apiKey ? "no recipient" : "no RESEND_API_KEY"})\nTo: ${to}\nSubject: ${subject}\n${text}`);
@@ -114,7 +115,7 @@ export async function sendNotification(to: string, subject: string, text: string
  * real email was dispatched (false = logged only, e.g. no API key configured).
  */
 export async function sendLeadEmail(to: string, subject: string, text: string): Promise<boolean> {
-  const apiKey = process.env.RESEND_API_KEY;
+  const apiKey = emailApiKey();
   const from = process.env.LEAD_NOTIFY_FROM ?? "leads@example.com";
   const replyTo = process.env.LEAD_NOTIFY_TO;
 

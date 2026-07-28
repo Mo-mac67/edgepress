@@ -44,6 +44,11 @@
     "EDGEPRESS_STORAGE": "kv",
     "EDGEPRESS_MEDIA": "r2"
   },
+  // Sandbox instances only: reset the demo on a schedule. Pair with
+  // EDGEPRESS_SANDBOX=1 + CRON_SECRET, then have the cron hit
+  // /api/cron/sandbox-reset?key=$CRON_SECRET . Leave commented out on a real site.
+  // "triggers": { "crons": ["0 * * * *"] },
+
   "observability": {
     "enabled": true
   }

@@ -1,4 +1,5 @@
 import "server-only";
+import { emailApiKey } from "./outbound";
 
 /**
  * Minimal transactional email sender for site-user flows (password resets).
@@ -7,7 +8,7 @@ import "server-only";
  * must surface the link/url to the admin so it can be sent manually.
  */
 export async function sendUserEmail(to: string, subject: string, text: string): Promise<boolean> {
-  const apiKey = process.env.RESEND_API_KEY;
+  const apiKey = emailApiKey();
   const from = process.env.LEAD_NOTIFY_FROM ?? "no-reply@example.com";
   if (!apiKey) {
     console.info(`[user-email] (not sent — no RESEND_API_KEY)\nTo: ${to}\nSubject: ${subject}\n${text}`);

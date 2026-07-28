@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getRole, isAuthed } from "@/lib/admin-auth";
 import { logAudit } from "@/lib/audit-store";
 import { getSubscribers, recordCampaign, unsubscribeToken } from "@/lib/newsletter-store";
+import { emailApiKey } from "@/lib/outbound";
 
 /**
  * Sends a campaign to every subscriber via Resend's batch endpoint (chunks of
@@ -20,7 +21,7 @@ export async function POST(request: Request) {
   const subs = await getSubscribers();
   if (subs.length === 0) return NextResponse.json({ error: "No subscribers yet" }, { status: 422 });
 
-  const apiKey = process.env.RESEND_API_KEY;
+  const apiKey = emailApiKey();
   const from = process.env.LEAD_NOTIFY_FROM ?? "newsletter@example.com";
   const site = process.env.SITE_URL ?? "";
   let delivered = false;
