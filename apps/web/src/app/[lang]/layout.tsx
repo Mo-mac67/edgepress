@@ -16,7 +16,7 @@ import { getActiveLocales, getNav, getSeo, getSettings, getTheme } from "@/lib/c
 import { getAIConfig } from "@/lib/ai/engine";
 import { getSnippets, hasSnippetTokens, renderSnippets } from "@/lib/snippets-store";
 import { SandboxBanner } from "@/components/SandboxBanner";
-import { isSandbox, sandboxResetMinutes } from "@/lib/sandbox";
+import { isSandbox, maybeResetSandbox, sandboxResetMinutes } from "@/lib/sandbox";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -120,6 +120,11 @@ export default async function LangLayout({
   }
   // Well-formed but inactive locales (e.g. /de) 404 — after a redirect check.
   if (!(await getActiveLocales()).includes(lang)) await redirectOrNotFound(`/${lang}`);
+
+  // Sandbox instances put themselves back on a schedule, evaluated here rather
+  // than by a cron (the OpenNext worker exports no `scheduled` handler, so a
+  // Cloudflare trigger would never fire). No-ops instantly when not a sandbox.
+  await maybeResetSandbox();
 
   const dict = getDictionary(lang);
   const [nav, rawSettings, seo, aiCfg, theme] = await Promise.all([getNav(), getSettings(), getSeo(), getAIConfig(), getTheme()]);

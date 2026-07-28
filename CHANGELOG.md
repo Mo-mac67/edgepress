@@ -14,9 +14,8 @@ updates.
 ### Added
 - **Public sandbox mode** (`EDGEPRESS_SANDBOX=1`, off by default) — run an
   instance anyone can sign into and change, which puts itself back on a
-  schedule. Capture a snapshot in Settings → Sandbox, point a cron at
-  `/api/cron/sandbox-reset?key=$CRON_SECRET`, and visitors get the real admin
-  panel with no signup. See docs/sandbox.md.
+  schedule. Capture a snapshot in Settings → Sandbox, and visitors get the real
+  admin panel with no signup. See docs/sandbox.md.
   - Everything about *building a site* stays editable — that's the product.
     What's refused is reaching real people (email, outbound webhooks) and
     locking the next visitor out (password, username, admin URL, sign-out
@@ -24,8 +23,15 @@ updates.
   - Email is contained by **withholding the API key**, which is the same path
     every sender already takes when no key is set: it logs what it would have
     sent and moves on. A sender added later inherits that automatically.
+  - Resets run **at request time**, not on a cron. A Cloudflare trigger invokes
+    a `scheduled` handler the OpenNext worker doesn't export, so a trigger would
+    have silently never fired. This is the same approach scheduled publishing
+    already uses, and it works identically on Workers, Docker and Node.
+  - A reset restores the snapshot **and removes documents that aren't in it** —
+    otherwise the leads, submissions and collections visitors create would
+    survive every reset and pile up forever.
   - A reset with no snapshot **does nothing** — restoring "nothing" would mean
-    deleting everything, so a cron firing before setup is a no-op, not a wipe.
+    deleting everything, so firing before setup is a no-op, not a wipe.
   - A non-dismissible banner tells visitors their edits are temporary.
 
 ## [1.17.0] — 2026-07-27

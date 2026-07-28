@@ -21,14 +21,20 @@ Then:
    theme, a few leads, whatever tells your story.
 2. **Settings → Sandbox → Capture snapshot.** This freezes the current content
    as the state every reset returns to.
-3. Point a schedule at the reset endpoint:
+3. That's it — resets happen **at request time**. On the first page view after
+   the interval has elapsed, the sandbox restores itself.
+
+   > Cloudflare cron triggers are deliberately not used here: a trigger invokes
+   > a `scheduled` handler, which the OpenNext worker doesn't export, so it
+   > would silently never fire. Request-time is also how scheduled publishing
+   > already works in EdgePress, and it behaves identically on Workers, Docker
+   > and plain Node. A sandbox nobody is visiting doesn't need resetting.
+
+   To force one from outside (an uptime pinger, a deploy hook):
 
    ```
    GET /api/cron/sandbox-reset?key=$CRON_SECRET
    ```
-
-   On Cloudflare, uncomment the `triggers.crons` block in `wrangler.jsonc`
-   (`"0 * * * *"` is hourly). Any external pinger works too.
 
 Publish the sign-in details somewhere obvious — the point is that people get in.
 
@@ -55,9 +61,12 @@ sent and moves on. A sender added later inherits that for free.
 
 ## Resetting
 
-- `resetSandbox()` restores the snapshot over the current content.
+- A reset restores every document in the snapshot **and deletes any that aren't
+  in it**. Overwriting alone isn't enough: the leads, form submissions and
+  collections visitors create are new documents, and they'd survive every reset
+  and pile up forever. Restoring a state means ending at that state.
 - **With no snapshot, a reset does nothing.** Restoring "nothing" would mean
-  deleting everything, so a cron that fires before you've captured one is a
+  deleting everything, so a reset that fires before you've captured one is a
   no-op rather than a wipe.
 - Media in R2 is not part of the snapshot (backups carry the media *index*, not
   the binaries). Uploads accumulate; clear the bucket occasionally if that

@@ -93,17 +93,51 @@ describe("sandbox reset", () => {
     expect(await resetSandbox()).toBeNull();
   });
 
+  it("read-time reset waits for the interval, then fires", async () => {
+    const { captureSnapshot, maybeResetSandbox, getSandboxState } = await import("@/lib/sandbox");
+    const { getPages, savePage } = await import("@/lib/cms-store");
+    const { writeJsonDoc } = await import("@/lib/storage");
+    process.env.EDGEPRESS_SANDBOX_RESET_MINUTES = "60";
+
+    // Snapshot a sandbox that HAS content, the way a real one is set up.
+    await savePage({ id: "seed-welcome", slug: "welcome", status: "published", title: { en: "W", fr: "W" }, description: { en: "", fr: "" }, blocks: [] } as never);
+    await captureSnapshot();
+    await savePage({ id: "junk-1", slug: "junk", status: "published", title: { en: "J", fr: "J" }, description: { en: "", fr: "" }, blocks: [] } as never);
+
+    // Just reset → not due yet, the visitor's page must survive.
+    await writeJsonDoc("sandbox-state.json", { lastResetAt: new Date().toISOString() });
+    expect(await maybeResetSandbox()).toBe(false);
+    expect((await getPages()).some((p) => p.slug === "junk")).toBe(true);
+
+    // Interval elapsed → it fires and the page is gone.
+    await writeJsonDoc("sandbox-state.json", { lastResetAt: new Date(Date.now() - 61 * 60_000).toISOString() });
+    expect(await maybeResetSandbox()).toBe(true);
+    expect((await getPages()).some((p) => p.slug === "junk")).toBe(false);
+
+    delete process.env.EDGEPRESS_SANDBOX_RESET_MINUTES;
+  });
+
+  it("read-time reset does nothing on a non-sandbox site", async () => {
+    const { captureSnapshot, maybeResetSandbox } = await import("@/lib/sandbox");
+    await captureSnapshot();
+    delete process.env.EDGEPRESS_SANDBOX;
+    // Runs on every page render, so this is the assertion that keeps it from
+    // ever touching a real site's content.
+    expect(await maybeResetSandbox()).toBe(false);
+  });
+
   it("captures a snapshot and restores content back to it", async () => {
     const { captureSnapshot, resetSandbox, hasSnapshot, getSandboxState } = await import("@/lib/sandbox");
     const { getPages, savePage } = await import("@/lib/cms-store");
 
+    await savePage({ id: "seed-welcome", slug: "welcome", status: "published", title: { en: "W", fr: "W" }, description: { en: "", fr: "" }, blocks: [] } as never);
     const before = (await getPages()).length;
     const { keys } = await captureSnapshot();
     expect(keys).toBeGreaterThan(0);
     expect(await hasSnapshot()).toBe(true);
 
     // A visitor adds a page…
-    await savePage({ slug: "visitor-page", status: "published", title: { en: "Oops", fr: "Oops" } } as never);
+    await savePage({ id: "visitor-1", slug: "visitor-page", status: "published", title: { en: "Oops", fr: "Oops" }, description: { en: "", fr: "" }, blocks: [] } as never);
     expect((await getPages()).length).toBe(before + 1);
 
     // …and the reset takes it away again.
