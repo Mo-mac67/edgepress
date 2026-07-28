@@ -1,0 +1,29 @@
+{
+  "edgepressTheme": 1,
+  "name": "Paper & Ink",
+  "description": "Long-form reading — blogs, essays.",
+  "theme": {
+    "preset": "paper-ink",
+    "colors": {
+      "brand": "#1a1a1a",
+      "brandDark": "#0d0d0d",
+      "brandSoft": "#ededea",
+      "accent": "#b23a2f",
+      "accentDark": "#8c2b22",
+      "accentSoft": "#f6e5e2",
+      "accentInk": "#ffffff",
+      "heading": "#121212",
+      "bg": "#fbfaf7",
+      "surface": "#ffffff",
+      "sand": "#f2efe9",
+      "cream": "#fbfaf7",
+      "ink": "#232323",
+      "inkSoft": "#6b6b6b",
+      "line": "#e2ded5",
+      "lineDark": "#2e2e2e"
+    },
+    "fontPair": "editorial",
+    "radius": "sharp",
+    "headerStyle": "light"
+  }
+}

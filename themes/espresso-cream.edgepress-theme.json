@@ -1,0 +1,28 @@
+{
+  "edgepressTheme": 1,
+  "name": "Espresso & Cream",
+  "description": "Soft and appetising.",
+  "theme": {
+    "preset": "espresso-cream",
+    "colors": {
+      "brand": "#3d2f27",
+      "brandDark": "#291f19",
+      "brandSoft": "#f0eae5",
+      "accent": "#d9a441",
+      "accentDark": "#b58328",
+      "accentSoft": "#f9eed6",
+      "accentInk": "#413114",
+      "bg": "#ffffff",
+      "surface": "#ffffff",
+      "sand": "#f6f2ec",
+      "cream": "#fcfaf6",
+      "ink": "#28211c",
+      "inkSoft": "#6b5f55",
+      "line": "#e8e1d7",
+      "lineDark": "#544236"
+    },
+    "fontPair": "elegant",
+    "radius": "round",
+    "headerStyle": "light"
+  }
+}

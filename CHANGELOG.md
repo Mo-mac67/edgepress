@@ -9,6 +9,37 @@ Upgrade with `npx create-edgepress upgrade` (scaffolded sites) or `git pull`
 (clones) — your content lives in your storage and is never touched by code
 updates.
 
+## [1.17.0] — 2026-07-27
+
+### Added
+- **Theme gallery** — 14 designed themes, up from 10 palettes. Each card shows a
+  miniature page rendered in that theme's own colours, font and corner radius,
+  so you see what you'd actually get instead of four colour chips.
+- **A theme is now the whole design.** Presets used to carry colours only, so
+  picking one left your old typography and corners in place. They now bring
+  `fontPair`, `radius` and `headerStyle` too — anything a theme doesn't specify
+  keeps your current setting, and your Custom CSS is never touched.
+- New themes: **Paper & Ink** (long-form reading), **Studio Noir** (dark
+  portfolio), **Clinic Blue** (health/services) and **Terracotta** (hospitality).
+- **`themes/` in the repo** — every theme as a portable `.edgepress-theme.json`,
+  the exact format Import theme accepts. Generated from the gallery, with a CI
+  check so the files can never drift from the code.
+
+### Fixed
+- **9 of the 14 themes had an unreadable primary button.** White-on-accent was
+  hardcoded until `accentInk` existed, which hid it; measuring every theme
+  surfaced it. Light accents (mint, gold, amber) now carry dark button text, and
+  accents that should keep white text were nudged darker until they clear it.
+  The default theme's indigo moved #6366f1 → #5b5bef for the same reason (4.47:1
+  → 5.02:1). A test now holds every theme to WCAG AA on body text, headings and
+  the primary button, so a new theme can't ship unreadable.
+
+### Changed
+- **create-edgepress publishes from CI** when its version changes, after a smoke
+  test that scaffolds a project and builds it. Publishing was a manual step
+  someone had to remember, which is why the registry sat weeks behind the repo.
+  Needs an `NPM_TOKEN` repo secret.
+
 ## [1.16.2] — 2026-07-27
 
 ### Security

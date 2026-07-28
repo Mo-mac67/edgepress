@@ -24,6 +24,11 @@ jobs:
       - run: npx tsc --noEmit
       - run: npm run lint
       - run: npm test
+      # themes/*.edgepress-theme.json are generated from the gallery in
+      # packages/core — fail if someone edited one by hand or forgot to re-run.
+      - name: Exported theme files match the gallery
+        run: node scripts/export-themes.mjs --check
+        working-directory: .
 
   integration:
     name: Integration API tests

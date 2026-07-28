@@ -1,0 +1,28 @@
+{
+  "edgepressTheme": 1,
+  "name": "Stone & Mint",
+  "description": "Warm, calm, editorial.",
+  "theme": {
+    "preset": "stone-mint",
+    "colors": {
+      "brand": "#3a3632",
+      "brandDark": "#282521",
+      "brandSoft": "#eae6df",
+      "accent": "#08b892",
+      "accentDark": "#067a63",
+      "accentSoft": "#dff6ef",
+      "accentInk": "#02372c",
+      "bg": "#ffffff",
+      "surface": "#ffffff",
+      "sand": "#f4f2eb",
+      "cream": "#faf9f4",
+      "ink": "#3a3632",
+      "inkSoft": "#7a736b",
+      "line": "#e6e1d8",
+      "lineDark": "#4a453f"
+    },
+    "fontPair": "editorial",
+    "radius": "soft",
+    "headerStyle": "light"
+  }
+}

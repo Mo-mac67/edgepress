@@ -1,0 +1,28 @@
+{
+  "edgepressTheme": 1,
+  "name": "Graphite & Gold",
+  "description": "Restrained luxury.",
+  "theme": {
+    "preset": "graphite-gold",
+    "colors": {
+      "brand": "#111820",
+      "brandDark": "#0f1419",
+      "brandSoft": "#eceae4",
+      "accent": "#c9942e",
+      "accentDark": "#8c6218",
+      "accentSoft": "#f5e8cf",
+      "accentInk": "#3c2c0e",
+      "bg": "#ffffff",
+      "surface": "#ffffff",
+      "sand": "#f7f5f0",
+      "cream": "#fcfbf8",
+      "ink": "#0f1419",
+      "inkSoft": "#66717d",
+      "line": "#e7e2d8",
+      "lineDark": "#2a3440"
+    },
+    "fontPair": "elegant",
+    "radius": "sharp",
+    "headerStyle": "dark"
+  }
+}

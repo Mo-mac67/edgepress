@@ -1,0 +1,70 @@
+name: Publish create-edgepress
+
+# The installer is the first thing anyone touches, and it once sat stale on npm
+# for weeks because publishing was a manual step someone had to remember. This
+# publishes it from CI whenever its version changes, so the registry can't drift
+# from the repo again.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "packages/create-edgepress/package.json"
+      - "packages/create-edgepress/bin/**"
+  workflow_dispatch: {} # manual re-run if a publish ever fails
+
+jobs:
+  publish:
+    name: Publish to npm if the version is new
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      - name: Is this version already on npm?
+        id: check
+        working-directory: packages/create-edgepress
+        run: |
+          name=$(node -p "require('./package.json').name")
+          version=$(node -p "require('./package.json').version")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if npm view "$name@$version" version >/dev/null 2>&1; then
+            echo "$name@$version is already published — nothing to do."
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "$name@$version is new."
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # A scaffold that cannot build is worse than a stale one, so prove the CLI
+      # works against this commit before it reaches the registry.
+      - name: Smoke-test the CLI before publishing
+        if: steps.check.outputs.publish == 'true'
+        env:
+          EDGEPRESS_REPO: ${{ github.repository }}
+          EDGEPRESS_BRANCH: ${{ github.ref_name }}
+        run: |
+          node packages/create-edgepress/bin/index.mjs smoke-site --no-install
+          test -d smoke-site/packages/core/src
+          test -d smoke-site/packages/ai/src
+          cd smoke-site && npm install --no-audit --no-fund && npm run build
+
+      - name: Publish
+        if: steps.check.outputs.publish == 'true'
+        working-directory: packages/create-edgepress
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "$NODE_AUTH_TOKEN" ]; then
+            echo "::error::NPM_TOKEN secret is not set — add an npm automation token in Settings → Secrets → Actions."
+            exit 1
+          fi
+          npm publish --provenance --access public
+
+      - name: Summary
+        run: |
+          echo "### create-edgepress ${{ steps.check.outputs.version }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "published: ${{ steps.check.outputs.publish }}" >> "$GITHUB_STEP_SUMMARY"

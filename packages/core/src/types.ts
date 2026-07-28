@@ -759,7 +759,9 @@ export const DEFAULT_THEME: ThemeSettings = {
     brand: "#1e243b",
     brandDark: "#141829",
     brandSoft: "#e7e9f5",
-    accent: "#6366f1",
+    // Nudged darker from #6366f1: white-on-accent was 4.47:1, just under the
+    // WCAG AA 4.5 floor for the primary button. 5.02:1 at the same hue.
+    accent: "#5b5bef",
     accentDark: "#4f46e5",
     accentSoft: "#e6e7ff",
     bg: "#ffffff",
@@ -776,14 +778,50 @@ export const DEFAULT_THEME: ThemeSettings = {
   headerStyle: "dark",
 };
 
-export const THEME_PRESETS: { id: string; label: string; colors: ThemeColors }[] = [
+/**
+ * A theme in the gallery. A theme is the WHOLE design — palette, typography and
+ * shape — not just a palette, so applying one actually changes how the site
+ * reads. Every field except the colours is optional and falls back to the
+ * site's current setting.
+ */
+export interface ThemePreset {
+  id: string;
+  label: string;
+  /** One line on what this design is for — shown under the gallery card. */
+  description?: string;
+  colors: ThemeColors;
+  fontPair?: FontPair;
+  radius?: ThemeRadius;
+  headerStyle?: HeaderStyle;
+}
+
+/** Typography + shape each palette was designed against, kept beside the
+ *  colours so the literal palette blocks below stay readable. */
+const PRESET_STYLE: Record<string, Omit<ThemePreset, "id" | "label" | "colors">> = {
+  "slate-indigo": { fontPair: "modern", radius: "soft", headerStyle: "dark", description: "Clean developer-product default." },
+  "stone-mint": { fontPair: "editorial", radius: "soft", headerStyle: "light", description: "Warm, calm, editorial." },
+  "mint-ink": { fontPair: "minimal", radius: "sharp", headerStyle: "dark", description: "Crisp and understated." },
+  "graphite-gold": { fontPair: "elegant", radius: "sharp", headerStyle: "dark", description: "Restrained luxury." },
+  "navy-gold": { fontPair: "elegant", radius: "soft", headerStyle: "dark", description: "Trust and heritage — law, finance." },
+  "forest-copper": { fontPair: "editorial", radius: "round", headerStyle: "dark", description: "Natural and grounded." },
+  "charcoal-red": { fontPair: "bold", radius: "sharp", headerStyle: "dark", description: "Loud and confident." },
+  "slate-sky": { fontPair: "modern", radius: "round", headerStyle: "light", description: "Friendly and open — SaaS." },
+  "midnight-mint": { fontPair: "bold", radius: "soft", headerStyle: "dark", description: "Fully dark, mint accent." },
+  "espresso-cream": { fontPair: "elegant", radius: "round", headerStyle: "light", description: "Soft and appetising." },
+  "paper-ink": { fontPair: "editorial", radius: "sharp", headerStyle: "light", description: "Long-form reading — blogs, essays." },
+  "studio-noir": { fontPair: "bold", radius: "sharp", headerStyle: "dark", description: "Dark portfolio; let the work glow." },
+  "clinic-blue": { fontPair: "minimal", radius: "soft", headerStyle: "light", description: "Calm and clinical — health, services." },
+  "terracotta": { fontPair: "editorial", radius: "round", headerStyle: "dark", description: "Warm hospitality — food, travel." },
+};
+
+const PALETTES: { id: string; label: string; colors: ThemeColors }[] = [
   { id: "slate-indigo", label: "Slate & Indigo", colors: DEFAULT_THEME.colors },
   {
     id: "stone-mint",
     label: "Stone & Mint",
     colors: {
       brand: "#3a3632", brandDark: "#282521", brandSoft: "#eae6df",
-      accent: "#08b892", accentDark: "#067a63", accentSoft: "#dff6ef",
+      accent: "#08b892", accentDark: "#067a63", accentSoft: "#dff6ef", accentInk: "#02372c",
       bg: "#ffffff", surface: "#ffffff",
       sand: "#f4f2eb", cream: "#faf9f4", ink: "#3a3632", inkSoft: "#7a736b",
       line: "#e6e1d8", lineDark: "#4a453f",
@@ -794,7 +832,7 @@ export const THEME_PRESETS: { id: string; label: string; colors: ThemeColors }[]
     label: "Mint & Ink",
     colors: {
       brand: "#14181a", brandDark: "#0b0e0f", brandSoft: "#ececea",
-      accent: "#00b894", accentDark: "#007a5e", accentSoft: "#e3f9f1",
+      accent: "#00b894", accentDark: "#007a5e", accentSoft: "#e3f9f1", accentInk: "#00372c",
       bg: "#ffffff", surface: "#ffffff",
       sand: "#f6f6f4", cream: "#fbfbfa", ink: "#14181a", inkSoft: "#676d6a",
       line: "#e4e3e0", lineDark: "#262b2c",
@@ -805,7 +843,7 @@ export const THEME_PRESETS: { id: string; label: string; colors: ThemeColors }[]
     label: "Graphite & Gold",
     colors: {
       brand: "#111820", brandDark: "#0f1419", brandSoft: "#eceae4",
-      accent: "#c9942e", accentDark: "#8c6218", accentSoft: "#f5e8cf",
+      accent: "#c9942e", accentDark: "#8c6218", accentSoft: "#f5e8cf", accentInk: "#3c2c0e",
       bg: "#ffffff", surface: "#ffffff",
       sand: "#f7f5f0", cream: "#fcfbf8", ink: "#0f1419", inkSoft: "#66717d",
       line: "#e7e2d8", lineDark: "#2a3440",
@@ -816,7 +854,7 @@ export const THEME_PRESETS: { id: string; label: string; colors: ThemeColors }[]
     label: "Navy & Gold",
     colors: {
       brand: "#16324f", brandDark: "#0e2438", brandSoft: "#e9eef4",
-      accent: "#e0a52e", accentDark: "#c2861a", accentSoft: "#fbeecd",
+      accent: "#e0a52e", accentDark: "#c2861a", accentSoft: "#fbeecd", accentInk: "#43320e",
       bg: "#ffffff", surface: "#ffffff",
       sand: "#f6f4f0", cream: "#fbfaf8", ink: "#17222e", inkSoft: "#5a6571",
       line: "#e6e2db", lineDark: "#24405c",
@@ -827,7 +865,7 @@ export const THEME_PRESETS: { id: string; label: string; colors: ThemeColors }[]
     label: "Forest & Copper",
     colors: {
       brand: "#1e4034", brandDark: "#122b22", brandSoft: "#e8f0ec",
-      accent: "#c97e42", accentDark: "#a5602a", accentSoft: "#f7e8da",
+      accent: "#a56736", accentDark: "#a5602a", accentSoft: "#f7e8da",
       bg: "#ffffff", surface: "#ffffff",
       sand: "#f4f3ee", cream: "#fbfaf6", ink: "#1b2620", inkSoft: "#5b6a61",
       line: "#e3e2d8", lineDark: "#2e5245",
@@ -838,7 +876,7 @@ export const THEME_PRESETS: { id: string; label: string; colors: ThemeColors }[]
     label: "Charcoal & Red",
     colors: {
       brand: "#26282c", brandDark: "#17181b", brandSoft: "#ebecee",
-      accent: "#d64545", accentDark: "#b32f2f", accentSoft: "#fbe3e3",
+      accent: "#d24444", accentDark: "#b32f2f", accentSoft: "#fbe3e3",
       bg: "#ffffff", surface: "#ffffff",
       sand: "#f5f4f3", cream: "#fbfafa", ink: "#1d1f23", inkSoft: "#5f6368",
       line: "#e5e3e1", lineDark: "#3a3d43",
@@ -849,7 +887,7 @@ export const THEME_PRESETS: { id: string; label: string; colors: ThemeColors }[]
     label: "Slate & Sky",
     colors: {
       brand: "#1e293b", brandDark: "#111a2b", brandSoft: "#e8edf5",
-      accent: "#2f9dd0", accentDark: "#1f7aa8", accentSoft: "#dcf0f9",
+      accent: "#267ea6", accentDark: "#1f7aa8", accentSoft: "#dcf0f9",
       bg: "#ffffff", surface: "#ffffff",
       sand: "#f3f5f7", cream: "#fafbfc", ink: "#182030", inkSoft: "#5a6472",
       line: "#e2e5e9", lineDark: "#2c3c55",
@@ -874,13 +912,78 @@ export const THEME_PRESETS: { id: string; label: string; colors: ThemeColors }[]
     label: "Espresso & Cream",
     colors: {
       brand: "#3d2f27", brandDark: "#291f19", brandSoft: "#f0eae5",
-      accent: "#d9a441", accentDark: "#b58328", accentSoft: "#f9eed6",
+      accent: "#d9a441", accentDark: "#b58328", accentSoft: "#f9eed6", accentInk: "#413114",
       bg: "#ffffff", surface: "#ffffff",
       sand: "#f6f2ec", cream: "#fcfaf6", ink: "#28211c", inkSoft: "#6b5f55",
       line: "#e8e1d7", lineDark: "#544236",
     },
   },
+  {
+    id: "paper-ink",
+    label: "Paper & Ink",
+    colors: {
+      brand: "#1a1a1a", brandDark: "#0d0d0d", brandSoft: "#ededea",
+      accent: "#b23a2f", accentDark: "#8c2b22", accentSoft: "#f6e5e2", accentInk: "#ffffff",
+      heading: "#121212",
+      bg: "#fbfaf7", surface: "#ffffff",
+      sand: "#f2efe9", cream: "#fbfaf7", ink: "#232323", inkSoft: "#6b6b6b",
+      line: "#e2ded5", lineDark: "#2e2e2e",
+    },
+  },
+  {
+    id: "studio-noir",
+    label: "Studio Noir (dark)",
+    colors: {
+      brand: "#17171a", brandDark: "#0d0d0f", brandSoft: "#26262b",
+      accent: "#e8c46a", accentDark: "#c9a44e", accentSoft: "#2a2418", accentInk: "#1a1508",
+      heading: "#f5f4f2",
+      bg: "#0d0d0f", surface: "#17171a",
+      sand: "#121214", cream: "#17171a", ink: "#eceae7", inkSoft: "#9a978f",
+      line: "#26262b", lineDark: "#33333a",
+    },
+  },
+  {
+    id: "clinic-blue",
+    label: "Clinic Blue",
+    colors: {
+      brand: "#12457a", brandDark: "#0d3157", brandSoft: "#e3edf7",
+      accent: "#297cb5", accentDark: "#1f6ea6", accentSoft: "#e0f0fb", accentInk: "#ffffff",
+      heading: "#12457a",
+      bg: "#ffffff", surface: "#ffffff",
+      sand: "#f2f7fb", cream: "#fafcfe", ink: "#1c2b3a", inkSoft: "#5d6b7a",
+      line: "#dde6ee", lineDark: "#1d3a56",
+    },
+  },
+  {
+    id: "terracotta",
+    label: "Terracotta",
+    colors: {
+      brand: "#6b3a2a", brandDark: "#4a2619", brandSoft: "#f2e4dc",
+      accent: "#b06135", accentDark: "#a9542a", accentSoft: "#fbe9dc", accentInk: "#ffffff",
+      heading: "#4a2619",
+      bg: "#fdf8f4", surface: "#ffffff",
+      sand: "#f7ede5", cream: "#fdf8f4", ink: "#33231c", inkSoft: "#7a6459",
+      line: "#ead9cd", lineDark: "#5c3626",
+    },
+  },
 ];
+
+/** The gallery: each palette married to the typography and shape it was
+ *  designed with, so picking one changes the whole design, not just colours. */
+export const THEME_PRESETS: ThemePreset[] = PALETTES.map((p) => ({ ...p, ...PRESET_STYLE[p.id] }));
+
+/** Turn a gallery entry into a complete, saveable theme. Anything the preset
+ *  doesn't specify is kept from the theme you already have. */
+export function presetToTheme(preset: ThemePreset, current: ThemeSettings): ThemeSettings {
+  return {
+    ...current,
+    preset: preset.id,
+    colors: { ...preset.colors },
+    fontPair: preset.fontPair ?? current.fontPair,
+    radius: preset.radius ?? current.radius,
+    headerStyle: preset.headerStyle ?? current.headerStyle,
+  };
+}
 
 /**
  * Only these shapes may reach a stylesheet: #hex, a bare colour keyword, or an

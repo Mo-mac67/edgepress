@@ -1,0 +1,29 @@
+{
+  "edgepressTheme": 1,
+  "name": "Clinic Blue",
+  "description": "Calm and clinical — health, services.",
+  "theme": {
+    "preset": "clinic-blue",
+    "colors": {
+      "brand": "#12457a",
+      "brandDark": "#0d3157",
+      "brandSoft": "#e3edf7",
+      "accent": "#297cb5",
+      "accentDark": "#1f6ea6",
+      "accentSoft": "#e0f0fb",
+      "accentInk": "#ffffff",
+      "heading": "#12457a",
+      "bg": "#ffffff",
+      "surface": "#ffffff",
+      "sand": "#f2f7fb",
+      "cream": "#fafcfe",
+      "ink": "#1c2b3a",
+      "inkSoft": "#5d6b7a",
+      "line": "#dde6ee",
+      "lineDark": "#1d3a56"
+    },
+    "fontPair": "minimal",
+    "radius": "soft",
+    "headerStyle": "light"
+  }
+}

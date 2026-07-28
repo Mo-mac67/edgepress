@@ -1,0 +1,29 @@
+{
+  "edgepressTheme": 1,
+  "name": "Midnight & Mint (dark)",
+  "description": "Fully dark, mint accent.",
+  "theme": {
+    "preset": "midnight-mint",
+    "colors": {
+      "brand": "#12171f",
+      "brandDark": "#0a0c10",
+      "brandSoft": "#1e252f",
+      "accent": "#4ff0b5",
+      "accentDark": "#2fd39a",
+      "accentSoft": "#0f2a22",
+      "accentInk": "#062b20",
+      "heading": "#f2f5f8",
+      "bg": "#0a0c10",
+      "surface": "#12171f",
+      "sand": "#0e1218",
+      "cream": "#12171f",
+      "ink": "#f2f5f8",
+      "inkSoft": "#8794a1",
+      "line": "#1e252f",
+      "lineDark": "#2a3340"
+    },
+    "fontPair": "bold",
+    "radius": "soft",
+    "headerStyle": "dark"
+  }
+}

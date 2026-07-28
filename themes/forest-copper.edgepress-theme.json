@@ -1,0 +1,27 @@
+{
+  "edgepressTheme": 1,
+  "name": "Forest & Copper",
+  "description": "Natural and grounded.",
+  "theme": {
+    "preset": "forest-copper",
+    "colors": {
+      "brand": "#1e4034",
+      "brandDark": "#122b22",
+      "brandSoft": "#e8f0ec",
+      "accent": "#a56736",
+      "accentDark": "#a5602a",
+      "accentSoft": "#f7e8da",
+      "bg": "#ffffff",
+      "surface": "#ffffff",
+      "sand": "#f4f3ee",
+      "cream": "#fbfaf6",
+      "ink": "#1b2620",
+      "inkSoft": "#5b6a61",
+      "line": "#e3e2d8",
+      "lineDark": "#2e5245"
+    },
+    "fontPair": "editorial",
+    "radius": "round",
+    "headerStyle": "dark"
+  }
+}

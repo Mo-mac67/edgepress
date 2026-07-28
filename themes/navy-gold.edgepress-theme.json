@@ -1,0 +1,28 @@
+{
+  "edgepressTheme": 1,
+  "name": "Navy & Gold",
+  "description": "Trust and heritage — law, finance.",
+  "theme": {
+    "preset": "navy-gold",
+    "colors": {
+      "brand": "#16324f",
+      "brandDark": "#0e2438",
+      "brandSoft": "#e9eef4",
+      "accent": "#e0a52e",
+      "accentDark": "#c2861a",
+      "accentSoft": "#fbeecd",
+      "accentInk": "#43320e",
+      "bg": "#ffffff",
+      "surface": "#ffffff",
+      "sand": "#f6f4f0",
+      "cream": "#fbfaf8",
+      "ink": "#17222e",
+      "inkSoft": "#5a6571",
+      "line": "#e6e2db",
+      "lineDark": "#24405c"
+    },
+    "fontPair": "elegant",
+    "radius": "soft",
+    "headerStyle": "dark"
+  }
+}

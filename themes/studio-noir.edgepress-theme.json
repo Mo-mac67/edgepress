@@ -1,0 +1,29 @@
+{
+  "edgepressTheme": 1,
+  "name": "Studio Noir (dark)",
+  "description": "Dark portfolio; let the work glow.",
+  "theme": {
+    "preset": "studio-noir",
+    "colors": {
+      "brand": "#17171a",
+      "brandDark": "#0d0d0f",
+      "brandSoft": "#26262b",
+      "accent": "#e8c46a",
+      "accentDark": "#c9a44e",
+      "accentSoft": "#2a2418",
+      "accentInk": "#1a1508",
+      "heading": "#f5f4f2",
+      "bg": "#0d0d0f",
+      "surface": "#17171a",
+      "sand": "#121214",
+      "cream": "#17171a",
+      "ink": "#eceae7",
+      "inkSoft": "#9a978f",
+      "line": "#26262b",
+      "lineDark": "#33333a"
+    },
+    "fontPair": "bold",
+    "radius": "sharp",
+    "headerStyle": "dark"
+  }
+}

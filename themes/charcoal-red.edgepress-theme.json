@@ -1,0 +1,27 @@
+{
+  "edgepressTheme": 1,
+  "name": "Charcoal & Red",
+  "description": "Loud and confident.",
+  "theme": {
+    "preset": "charcoal-red",
+    "colors": {
+      "brand": "#26282c",
+      "brandDark": "#17181b",
+      "brandSoft": "#ebecee",
+      "accent": "#d24444",
+      "accentDark": "#b32f2f",
+      "accentSoft": "#fbe3e3",
+      "bg": "#ffffff",
+      "surface": "#ffffff",
+      "sand": "#f5f4f3",
+      "cream": "#fbfafa",
+      "ink": "#1d1f23",
+      "inkSoft": "#5f6368",
+      "line": "#e5e3e1",
+      "lineDark": "#3a3d43"
+    },
+    "fontPair": "bold",
+    "radius": "sharp",
+    "headerStyle": "dark"
+  }
+}

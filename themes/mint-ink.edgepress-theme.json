@@ -1,0 +1,28 @@
+{
+  "edgepressTheme": 1,
+  "name": "Mint & Ink",
+  "description": "Crisp and understated.",
+  "theme": {
+    "preset": "mint-ink",
+    "colors": {
+      "brand": "#14181a",
+      "brandDark": "#0b0e0f",
+      "brandSoft": "#ececea",
+      "accent": "#00b894",
+      "accentDark": "#007a5e",
+      "accentSoft": "#e3f9f1",
+      "accentInk": "#00372c",
+      "bg": "#ffffff",
+      "surface": "#ffffff",
+      "sand": "#f6f6f4",
+      "cream": "#fbfbfa",
+      "ink": "#14181a",
+      "inkSoft": "#676d6a",
+      "line": "#e4e3e0",
+      "lineDark": "#262b2c"
+    },
+    "fontPair": "minimal",
+    "radius": "sharp",
+    "headerStyle": "dark"
+  }
+}

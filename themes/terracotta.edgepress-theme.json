@@ -1,0 +1,29 @@
+{
+  "edgepressTheme": 1,
+  "name": "Terracotta",
+  "description": "Warm hospitality — food, travel.",
+  "theme": {
+    "preset": "terracotta",
+    "colors": {
+      "brand": "#6b3a2a",
+      "brandDark": "#4a2619",
+      "brandSoft": "#f2e4dc",
+      "accent": "#b06135",
+      "accentDark": "#a9542a",
+      "accentSoft": "#fbe9dc",
+      "accentInk": "#ffffff",
+      "heading": "#4a2619",
+      "bg": "#fdf8f4",
+      "surface": "#ffffff",
+      "sand": "#f7ede5",
+      "cream": "#fdf8f4",
+      "ink": "#33231c",
+      "inkSoft": "#7a6459",
+      "line": "#ead9cd",
+      "lineDark": "#5c3626"
+    },
+    "fontPair": "editorial",
+    "radius": "round",
+    "headerStyle": "dark"
+  }
+}

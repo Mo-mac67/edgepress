@@ -1,0 +1,27 @@
+{
+  "edgepressTheme": 1,
+  "name": "Slate & Sky",
+  "description": "Friendly and open — SaaS.",
+  "theme": {
+    "preset": "slate-sky",
+    "colors": {
+      "brand": "#1e293b",
+      "brandDark": "#111a2b",
+      "brandSoft": "#e8edf5",
+      "accent": "#267ea6",
+      "accentDark": "#1f7aa8",
+      "accentSoft": "#dcf0f9",
+      "bg": "#ffffff",
+      "surface": "#ffffff",
+      "sand": "#f3f5f7",
+      "cream": "#fafbfc",
+      "ink": "#182030",
+      "inkSoft": "#5a6472",
+      "line": "#e2e5e9",
+      "lineDark": "#2c3c55"
+    },
+    "fontPair": "modern",
+    "radius": "round",
+    "headerStyle": "light"
+  }
+}

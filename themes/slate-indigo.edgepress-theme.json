@@ -1,0 +1,27 @@
+{
+  "edgepressTheme": 1,
+  "name": "Slate & Indigo",
+  "description": "Clean developer-product default.",
+  "theme": {
+    "preset": "slate-indigo",
+    "colors": {
+      "brand": "#1e243b",
+      "brandDark": "#141829",
+      "brandSoft": "#e7e9f5",
+      "accent": "#5b5bef",
+      "accentDark": "#4f46e5",
+      "accentSoft": "#e6e7ff",
+      "bg": "#ffffff",
+      "surface": "#ffffff",
+      "sand": "#f5f6fb",
+      "cream": "#fbfbfe",
+      "ink": "#1a1c2b",
+      "inkSoft": "#666b85",
+      "line": "#e6e7f0",
+      "lineDark": "#2c3350"
+    },
+    "fontPair": "modern",
+    "radius": "soft",
+    "headerStyle": "dark"
+  }
+}

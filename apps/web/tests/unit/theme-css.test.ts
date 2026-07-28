@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_THEME, THEME_PRESETS, themeCss, type ThemeColors, type ThemeSettings } from "@edgepress/core/types";
+import { DEFAULT_THEME, THEME_PRESETS, presetToTheme, themeCss, type ThemeColors, type ThemeSettings } from "@edgepress/core/types";
 
 /** The theme layer's public contract: themeCss() is the ONLY bridge between the
  *  CMS and the presentation layer, so every token it emits is load-bearing. */
@@ -89,6 +89,69 @@ describe("themeCss sanitising", () => {
   it("falls back when a colour is empty or the wrong type", () => {
     expect(vars(themeCss(withColors({ heading: "" })))["--color-heading"]).toBe(DEFAULT_THEME.colors.brand);
     expect(vars(themeCss(withColors({ ink: 123 as unknown as string })))["--color-ink"]).toBe(DEFAULT_THEME.colors.ink);
+  });
+});
+
+describe("theme gallery", () => {
+  it("every theme carries a full design, not just a palette", () => {
+    for (const p of THEME_PRESETS) {
+      expect(p.fontPair, `${p.id} has no fontPair`).toBeTruthy();
+      expect(p.radius, `${p.id} has no radius`).toBeTruthy();
+      expect(p.headerStyle, `${p.id} has no headerStyle`).toBeTruthy();
+      expect(p.description, `${p.id} has no description`).toBeTruthy();
+    }
+  });
+
+  it("ids are unique — they key the saved theme and the exported filename", () => {
+    const ids = THEME_PRESETS.map((p) => p.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("applying a theme replaces the whole design, keeping unrelated settings", () => {
+    const current: ThemeSettings = { ...DEFAULT_THEME, fontPair: "minimal", radius: "sharp", customCss: ".x{}" };
+    const terracotta = THEME_PRESETS.find((p) => p.id === "terracotta")!;
+    const next = presetToTheme(terracotta, current);
+    expect(next.preset).toBe("terracotta");
+    expect(next.fontPair).toBe("editorial"); // came from the theme
+    expect(next.radius).toBe("round");
+    expect(next.colors.accent).toBe(terracotta.colors.accent);
+    expect(next.customCss).toBe(".x{}"); // your own CSS is never clobbered
+  });
+
+  it("a theme with no typography opinion leaves yours alone", () => {
+    const current: ThemeSettings = { ...DEFAULT_THEME, fontPair: "bold", radius: "round", headerStyle: "light" };
+    const next = presetToTheme({ id: "x", label: "X", colors: DEFAULT_THEME.colors }, current);
+    expect(next.fontPair).toBe("bold");
+    expect(next.radius).toBe("round");
+    expect(next.headerStyle).toBe("light");
+  });
+
+  it("every theme stays readable once rendered", () => {
+    // Guards the gallery against shipping a palette whose body text or primary
+    // button is unreadable — the failure mode a colour-only preset can hide.
+    const lum = (hex: string) => {
+      const n = hex.replace("#", "");
+      const [r, g, b] = [0, 2, 4].map((i) => {
+        const v = parseInt(n.slice(i, i + 2), 16) / 255;
+        return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+      });
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    };
+    const ratio = (a: string, b: string) => {
+      const [x, y] = [lum(a), lum(b)];
+      return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+    };
+    for (const p of THEME_PRESETS) {
+      const c = {
+        ...p.colors,
+        bg: p.colors.bg ?? "#ffffff",
+        accentInk: p.colors.accentInk ?? "#ffffff",
+        heading: p.colors.heading ?? p.colors.brand,
+      };
+      expect(ratio(c.ink, c.bg), `${p.id}: body text on page`).toBeGreaterThanOrEqual(4.5);
+      expect(ratio(c.heading!, c.bg), `${p.id}: headings on page`).toBeGreaterThanOrEqual(4.5);
+      expect(ratio(c.accentInk!, c.accent), `${p.id}: text on primary button`).toBeGreaterThanOrEqual(4.5);
+    }
   });
 });
 

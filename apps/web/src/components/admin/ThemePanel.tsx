@@ -6,6 +6,8 @@ import { Icon } from "@/components/Icon";
 import { CodeEditor } from "./CodeEditor";
 import {
   FONT_PAIRS,
+  presetToTheme,
+  type ThemePreset,
   RADII,
   THEME_PRESETS,
   type FontPair,
@@ -65,6 +67,50 @@ function withDefaults(c: ThemeColors): ThemeColors {
     heading: c.heading ?? c.brand,
     accentInk: c.accentInk ?? "#ffffff",
   };
+}
+
+/** A miniature page rendered in the theme's OWN palette, font and corner radius
+ *  — so the gallery shows what you'd actually get, not four colour chips. */
+function ThemeThumb({ preset }: { preset: ThemePreset }) {
+  const c = withDefaults(preset.colors);
+  const r = RADII[preset.radius ?? "soft"];
+  const font = FONT_PAIRS[preset.fontPair ?? "modern"];
+  const onDarkHeader = (preset.headerStyle ?? "dark") === "dark";
+  return (
+    <div aria-hidden style={{ background: c.bg, fontFamily: font.body }}>
+      {/* header */}
+      <div
+        className="flex items-center justify-between px-3 py-2"
+        style={{ background: onDarkHeader ? c.brandDark : c.surface, borderBottom: `1px solid ${onDarkHeader ? c.brandDark : c.line}` }}
+      >
+        <span className="text-[10px] font-extrabold" style={{ color: onDarkHeader ? "#fff" : c.heading, fontFamily: font.display }}>
+          Acme
+        </span>
+        <span className="px-2 py-[3px] text-[8px] font-bold" style={{ background: c.accent, color: c.accentInk, borderRadius: r.btn }}>
+          Get a quote
+        </span>
+      </div>
+      {/* hero */}
+      <div className="px-3 pb-3 pt-4">
+        <div className="h-2 w-3/4 rounded-sm" style={{ background: c.heading }} />
+        <div className="mt-1.5 h-1.5 w-1/2 rounded-sm" style={{ background: c.inkSoft, opacity: 0.55 }} />
+        <div className="mt-2.5 flex gap-1.5">
+          <span className="h-4 w-14" style={{ background: c.accent, borderRadius: r.btn }} />
+          <span className="h-4 w-10 border" style={{ borderColor: c.line, borderRadius: r.btn }} />
+        </div>
+      </div>
+      {/* cards on a tinted band */}
+      <div className="grid grid-cols-2 gap-2 px-3 pb-3 pt-2" style={{ background: c.sand }}>
+        {[0, 1].map((i) => (
+          <div key={i} className="p-2" style={{ background: c.surface, border: `1px solid ${c.line}`, borderRadius: r.card }}>
+            <span className="block h-3 w-3" style={{ background: c.brandSoft, borderRadius: r.btn }} />
+            <span className="mt-1.5 block h-1.5 w-4/5 rounded-sm" style={{ background: c.heading, opacity: 0.85 }} />
+            <span className="mt-1 block h-1 w-3/5 rounded-sm" style={{ background: c.inkSoft, opacity: 0.5 }} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export function ThemePanel() {
@@ -145,29 +191,36 @@ export function ThemePanel() {
   return (
     <div className="grid gap-6 xl:grid-cols-[1fr_340px]">
       <div className="space-y-6">
-        {/* Presets */}
+        {/* Theme gallery */}
         <section className="card p-5">
-          <h3 className="font-display font-bold text-brand">Theme presets</h3>
-          <p className="mt-1 text-sm text-ink-soft">One-click looks. Pick one, then fine-tune anything below.</p>
-          <div className="mt-4 grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
-            {THEME_PRESETS.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => setTheme({ ...theme, preset: p.id, colors: withDefaults(p.colors) })}
-                className={`rounded-xl border-2 p-3 text-left transition ${
-                  theme.preset === p.id ? "border-accent" : "border-line hover:border-brand"
-                }`}
-              >
-                <div className="flex h-10 overflow-hidden rounded-lg">
-                  <span className="flex-1" style={{ background: p.colors.brand }} />
-                  <span className="flex-1" style={{ background: p.colors.brandDark }} />
-                  <span className="flex-1" style={{ background: p.colors.accent }} />
-                  <span className="flex-1" style={{ background: p.colors.sand }} />
-                </div>
-                <p className="mt-2 text-xs font-semibold text-ink">{p.label}</p>
-              </button>
-            ))}
+          <h3 className="font-display font-bold text-brand">Theme gallery</h3>
+          <p className="mt-1 text-sm text-ink-soft">
+            A theme is the whole design — palette, typography and corners. Pick one to apply it, then fine-tune anything below.
+          </p>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {THEME_PRESETS.map((p) => {
+              const active = theme.preset === p.id;
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => setTheme(presetToTheme({ ...p, colors: withDefaults(p.colors) }, theme))}
+                  className={`overflow-hidden rounded-xl border-2 text-left transition hover:shadow-md ${
+                    active ? "border-accent" : "border-line hover:border-accent/50"
+                  }`}
+                >
+                  <ThemeThumb preset={p} />
+                  <div className="flex items-start justify-between gap-2 p-3">
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-semibold text-ink">{p.label}</span>
+                      {p.description && <span className="mt-0.5 block text-xs leading-snug text-ink-soft">{p.description}</span>}
+                    </span>
+                    {active && <span className="shrink-0 rounded-full bg-accent-soft px-2 py-0.5 text-[10px] font-bold uppercase text-accent-dark">On</span>}
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </section>
 
