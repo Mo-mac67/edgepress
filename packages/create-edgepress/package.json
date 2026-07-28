@@ -1,12 +1,14 @@
 {
   "name": "create-edgepress",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Scaffold a new EdgePress site — the AI-native CMS that runs free on the edge.",
   "type": "module",
   "bin": {
     "create-edgepress": "bin/index.mjs"
   },
-  "files": ["bin"],
+  "files": [
+    "bin"
+  ],
   "engines": {
     "node": ">=20"
   },
@@ -16,5 +18,11 @@
     "url": "git+https://github.com/Mo-mac67/edgepress.git",
     "directory": "packages/create-edgepress"
   },
-  "keywords": ["edgepress", "cms", "cloudflare", "ai", "scaffold"]
+  "keywords": [
+    "edgepress",
+    "cms",
+    "cloudflare",
+    "ai",
+    "scaffold"
+  ]
 }
