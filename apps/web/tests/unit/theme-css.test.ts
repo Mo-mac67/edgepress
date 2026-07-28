@@ -62,6 +62,36 @@ describe("themeCss", () => {
   });
 });
 
+describe("themeCss sanitising", () => {
+  // themeCss output is injected into a <style> inside a Custom-HTML page's
+  // iframe, so a hostile value (e.g. from an imported theme file) must never
+  // be able to close the tag or add declarations.
+  it("rejects a value that tries to break out of the <style> tag", () => {
+    const css = themeCss(withColors({ brand: "red;}</style><script>alert(1)</script>" }));
+    expect(css).not.toContain("</style>");
+    expect(css).not.toContain("<script>");
+    expect(vars(css)["--color-brand"]).toBe(DEFAULT_THEME.colors.brand); // fell back
+  });
+
+  it("rejects extra declarations smuggled in via a semicolon", () => {
+    const v = vars(themeCss(withColors({ accent: "#fff;--color-ink:#fff" })));
+    expect(v["--color-accent"]).toBe(DEFAULT_THEME.colors.accent);
+    expect(v["--color-ink"]).toBe(DEFAULT_THEME.colors.ink);
+  });
+
+  it("rejects url()/expression payloads but keeps legitimate colour formats", () => {
+    expect(vars(themeCss(withColors({ bg: "url(javascript:alert(1))" })))["--color-bg"]).toBe("#ffffff");
+    for (const ok of ["#fff", "#ffffff", "#ffffffcc", "rebeccapurple", "rgb(10, 20, 30)", "hsl(210 40% 8%)", "rgba(0,0,0,.5)"]) {
+      expect(vars(themeCss(withColors({ bg: ok })))["--color-bg"], ok).toBe(ok);
+    }
+  });
+
+  it("falls back when a colour is empty or the wrong type", () => {
+    expect(vars(themeCss(withColors({ heading: "" })))["--color-heading"]).toBe(DEFAULT_THEME.colors.brand);
+    expect(vars(themeCss(withColors({ ink: 123 as unknown as string })))["--color-ink"]).toBe(DEFAULT_THEME.colors.ink);
+  });
+});
+
 describe("THEME_PRESETS", () => {
   it("every preset defines the full required palette", () => {
     for (const p of THEME_PRESETS) {

@@ -117,8 +117,13 @@ export function ThemePanel() {
     setTimeout(() => setIoMsg(""), 5000);
   }
 
-  const setColors = (patch: Partial<ThemeColors>) =>
-    setTheme({ ...theme, preset: "custom", colors: { ...theme.colors, ...patch } });
+  const setColors = (patch: Partial<ThemeColors>) => {
+    // Headings used to BE the primary colour. Keep them following Primary while
+    // the two still match, so changing Primary behaves like it always did —
+    // once you pick a different heading colour, they stay independent.
+    const linked = patch.brand && theme.colors.heading === theme.colors.brand ? { heading: patch.brand } : null;
+    setTheme({ ...theme, preset: "custom", colors: { ...theme.colors, ...patch, ...linked } });
+  };
 
   async function save() {
     setSaving(true);

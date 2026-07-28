@@ -15,11 +15,18 @@ jobs:
       - name: Ping follow-up endpoint
         env:
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          # Your site's public URL. Set it as a repository *variable*
+          # (Settings → Secrets and variables → Actions → Variables), e.g.
+          # SITE_URL = https://example.com
+          SITE_URL: ${{ vars.SITE_URL }}
         run: |
           if [ -z "$CRON_SECRET" ]; then
             echo "CRON_SECRET repo secret is not set — skipping."; exit 1
           fi
+          if [ -z "$SITE_URL" ]; then
+            echo "SITE_URL repo variable is not set — skipping."; exit 1
+          fi
           code=$(curl -s -o /tmp/out.json -w "%{http_code}" \
-            "https://kingspro.ca/api/cron/followups?key=$CRON_SECRET")
+            "${SITE_URL%/}/api/cron/followups?key=$CRON_SECRET")
           echo "HTTP $code"; cat /tmp/out.json
           [ "$code" = "200" ]

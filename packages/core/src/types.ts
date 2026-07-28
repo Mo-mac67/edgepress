@@ -882,19 +882,49 @@ export const THEME_PRESETS: { id: string; label: string; colors: ThemeColors }[]
   },
 ];
 
+/**
+ * Only these shapes may reach a stylesheet: #hex, a bare colour keyword, or an
+ * rgb()/hsl() function. themeCss output is also injected into a `<style>` inside
+ * a Custom-HTML page's iframe, so an unvalidated value (from an imported theme
+ * file, say) could otherwise close the tag and inject markup. Anything that
+ * doesn't match is replaced by the caller's fallback.
+ */
+const SAFE_COLOR = /^(#[0-9a-fA-F]{3,8}|[a-zA-Z]{3,20}|(rgb|rgba|hsl|hsla)\([0-9a-zA-Z.,%/\s+-]{1,60}\))$/;
+
+export function safeColor(value: unknown, fallback: string): string {
+  const v = typeof value === "string" ? value.trim() : "";
+  return v && SAFE_COLOR.test(v) ? v : fallback;
+}
+
 /** CSS `:root` override string for a theme — injected by the layout. */
 export function themeCss(t: ThemeSettings): string {
-  const c = t.colors;
+  const d = DEFAULT_THEME.colors;
   const f = FONT_PAIRS[t.fontPair] ?? FONT_PAIRS.modern;
   const r = RADII[t.radius] ?? RADII.soft;
+  // Every value is sanitised, and the newer tokens (bg/surface/heading/
+  // accentInk) fall back to what they used to be hardcoded as — so a theme
+  // saved before they existed still renders exactly as it did (light page,
+  // white surfaces, brand headings).
+  const raw = t.colors ?? d;
+  const c = {
+    brand: safeColor(raw.brand, d.brand),
+    brandDark: safeColor(raw.brandDark, d.brandDark),
+    brandSoft: safeColor(raw.brandSoft, d.brandSoft),
+    accent: safeColor(raw.accent, d.accent),
+    accentDark: safeColor(raw.accentDark, d.accentDark),
+    accentSoft: safeColor(raw.accentSoft, d.accentSoft),
+    sand: safeColor(raw.sand, d.sand),
+    cream: safeColor(raw.cream, d.cream),
+    ink: safeColor(raw.ink, d.ink),
+    inkSoft: safeColor(raw.inkSoft, d.inkSoft),
+    line: safeColor(raw.line, d.line),
+    lineDark: safeColor(raw.lineDark, d.lineDark),
+  };
+  const bg = safeColor(raw.bg, "#ffffff");
+  const surface = safeColor(raw.surface, "#ffffff");
+  const heading = safeColor(raw.heading, c.brand);
+  const accentInk = safeColor(raw.accentInk, "#ffffff");
   // :root:root — higher specificity than Tailwind's @theme `:root` fallback so
   // the live CMS theme always wins regardless of stylesheet load order.
-  // bg/surface/heading/accentInk are newer tokens; each falls back to what the
-  // value used to be hardcoded as, so themes saved before they existed keep
-  // rendering exactly as they did (light page, white surfaces, brand headings).
-  const bg = c.bg ?? "#ffffff";
-  const surface = c.surface ?? "#ffffff";
-  const heading = c.heading ?? c.brand;
-  const accentInk = c.accentInk ?? "#ffffff";
   return `:root:root{--color-brand:${c.brand};--color-brand-dark:${c.brandDark};--color-brand-soft:${c.brandSoft};--color-accent:${c.accent};--color-accent-dark:${c.accentDark};--color-accent-soft:${c.accentSoft};--color-accent-ink:${accentInk};--color-heading:${heading};--color-bg:${bg};--color-surface:${surface};--color-sand:${c.sand};--color-cream:${c.cream};--color-ink:${c.ink};--color-ink-soft:${c.inkSoft};--color-line:${c.line};--color-line-dark:${c.lineDark};--font-display:${f.display};--font-sans:${f.body};--ui-radius:${r.btn};--ui-radius-lg:${r.card}}`;
 }

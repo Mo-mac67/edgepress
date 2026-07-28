@@ -73,7 +73,7 @@ themeCss(theme)  →  :root:root { --color-brand; --color-accent;
 
 - Change any colour/font/corner in **Appearance** → the whole public site
   updates; content is untouched.
-- Build a **dark** site (like synergion) entirely from the CMS — `bg`/`surface`
+- Build a fully **dark** site entirely from the CMS — `bg`/`surface`
   go dark, `ink` goes light — with no hand-edited stylesheet.
 - **Reuse a design** across client sites: export the theme, import it, done.
 - **Starter kits** (`create-edgepress --kit`, Settings → Developer) bundle a

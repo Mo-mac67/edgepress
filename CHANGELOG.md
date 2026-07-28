@@ -9,6 +9,25 @@ Upgrade with `npx create-edgepress upgrade` (scaffolded sites) or `git pull`
 (clones) — your content lives in your storage and is never touched by code
 updates.
 
+## [1.16.1] — 2026-07-27
+
+### Security
+- **Theme colours are validated before they reach a stylesheet.** `themeCss`
+  output is injected into a `<style>` inside a Custom-HTML page's iframe, so an
+  unvalidated colour value could close that tag and inject markup. Values are
+  now restricted to `#hex`, colour keywords, and `rgb()`/`hsl()`; anything else
+  falls back to the default. This matters most for the new **Import theme**
+  feature — a theme file from a stranger can no longer carry a payload.
+
+### Fixed
+- The bundled `followups` workflow pinged a **hardcoded site URL**, so every
+  install would have called someone else's domain on a daily schedule. It now
+  reads a `SITE_URL` repository variable and skips cleanly when it isn't set.
+- Removed a leftover project name from the bundled editor launch config.
+- Changing **Primary** in Appearance moves the heading colour with it again —
+  unless you've deliberately set a different heading colour, in which case the
+  two stay independent.
+
 ## [1.16.0] — 2026-07-27
 
 ### Added
