@@ -9,6 +9,19 @@ Upgrade with `npx create-edgepress upgrade` (scaffolded sites) or `git pull`
 (clones) — your content lives in your storage and is never touched by code
 updates.
 
+## [1.16.2] — 2026-07-27
+
+### Security
+- **Dependency upgrades closing 13 of 14 advisories** — Next.js 16.2.9 → 16.2.11
+  (9 of them), plus `postcss` → 8.5.23 and `sharp` → 0.35.3 pinned through
+  `overrides` so no stale transitive copy survives.
+- `@opennextjs/cloudflare` is unpinned from 1.20.1 → ^1.20.2; the exact pin only
+  existed because 1.20.2 needs Next ≥ 16.2.11, which we now have.
+- **Not fixed, deliberately:** a ReDoS advisory in `brace-expansion`. The patched
+  release is ESM-only, so forcing it would break every CommonJS build tool that
+  `require()`s it. It is a build-time dependency and never runs on your site;
+  we'll take it when the toolchain moves.
+
 ## [1.16.1] — 2026-07-27
 
 ### Security
