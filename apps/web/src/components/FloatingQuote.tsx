@@ -34,14 +34,14 @@ export function FloatingQuote({ locale, phone, quoteLabel, callLabel }: { locale
       <div className="flex gap-3 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3">
         <a
           href={`tel:${tel}`}
-          className="flex flex-1 items-center justify-center gap-2 border border-brand py-3 text-xs font-semibold uppercase tracking-[0.14em] text-brand"
+          className="flex flex-1 items-center justify-center gap-2 border border-heading py-3 text-xs font-semibold uppercase tracking-[0.14em] text-heading"
         >
           <Icon name="phone" size={16} />
           {callLabel}
         </a>
         <Link
           href={`/${locale}/contact`}
-          className="flex flex-1 items-center justify-center gap-2 bg-accent py-3 text-xs font-semibold uppercase tracking-[0.14em] text-brand-dark"
+          className="flex flex-1 items-center justify-center gap-2 bg-accent py-3 text-xs font-semibold uppercase tracking-[0.14em] text-accent-ink"
         >
           {quoteLabel}
           <Icon name="arrow-right" size={16} />

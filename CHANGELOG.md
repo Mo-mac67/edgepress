@@ -9,6 +9,27 @@ Upgrade with `npx create-edgepress upgrade` (scaffolded sites) or `git pull`
 (clones) — your content lives in your storage and is never touched by code
 updates.
 
+## [1.16.0] — 2026-07-27
+
+### Added
+- **Heading colour is its own theme token.** `brand` was doing two jobs at once
+  — heading TEXT and dark-section BACKGROUND — which made a dark site
+  impossible (dark headings on a dark canvas). Headings now read a separate
+  `heading` token that defaults to `brand`, so existing sites look identical
+  while a dark theme can finally have light headings.
+- **`accentInk` — the text colour on accent surfaces.** Primary buttons were
+  hardcoded white-on-accent, unreadable when the accent is light (mint, yellow).
+  Now themeable, defaulting to white.
+- **A dark preset: "Midnight & Mint".** One click gives a genuinely dark site —
+  dark canvas and cards, light headings, mint accent with dark button text —
+  entirely from the Appearance panel, no hand-written CSS. It's also proof the
+  theme layer really owns presentation.
+
+### Fixed
+- The mobile sticky bar's "Call" button used dark brand text on the page
+  background — invisible under a dark theme. It and three other
+  white-on-accent spots now use the new tokens.
+
 ## [1.15.0] — 2026-07-27
 
 ### Changed

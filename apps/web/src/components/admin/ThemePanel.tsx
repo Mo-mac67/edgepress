@@ -30,6 +30,7 @@ const COLOR_GROUPS: { title: string; keys: { key: keyof ThemeColors; label: stri
       { key: "accent", label: "Accent" },
       { key: "accentDark", label: "Accent dark" },
       { key: "accentSoft", label: "Accent tint" },
+      { key: "accentInk", label: "Text on accent" },
     ],
   },
   {
@@ -44,6 +45,7 @@ const COLOR_GROUPS: { title: string; keys: { key: keyof ThemeColors; label: stri
     keys: [
       { key: "sand", label: "Section tint A" },
       { key: "cream", label: "Section tint B" },
+      { key: "heading", label: "Headings" },
       { key: "ink", label: "Text" },
       { key: "inkSoft", label: "Muted text" },
       { key: "line", label: "Borders" },
@@ -51,6 +53,19 @@ const COLOR_GROUPS: { title: string; keys: { key: keyof ThemeColors; label: stri
     ],
   },
 ];
+
+/** Fill tokens added after a theme was saved, each with the value it used to be
+ *  hardcoded as — so an older theme keeps its exact look and every colour input
+ *  stays controlled. */
+function withDefaults(c: ThemeColors): ThemeColors {
+  return {
+    ...c,
+    bg: c.bg ?? "#ffffff",
+    surface: c.surface ?? "#ffffff",
+    heading: c.heading ?? c.brand,
+    accentInk: c.accentInk ?? "#ffffff",
+  };
+}
 
 export function ThemePanel() {
   const router = useRouter();
@@ -66,7 +81,7 @@ export function ThemePanel() {
       const t = (await r.json()).theme as ThemeSettings;
       // Backfill tokens added after this theme was saved so the color inputs
       // are always controlled and old sites keep their current look.
-      t.colors = { ...t.colors, bg: t.colors.bg ?? "#ffffff", surface: t.colors.surface ?? "#ffffff" };
+      t.colors = withDefaults(t.colors);
       setTheme(t);
     });
   }, []);
@@ -93,7 +108,7 @@ export function ThemePanel() {
       const data = JSON.parse(await file.text());
       const imported: ThemeSettings | undefined = data?.theme?.colors ? data.theme : data?.colors ? data : undefined;
       if (!imported?.colors) throw new Error("not a theme file");
-      imported.colors = { ...imported.colors, bg: imported.colors.bg ?? "#ffffff", surface: imported.colors.surface ?? "#ffffff" };
+      imported.colors = withDefaults(imported.colors);
       setTheme({ ...imported, preset: imported.preset || "custom" });
       setIoMsg("Theme loaded — review below, then Save & apply.");
     } catch {
@@ -134,7 +149,7 @@ export function ThemePanel() {
               <button
                 key={p.id}
                 type="button"
-                onClick={() => setTheme({ ...theme, preset: p.id, colors: { ...p.colors } })}
+                onClick={() => setTheme({ ...theme, preset: p.id, colors: withDefaults(p.colors) })}
                 className={`rounded-xl border-2 p-3 text-left transition ${
                   theme.preset === p.id ? "border-accent" : "border-line hover:border-brand"
                 }`}
@@ -162,13 +177,13 @@ export function ThemePanel() {
                   <label key={key} className="flex items-center gap-2 rounded-lg border border-line p-2">
                     <input
                       type="color"
-                      value={c[key]}
+                      value={c[key] ?? "#ffffff"}
                       onChange={(e) => setColors({ [key]: e.target.value } as Partial<ThemeColors>)}
                       className="h-8 w-8 cursor-pointer rounded border-0 bg-transparent p-0"
                     />
                     <span className="min-w-0">
                       <span className="block truncate text-xs font-medium text-ink">{label}</span>
-                      <span className="block text-[10px] text-ink-soft">{c[key]}</span>
+                      <span className="block text-[10px] text-ink-soft">{c[key] ?? "—"}</span>
                     </span>
                   </label>
                 ))}
@@ -280,14 +295,14 @@ export function ThemePanel() {
         <div className="overflow-hidden rounded-xl border border-line shadow-sm">
           {/* mini header */}
           <div className="flex items-center justify-between px-4 py-3" style={{ background: theme.headerStyle === "dark" ? c.brandDark : c.surface, borderBottom: `1px solid ${c.line}` }}>
-            <span className="text-sm font-extrabold" style={{ color: theme.headerStyle === "dark" ? "#fff" : c.brand }}>EdgePress</span>
-            <span className="rounded px-3 py-1 text-xs font-bold" style={{ background: c.accent, color: c.brandDark, borderRadius: RADII[theme.radius].btn }}>Get a Quote</span>
+            <span className="text-sm font-extrabold" style={{ color: theme.headerStyle === "dark" ? "#fff" : c.heading }}>EdgePress</span>
+            <span className="rounded px-3 py-1 text-xs font-bold" style={{ background: c.accent, color: c.accentInk, borderRadius: RADII[theme.radius].btn }}>Get a Quote</span>
           </div>
           {/* mini hero */}
           <div className="px-5 py-8" style={{ background: c.brandDark }}>
             <p className="text-lg font-extrabold leading-tight text-white">Building homes that last</p>
             <p className="mt-2 text-xs" style={{ color: "#ffffffb0" }}>Licensed, insured and warranty-backed across the GTA.</p>
-            <span className="mt-4 inline-block px-4 py-2 text-xs font-bold" style={{ background: c.accent, color: c.brandDark, borderRadius: RADII[theme.radius].btn }}>Start your project</span>
+            <span className="mt-4 inline-block px-4 py-2 text-xs font-bold" style={{ background: c.accent, color: c.accentInk, borderRadius: RADII[theme.radius].btn }}>Start your project</span>
           </div>
           {/* mini cards */}
           <div className="grid grid-cols-2 gap-3 p-4" style={{ background: c.sand }}>
@@ -296,7 +311,7 @@ export function ThemePanel() {
                 <span className="inline-grid h-6 w-6 place-items-center rounded" style={{ background: c.brandSoft, color: c.brand }}>
                   <Icon name={i ? "hammer" : "shield"} size={13} />
                 </span>
-                <p className="mt-2 text-xs font-bold" style={{ color: c.brand }}>{i ? "Craftsmanship" : "Fixed price"}</p>
+                <p className="mt-2 text-xs font-bold" style={{ color: c.heading }}>{i ? "Craftsmanship" : "Fixed price"}</p>
                 <p className="mt-1 text-[10px]" style={{ color: c.inkSoft }}>No hidden costs, ever.</p>
               </div>
             ))}

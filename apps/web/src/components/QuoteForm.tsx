@@ -77,7 +77,7 @@ export function QuoteForm({ locale, form }: { locale: Locale; form: FormDict }) 
         <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-accent-soft text-accent-dark">
           <Icon name="check" size={30} />
         </span>
-        <h3 className="mt-5 font-display text-2xl font-bold text-brand">{form.successTitle}</h3>
+        <h3 className="mt-5 font-display text-2xl font-bold text-heading">{form.successTitle}</h3>
         <p className="mx-auto mt-3 max-w-md text-ink-soft">{form.success}</p>
         <button
           type="button"
@@ -96,7 +96,7 @@ export function QuoteForm({ locale, form }: { locale: Locale; form: FormDict }) 
 
   return (
     <form onSubmit={onSubmit} onInput={onFirstInput} className="card p-6 sm:p-8">
-      <h3 className="font-display text-xl font-bold text-brand">{form.heading}</h3>
+      <h3 className="font-display text-xl font-bold text-heading">{form.heading}</h3>
 
       {/* Honeypot */}
       <input

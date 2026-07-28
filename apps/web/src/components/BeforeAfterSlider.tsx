@@ -78,7 +78,7 @@ export function BeforeAfterSlider({
       <div className="absolute inset-0" style={{ clipPath: `inset(0 ${100 - pos}% 0 0)` }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={after} alt={afterLabel} className="absolute inset-0 h-full w-full object-cover" draggable={false} />
-        <span className="absolute left-6 top-6 bg-accent px-3 py-2 text-[11px] font-extrabold uppercase tracking-[0.1em] text-white">
+        <span className="absolute left-6 top-6 bg-accent px-3 py-2 text-[11px] font-extrabold uppercase tracking-[0.1em] text-accent-ink">
           {afterLabel}
         </span>
       </div>
@@ -90,7 +90,7 @@ export function BeforeAfterSlider({
           type="button"
           aria-hidden
           tabIndex={-1}
-          className={`absolute top-1/2 -ml-[31px] -mt-[31px] grid h-[62px] w-[62px] cursor-ew-resize place-items-center rounded-full bg-accent text-2xl font-bold text-white shadow-[0_10px_30px_rgba(15,20,25,0.35)] transition-transform duration-200 ${
+          className={`absolute top-1/2 -ml-[31px] -mt-[31px] grid h-[62px] w-[62px] cursor-ew-resize place-items-center rounded-full bg-accent text-2xl font-bold text-accent-ink shadow-[0_10px_30px_rgba(15,20,25,0.35)] transition-transform duration-200 ${
             dragging ? "scale-110" : "hover:scale-105"
           }`}
         >

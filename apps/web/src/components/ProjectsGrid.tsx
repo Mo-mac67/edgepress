@@ -34,7 +34,7 @@ export function ProjectsGrid({
             className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
               active === c.id
                 ? "bg-brand text-white"
-                : "border border-line bg-surface text-ink-soft hover:border-brand hover:text-brand"
+                : "border border-line bg-surface text-ink-soft hover:border-brand hover:text-heading"
             }`}
           >
             {c.label}
@@ -56,7 +56,7 @@ export function ProjectsGrid({
             </div>
             <div className="p-6">
               <p className="text-xs font-semibold uppercase tracking-wide text-accent-dark">{p.location}</p>
-              <h3 className="mt-1.5 font-display text-lg font-bold text-brand">{p.title}</h3>
+              <h3 className="mt-1.5 font-display text-lg font-bold text-heading">{p.title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-ink-soft">{p.desc}</p>
             </div>
           </article>

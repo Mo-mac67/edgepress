@@ -28,11 +28,11 @@ into content:
 
 | Token group | Fields |
 |---|---|
-| Brand      | `brand`, `brandDark`, `brandSoft` |
-| Accent     | `accent`, `accentDark`, `accentSoft` |
+| Brand      | `brand`, `brandDark`, `brandSoft` (dark-section backgrounds) |
+| Accent     | `accent`, `accentDark`, `accentSoft`, `accentInk` (text ON accent) |
 | **Surfaces** | `bg` (page canvas), `surface` (cards/panels/inputs) |
 | Tints      | `sand`, `cream` (alternating section washes) |
-| Text/lines | `ink`, `inkSoft`, `line`, `lineDark` |
+| Text/lines | `heading`, `ink`, `inkSoft`, `line`, `lineDark` |
 | Type       | `fontPair` |
 | Shape      | `radius` |
 | Header     | `headerStyle` |
@@ -88,6 +88,8 @@ themeCss(theme)  →  :root:root { --color-brand; --color-accent;
 | Accent flows into Custom-HTML pages | ✅ 1.14.0 |
 | **Surfaces (`bg`/`surface`) are tokens; blocks use `bg-surface`** | ✅ 1.15.0 |
 | **Theme export/import as a portable file** | ✅ 1.15.0 |
+| **Heading text split from `brand`; `accentInk` for text on accent** | ✅ 1.16.0 |
+| **A dark theme is expressible from the panel alone (dark preset ships)** | ✅ 1.16.0 |
 | Admin pinned independent of site theme | ✅ done |
 | Shadow/elevation tokens (still literal `rgba(15,20,25,…)`) | ⏳ follow-up |
 | Multiple installable theme *packages* (theme registry) | ⏳ roadmap |

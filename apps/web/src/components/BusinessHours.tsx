@@ -154,7 +154,7 @@ export function BusinessHours({ locale = "en", tone = "dark" }: { locale?: strin
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className={`flex items-center gap-2.5 text-left text-sm ${dark ? "text-white/85 hover:text-white" : "text-ink hover:text-brand"}`}
+        className={`flex items-center gap-2.5 text-left text-sm ${dark ? "text-white/85 hover:text-white" : "text-ink hover:text-heading"}`}
       >
         <Icon name="clock" size={17} className={dark ? "shrink-0 text-accent" : "shrink-0 text-accent-dark"} />
         <span className={`inline-block h-1.5 w-1.5 shrink-0 rounded-full ${dotColor}`} />

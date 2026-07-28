@@ -308,7 +308,7 @@ function BlockView({
         <section className="bg-surface">
           <div
             {...ed("html", true)}
-            className="container-page prose max-w-3xl py-8 prose-headings:font-display prose-headings:text-brand prose-a:text-accent-dark"
+            className="container-page prose max-w-3xl py-8 prose-headings:font-display prose-headings:text-heading prose-a:text-accent-dark"
             dangerouslySetInnerHTML={{ __html: t("html") }}
           />
         </section>
@@ -353,7 +353,7 @@ function BlockView({
                   href={href(d.linkHref as string, locale)}
                   target={/^https?:\/\//.test(d.linkHref as string) ? "_blank" : undefined}
                   rel={/^https?:\/\//.test(d.linkHref as string) ? "noopener noreferrer" : undefined}
-                  className="mt-7 inline-flex items-center gap-2.5 text-xs font-semibold uppercase tracking-[0.18em] text-accent-dark hover:text-brand"
+                  className="mt-7 inline-flex items-center gap-2.5 text-xs font-semibold uppercase tracking-[0.18em] text-accent-dark hover:text-heading"
                 >
                   {/^https?:\/\/(www\.)?linkedin/.test(d.linkHref as string) && <Icon name="linkedin" size={17} />}
                   {t("linkLabel")}
@@ -380,10 +380,10 @@ function BlockView({
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {items.map((it, i) => (
                 <div key={i} className="card p-6">
-                  <span className="grid h-11 w-11 place-items-center ch-sm bg-brand-soft text-brand">
+                  <span className="grid h-11 w-11 place-items-center ch-sm bg-brand-soft text-heading">
                     <Icon name={(it.icon as IconName) || "check"} size={22} />
                   </span>
-                  <h3 {...ed(`items.${i}.title`)} className="mt-4 font-display font-bold text-brand">{tx(it.title, locale)}</h3>
+                  <h3 {...ed(`items.${i}.title`)} className="mt-4 font-display font-bold text-heading">{tx(it.title, locale)}</h3>
                   <p {...ed(`items.${i}.text`)} className="mt-1.5 text-sm leading-relaxed text-ink-soft">{tx(it.text, locale)}</p>
                 </div>
               ))}
@@ -405,7 +405,7 @@ function BlockView({
               <div className={`grid grid-cols-2 bg-surface shadow-[0_24px_60px_rgba(15,20,25,0.14)] md:-mt-[66px] md:divide-x md:divide-line ${cols}`}>
                 {items.map((it, i) => (
                   <div key={i} className="border-b border-line px-5 py-7 text-center last:border-b-0 md:border-b-0">
-                    <p className="font-display text-[2rem] font-extrabold leading-none text-brand">{it.value}</p>
+                    <p className="font-display text-[2rem] font-extrabold leading-none text-heading">{it.value}</p>
                     <p className="mt-2 text-[13px] text-ink-soft">{tx(it.label, locale)}</p>
                   </div>
                 ))}
@@ -419,7 +419,7 @@ function BlockView({
           <div className={`container-page grid grid-cols-2 gap-6 py-10 ${cols}`}>
             {items.map((it, i) => (
               <div key={i} className="text-center">
-                <p className="font-display text-3xl font-extrabold text-brand md:text-4xl">{it.value}</p>
+                <p className="font-display text-3xl font-extrabold text-heading md:text-4xl">{it.value}</p>
                 <p className="mt-1 text-sm text-ink-soft">{tx(it.label, locale)}</p>
               </div>
             ))}
@@ -538,7 +538,7 @@ function BlockView({
                     {it.step}
                   </span>
                   <div>
-                    <h3 {...ed(`items.${i}.title`)} className="font-display text-lg font-bold tracking-[-0.02em] text-brand">{tx(it.title, locale)}</h3>
+                    <h3 {...ed(`items.${i}.title`)} className="font-display text-lg font-bold tracking-[-0.02em] text-heading">{tx(it.title, locale)}</h3>
                     <p {...ed(`items.${i}.text`)} className="mt-1.5 text-sm leading-relaxed text-ink-soft">{tx(it.text, locale)}</p>
                   </div>
                 </div>
@@ -581,7 +581,7 @@ function BlockView({
                       </span>
                     </div>
                     <div className="p-5">
-                      <h3 {...ed(`items.${i}.title`)} className="font-display text-lg font-bold tracking-[-0.02em] text-brand">{tx(it.title, locale)}</h3>
+                      <h3 {...ed(`items.${i}.title`)} className="font-display text-lg font-bold tracking-[-0.02em] text-heading">{tx(it.title, locale)}</h3>
                       {tx(it.caption, locale) && <p {...ed(`items.${i}.caption`)} className="mt-1.5 text-sm leading-relaxed text-ink-soft">{tx(it.caption, locale)}</p>}
                       {it.href && (
                         <span className="mt-3.5 inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-[0.1em] text-accent-dark opacity-0 transition-opacity duration-300 group-hover:opacity-100">
@@ -648,7 +648,7 @@ function BlockView({
                   <Icon name="quote" size={30} className="text-accent" />
                   <blockquote className="mt-4 flex-1 text-[1.02rem] leading-relaxed text-ink">“<span {...ed(`items.${i}.quote`)}>{tx(it.quote, locale)}</span>”</blockquote>
                   <figcaption className="mt-6 border-t border-line pt-4">
-                    <p className="font-display font-bold text-brand">{it.author}</p>
+                    <p className="font-display font-bold text-heading">{it.author}</p>
                     <p {...ed(`items.${i}.role`)} className="text-sm text-ink-soft">{tx(it.role, locale)}</p>
                   </figcaption>
                 </figure>
@@ -668,7 +668,7 @@ function BlockView({
             <div className="divide-y divide-line ch-lg border border-line">
               {items.map((it, i) => (
                 <details key={i} className="group p-5">
-                  <summary className="flex cursor-pointer items-center justify-between font-display font-semibold text-brand">
+                  <summary className="flex cursor-pointer items-center justify-between font-display font-semibold text-heading">
                     <span {...ed(`items.${i}.q`)}>{tx(it.q, locale)}</span>
                     <Icon name="chevron-down" size={18} className="transition group-open:rotate-180" />
                   </summary>
@@ -745,9 +745,9 @@ function BlockView({
       return (
         <section className="bg-surface">
           <div className="container-page py-14 text-center md:py-16">
-            {t("title") && <h2 {...ed("title")} className="section-title text-brand">{t("title")}</h2>}
+            {t("title") && <h2 {...ed("title")} className="section-title text-heading">{t("title")}</h2>}
             {t("subtitle") && <p {...ed("subtitle")} className="mx-auto mt-3 max-w-xl text-ink-soft">{t("subtitle")}</p>}
-            <p className="mt-4 font-display text-3xl font-bold text-brand">{amount ? `${amount} ${currency}` : ""}</p>
+            <p className="mt-4 font-display text-3xl font-bold text-heading">{amount ? `${amount} ${currency}` : ""}</p>
             {pageId ? (
               <div className="flex justify-center"><PayButton pageId={pageId} blockId={block.id} locale={locale} label={t("buttonLabel") || "Buy now"} /></div>
             ) : (
@@ -762,7 +762,7 @@ function BlockView({
       return (
         <section className="bg-sand">
           <div className="container-page py-14 text-center md:py-16">
-            {t("title") && <h2 {...ed("title")} className="section-title text-brand">{t("title")}</h2>}
+            {t("title") && <h2 {...ed("title")} className="section-title text-heading">{t("title")}</h2>}
             {t("subtitle") && <p {...ed("subtitle")} className="mx-auto mt-3 max-w-xl text-ink-soft">{t("subtitle")}</p>}
             <BookingWidget locale={locale} />
           </div>
@@ -773,7 +773,7 @@ function BlockView({
       return (
         <section className="bg-cream">
           <div className="container-page py-14 text-center md:py-16">
-            {t("title") && <h2 {...ed("title")} className="section-title text-brand">{t("title")}</h2>}
+            {t("title") && <h2 {...ed("title")} className="section-title text-heading">{t("title")}</h2>}
             {t("subtitle") && <p {...ed("subtitle")} className="mx-auto mt-3 max-w-xl text-ink-soft">{t("subtitle")}</p>}
             <NewsletterSignup locale={locale} placeholder={t("placeholder")} buttonLabel={t("buttonLabel")} />
           </div>
@@ -785,18 +785,18 @@ function BlockView({
         <section className="bg-sand">
           <div className="container-page grid gap-10 py-16 lg:grid-cols-[1fr_1.15fr]">
             <div>
-              {t("title") && <h2 {...ed("title")} className="section-title text-brand">{t("title")}</h2>}
+              {t("title") && <h2 {...ed("title")} className="section-title text-heading">{t("title")}</h2>}
               {t("subtitle") && <p {...ed("subtitle")} className="mt-4 text-ink-soft">{t("subtitle")}</p>}
               <ul className="mt-7 space-y-3.5 text-[15px]">
-                <li className="flex items-center gap-2.5"><Icon name="phone" size={17} className="shrink-0 text-accent-dark" /><a href={`tel:${settings.phone.replace(/[^\d+]/g, "")}`} className="hover:text-brand">{settings.phone}</a></li>
-                <li className="flex items-center gap-2.5"><Icon name="mail" size={17} className="shrink-0 text-accent-dark" /><a href={`mailto:${settings.email}`} className="hover:text-brand">{settings.email}</a></li>
+                <li className="flex items-center gap-2.5"><Icon name="phone" size={17} className="shrink-0 text-accent-dark" /><a href={`tel:${settings.phone.replace(/[^\d+]/g, "")}`} className="hover:text-heading">{settings.phone}</a></li>
+                <li className="flex items-center gap-2.5"><Icon name="mail" size={17} className="shrink-0 text-accent-dark" /><a href={`mailto:${settings.email}`} className="hover:text-heading">{settings.email}</a></li>
                 <li className="flex items-center gap-2.5"><Icon name="map-pin" size={17} className="shrink-0 text-accent-dark" />{settings.address}</li>
                 <li><BusinessHours locale={locale} tone="light" /></li>
               </ul>
               {settings.serviceAreas.length > 0 && (
                 <div className="mt-7 flex flex-wrap gap-2">
                   {settings.serviceAreas.map((a) => (
-                    <span key={a} className="border border-line bg-surface px-3 py-1 text-xs font-semibold text-brand">{a}</span>
+                    <span key={a} className="border border-line bg-surface px-3 py-1 text-xs font-semibold text-heading">{a}</span>
                   ))}
                 </div>
               )}

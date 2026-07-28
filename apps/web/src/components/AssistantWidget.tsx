@@ -57,7 +57,7 @@ export function AssistantWidget({ locale, brandName }: { locale: Locale; brandNa
           </div>
           <form onSubmit={(e) => { e.preventDefault(); send(input); }} className="flex items-center gap-2 border-t border-line p-2">
             <input className="flex-1 rounded-lg bg-sand px-3 py-2 text-sm focus:outline-none" placeholder={locale === "fr" ? "Écrivez un message…" : "Type a message…"} value={input} onChange={(e) => setInput(e.target.value)} />
-            <button type="submit" disabled={busy || !input.trim()} className="rounded-lg bg-accent px-3 py-2 text-sm font-bold text-white disabled:opacity-50">→</button>
+            <button type="submit" disabled={busy || !input.trim()} className="rounded-lg bg-accent px-3 py-2 text-sm font-bold text-accent-ink disabled:opacity-50">→</button>
           </form>
         </div>
       )}

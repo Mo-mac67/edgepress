@@ -700,6 +700,13 @@ export interface ThemeColors {
   accent: string;
   accentDark: string;
   accentSoft: string;
+  /** Text/icon colour ON an accent surface (primary buttons). Defaults to
+   *  white — set it dark when the accent itself is light (mint, yellow…). */
+  accentInk?: string;
+  /** Heading text colour on the page background. Separate from `brand` (which
+   *  is also a dark-section BACKGROUND) so a dark theme can have light
+   *  headings. Defaults to `brand`, so existing themes are unchanged. */
+  heading?: string;
   /** Page background — the canvas behind all content (body). */
   bg: string;
   /** Surface — cards, panels, inputs and "white" sections sit on this. */
@@ -849,6 +856,20 @@ export const THEME_PRESETS: { id: string; label: string; colors: ThemeColors }[]
     },
   },
   {
+    // The only DARK preset — proves the theme layer owns surfaces: page/cards
+    // go dark, headings go light, and the light accent carries dark text.
+    id: "midnight-mint",
+    label: "Midnight & Mint (dark)",
+    colors: {
+      brand: "#12171f", brandDark: "#0a0c10", brandSoft: "#1e252f",
+      accent: "#4ff0b5", accentDark: "#2fd39a", accentSoft: "#0f2a22", accentInk: "#062b20",
+      heading: "#f2f5f8",
+      bg: "#0a0c10", surface: "#12171f",
+      sand: "#0e1218", cream: "#12171f", ink: "#f2f5f8", inkSoft: "#8794a1",
+      line: "#1e252f", lineDark: "#2a3340",
+    },
+  },
+  {
     id: "espresso-cream",
     label: "Espresso & Cream",
     colors: {
@@ -868,9 +889,12 @@ export function themeCss(t: ThemeSettings): string {
   const r = RADII[t.radius] ?? RADII.soft;
   // :root:root — higher specificity than Tailwind's @theme `:root` fallback so
   // the live CMS theme always wins regardless of stylesheet load order.
-  // bg/surface are newer tokens; default to white so themes saved before they
-  // existed keep rendering exactly as they did (light page + white surfaces).
+  // bg/surface/heading/accentInk are newer tokens; each falls back to what the
+  // value used to be hardcoded as, so themes saved before they existed keep
+  // rendering exactly as they did (light page, white surfaces, brand headings).
   const bg = c.bg ?? "#ffffff";
   const surface = c.surface ?? "#ffffff";
-  return `:root:root{--color-brand:${c.brand};--color-brand-dark:${c.brandDark};--color-brand-soft:${c.brandSoft};--color-accent:${c.accent};--color-accent-dark:${c.accentDark};--color-accent-soft:${c.accentSoft};--color-bg:${bg};--color-surface:${surface};--color-sand:${c.sand};--color-cream:${c.cream};--color-ink:${c.ink};--color-ink-soft:${c.inkSoft};--color-line:${c.line};--color-line-dark:${c.lineDark};--font-display:${f.display};--font-sans:${f.body};--ui-radius:${r.btn};--ui-radius-lg:${r.card}}`;
+  const heading = c.heading ?? c.brand;
+  const accentInk = c.accentInk ?? "#ffffff";
+  return `:root:root{--color-brand:${c.brand};--color-brand-dark:${c.brandDark};--color-brand-soft:${c.brandSoft};--color-accent:${c.accent};--color-accent-dark:${c.accentDark};--color-accent-soft:${c.accentSoft};--color-accent-ink:${accentInk};--color-heading:${heading};--color-bg:${bg};--color-surface:${surface};--color-sand:${c.sand};--color-cream:${c.cream};--color-ink:${c.ink};--color-ink-soft:${c.inkSoft};--color-line:${c.line};--color-line-dark:${c.lineDark};--font-display:${f.display};--font-sans:${f.body};--ui-radius:${r.btn};--ui-radius-lg:${r.card}}`;
 }

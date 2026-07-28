@@ -43,7 +43,7 @@ export function Testimonials({ dict }: { dict: Dictionary }) {
                 “{t.quote}”
               </blockquote>
               <figcaption className="mt-6 border-t border-line pt-4">
-                <p className="font-display font-bold text-brand">{t.author}</p>
+                <p className="font-display font-bold text-heading">{t.author}</p>
                 <p className="text-sm text-ink-soft">
                   {t.role} · {t.location}
                 </p>
@@ -73,12 +73,12 @@ export function Credentials({ dict, compact = false }: { dict: Dictionary; compa
 
         {/* Licenses */}
         <div className="mt-12">
-          <h3 className="font-display text-lg font-bold text-brand">{c.licenses.title}</h3>
+          <h3 className="font-display text-lg font-bold text-heading">{c.licenses.title}</h3>
           <p className="mt-1 text-sm text-ink-soft">{c.licenses.subtitle}</p>
           <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {c.licenses.items.map((l) => (
               <div key={l.name} className="card flex items-start gap-3 p-5">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-brand-soft text-brand">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-brand-soft text-heading">
                   <Icon name="shield" size={20} />
                 </span>
                 <div>
@@ -93,7 +93,7 @@ export function Credentials({ dict, compact = false }: { dict: Dictionary; compa
         {/* Certifications + Awards */}
         <div className="mt-10 grid gap-6 lg:grid-cols-2">
           <div className="card p-6">
-            <h3 className="flex items-center gap-2 font-display text-lg font-bold text-brand">
+            <h3 className="flex items-center gap-2 font-display text-lg font-bold text-heading">
               <Icon name="check" size={20} className="text-accent-dark" />
               {c.certifications.title}
             </h3>
@@ -110,7 +110,7 @@ export function Credentials({ dict, compact = false }: { dict: Dictionary; compa
             </ul>
           </div>
           <div className="card p-6">
-            <h3 className="flex items-center gap-2 font-display text-lg font-bold text-brand">
+            <h3 className="flex items-center gap-2 font-display text-lg font-bold text-heading">
               <Icon name="award" size={20} className="text-accent-dark" />
               {c.awards.title}
             </h3>
@@ -133,12 +133,12 @@ export function Credentials({ dict, compact = false }: { dict: Dictionary; compa
         {/* Memberships */}
         {!compact && (
           <div className="mt-10 rounded-2xl border border-line bg-sand p-7 text-center">
-            <h3 className="font-display text-lg font-bold text-brand">{c.memberships.title}</h3>
+            <h3 className="font-display text-lg font-bold text-heading">{c.memberships.title}</h3>
             <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
               {c.memberships.items.map((m) => (
                 <span
                   key={m}
-                  className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-4 py-2 text-sm font-semibold text-brand"
+                  className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-4 py-2 text-sm font-semibold text-heading"
                 >
                   <Icon name="star" size={15} className="text-accent" />
                   {m}
