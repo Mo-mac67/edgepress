@@ -7,19 +7,29 @@ Block-based site builder + admin panel + CRM + automated SEO + a full AI suite
 self-hostable app. Default deployment: Cloudflare Workers free tier ($0/month).
 Also runs on Docker, plain Node, or Vercel via storage adapters.
 
+```bash
+npx create-edgepress my-site
+```
+
 - Architecture & roadmap: [docs/RFC-001-architecture.md](docs/RFC-001-architecture.md)
+- CMS vs. theme, and the contract between them:
+  [docs/architecture-cms-vs-theme.md](docs/architecture-cms-vs-theme.md)
 - Product app: `apps/web` (Next.js — public site + admin + Content API)
 - Status: **public beta** — the full v1 feature set ships and is covered by
-  120 unit tests + a 111-check integration suite run against production
+  153 unit tests + a 112-check integration suite run against production
   builds in CI. APIs may still move before 1.0.
 
 ## What's inside
 
 - **Block CMS** — drag-and-drop page builder, Tiptap rich text, revisions,
-  autosave, themes, media, blog, nested menus, built-in site search — plus a
+  autosave, media, blog, nested menus, built-in site search — plus a
   code editor for page HTML and site-wide Custom CSS. Scheduled publishing,
   shareable draft-preview links, duplicate, and trash/restore for pages and
   posts.
+- **Themes are separate, and portable** — every colour, font and corner is a
+  token the CMS owns, so one panel restyles the whole site (a fully dark site
+  needs no CSS). Export a theme as a `.edgepress-theme.json` file and import it
+  on the next project — design travels, content never does.
 - **Headless too** — Custom Content Types with typed fields, relations
   (`?expand=1`) + CSV, a public Content API, API keys, and HMAC-signed
   webhooks.

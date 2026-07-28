@@ -85,3 +85,42 @@ jobs:
       - name: Container logs (on failure)
         if: failure()
         run: docker logs edgepress
+
+  installer:
+    name: Installer scaffolds a buildable project
+    runs-on: ubuntu-latest
+    # The published create-edgepress once shipped a scaffold with no
+    # packages/{core,ai} while tsconfig still aliased @edgepress/* at it, so
+    # `npx create-edgepress` produced a project that could not build — and
+    # nothing caught it. This job runs the CLI exactly as a new user would.
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Scaffold from this commit's CLI
+        run: |
+          node packages/create-edgepress/bin/index.mjs my-site --no-install
+        env:
+          # Pull the template from the branch under test, not from main.
+          EDGEPRESS_REPO: ${{ github.repository }}
+          EDGEPRESS_BRANCH: ${{ github.head_ref || github.ref_name }}
+
+      - name: The scaffold must be self-contained
+        run: |
+          cd my-site
+          test -d packages/core/src || { echo "::error::scaffold is missing packages/core"; exit 1; }
+          test -d packages/ai/src   || { echo "::error::scaffold is missing packages/ai"; exit 1; }
+          # aliases must point inside the scaffold, not at a monorepo parent
+          grep -q '"@edgepress/core": \["./packages/core/src/index.ts"\]' tsconfig.json \
+            || { echo "::error::tsconfig @edgepress aliases were not rewritten"; exit 1; }
+          # no personal deploy config may ever ship in a scaffold
+          ! grep -rqE 'cfat_|CLOUDFLARE_API_TOKEN=' . || { echo "::error::scaffold contains a credential"; exit 1; }
+
+      - name: It must actually build
+        run: |
+          cd my-site
+          npm install --no-audit --no-fund
+          npm run build
