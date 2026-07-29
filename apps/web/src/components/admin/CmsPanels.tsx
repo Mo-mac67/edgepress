@@ -116,6 +116,84 @@ export function PagesPanel({ locale }: { locale: Locale }) {
     }
   }
 
+  /**
+   * WordPress migration. Inspects first and asks before writing, because an
+   * import that silently skips the pages someone came here to move is worse
+   * than one that refuses. Media runs in batches afterwards — each file is an
+   * outbound request and there's a per-invocation cap.
+   */
+  async function importWordPress(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+
+    const send = async (action: string, extra: Record<string, string> = {}) => {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("action", action);
+      for (const [k, v] of Object.entries(extra)) fd.append(k, v);
+      const res = await fetch("/api/admin/import-wordpress", { method: "POST", body: fd });
+      return { ok: res.ok, data: await res.json().catch(() => ({})) };
+    };
+
+    setImporting(true);
+    try {
+      const look = await send("inspect");
+      if (!look.ok) { setErr(look.data.error || "Could not read that export"); ui.toast(look.data.error || "Could not read that export", "error"); return; }
+      const p = look.data as { pages: number; posts: number; attachments: number; redirects: number; siteUrl?: string };
+
+      const go = await ui.confirm({
+        title: "Import this WordPress site?",
+        message:
+          `Found ${p.pages} page(s), ${p.posts} post(s) and ${p.attachments} media file(s)` +
+          `${p.siteUrl ? ` from ${p.siteUrl}` : ""}. ` +
+          `${p.redirects} redirect(s) will be created so the old URLs keep working. ` +
+          `Existing pages with the same address are kept, not overwritten — you'll be told which.`,
+        confirmLabel: "Import",
+      });
+      if (!go) return;
+
+      const content = await send("content");
+      if (!content.ok) { setErr(content.data.error || "Import failed"); ui.toast(content.data.error || "Import failed", "error"); return; }
+      const s = content.data as {
+        pages: { created: number; skipped: number }; posts: { created: number; skipped: number };
+        redirects: { created: number }; collisions: { pages: string[]; posts: string[] }; mediaPending: number;
+      };
+      ui.toast(`Imported ${s.pages.created} page(s) and ${s.posts.created} post(s), ${s.redirects.created} redirect(s)`, "success");
+      load();
+
+      const clashed = [...s.collisions.pages, ...s.collisions.posts];
+      if (clashed.length) {
+        const replace = await ui.confirm({
+          title: "Some addresses were already taken",
+          message: `Kept your existing version of: ${clashed.slice(0, 8).join(", ")}${clashed.length > 8 ? `, +${clashed.length - 8} more` : ""}. Replace them with the WordPress content instead?`,
+          confirmLabel: "Replace them",
+        });
+        if (replace) {
+          const again = await send("content", { replace: "1" });
+          if (again.ok) { ui.toast("Replaced with the WordPress versions", "success"); load(); }
+        }
+      }
+
+      if (s.mediaPending > 0) {
+        ui.toast(`Fetching ${s.mediaPending} media file(s)… leave this tab open`);
+        const done: string[] = [];
+        for (let round = 0; round < 60; round++) {
+          const batch = await send("media", { limit: "5", done: done.join("\n") });
+          if (!batch.ok) break;
+          const b = batch.data as { imported: number; remaining: number; urlMap: Record<string, string>; failed: { url: string }[] };
+          done.push(...Object.keys(b.urlMap), ...b.failed.map((f) => f.url));
+          if (b.remaining <= 0) break;
+          ui.toast(`Media: ${done.length} done, ${b.remaining} to go`);
+        }
+        ui.toast("Media imported and links updated", "success");
+        load();
+      }
+    } finally {
+      setImporting(false);
+    }
+  }
+
   async function importScreenshot(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = "";
@@ -279,6 +357,10 @@ export function PagesPanel({ locale }: { locale: Locale }) {
           <button onClick={importWholeSite} disabled={importing} className="btn-secondary py-2 text-sm" title="Import every page of a site from its sitemap.xml" aria-label="Import every page of a site from its sitemap.xml">
             <Icon name="refresh" size={16} /> {importing ? "Importing…" : "Import whole site"}
           </button>
+          <label className="btn-secondary cursor-pointer py-2 text-sm" title="Import a WordPress export (Tools → Export) — pages, posts, media and 301 redirects">
+            <Icon name="download" size={16} /> From WordPress
+            <input type="file" accept=".xml,text/xml,application/xml" hidden disabled={importing} onChange={importWordPress} />
+          </label>
           <label className="btn-secondary cursor-pointer py-2 text-sm" title="Rebuild a page from a screenshot with AI (approximate)">
             <Icon name="image" size={16} /> Import screenshot
             <input type="file" accept="image/*" hidden onChange={importScreenshot} />

@@ -9,6 +9,34 @@ Upgrade with `npx create-edgepress upgrade` (scaffolded sites) or `git pull`
 (clones) — your content lives in your storage and is never touched by code
 updates.
 
+## [2.1.0] — 2026-07-29
+
+### Added
+- **Import a WordPress site** (Pages → From WordPress). Reads the `.xml` that
+  WordPress's own Tools → Export produces — no plugin on the old site, no
+  database access. Closes the gap 2.0.0 listed as its biggest: migrating was
+  manual, so anyone with an existing site couldn't get in the door.
+  - Pages arrive with their **original HTML intact**; a migration where the
+    layout shifts isn't a migration. Convert to blocks later if you want.
+  - Posts keep date, author, categories and tags. Drafts stay drafts — nothing
+    goes live that wasn't live.
+  - **301 redirects for every old URL**, so rankings and inbound links survive
+    the move from `/2023/05/post` to `/blog/post`.
+  - Media is re-hosted into your own storage in batches, with links rewritten as
+    each batch lands — otherwise the new site would hotlink the old one forever.
+    Batched because each file is an outbound request and hosts cap those per
+    invocation; a big library would die halfway through a single-shot import.
+  - **Slug clashes are surfaced, not silenced.** Every WordPress site has an
+    `/about` and so does a fresh install, so the first run keeps what you have,
+    lists the clashes, and asks whether to replace them. Re-running changes
+    nothing the second time.
+  - Menus, revisions and trashed items are skipped **with counts** — nothing
+    vanishes unexplained.
+  - The WXR parser is dependency-free (`packages/core/src/wxr.ts`): Workers has
+    no DOMParser, and an XML library would cost every install bundle size for
+    one code path. 25 tests cover CDATA bodies, entity-encoded titles, `?p=`
+    permalinks, and the storage round-trip.
+
 ## [2.0.0] — 2026-07-28
 
 **First stable release.** Nothing in your site changes when you upgrade from

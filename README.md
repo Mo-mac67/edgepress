@@ -15,11 +15,19 @@ npx create-edgepress my-site
 - CMS vs. theme, and the contract between them:
   [docs/architecture-cms-vs-theme.md](docs/architecture-cms-vs-theme.md)
 - Product app: `apps/web` (Next.js — public site + admin + Content API)
-- Status: **stable (2.0)** — the feature set is complete and covered by 166 unit
+- Status: **stable (2.1)** — the feature set is complete and covered by 191 unit
   tests plus a 112-check integration suite run against production builds in CI,
   with a Docker smoke test and an installer check that scaffolds a project and
   builds it. Storage keys, the Content API and the theme contract are settled;
   breaking changes get a major version and a migration note.
+
+## Coming from WordPress?
+
+Export your site (Tools → Export → All content) and drop the `.xml` into
+Pages → **From WordPress**. Pages keep their original HTML, posts keep their
+dates and taxonomy, media is re-hosted into your own storage, and every old URL
+gets a 301 so your rankings move with you. See
+[docs/wordpress-import.md](docs/wordpress-import.md).
 
 ## What's inside
 
