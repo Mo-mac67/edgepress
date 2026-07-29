@@ -16,6 +16,11 @@ jobs:
   publish:
     name: Publish to npm if the version is new
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # `npm publish --provenance` signs the package with a GitHub-issued OIDC
+      # token, which needs this. Without it npm fails with EUSAGE.
+      id-token: write
     steps:
       - uses: actions/checkout@v7
 

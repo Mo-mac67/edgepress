@@ -33,6 +33,13 @@ export function isSandbox(): boolean {
   return process.env.EDGEPRESS_SANDBOX === "1";
 }
 
+/** The sign-in hint shown in the banner (e.g. "sandbox / sandbox"). A sandbox
+ *  nobody can get into is pointless, so these credentials are meant to be
+ *  public — set EDGEPRESS_SANDBOX_LOGIN to advertise them. */
+export function sandboxLogin(): string | undefined {
+  return process.env.EDGEPRESS_SANDBOX_LOGIN?.trim() || undefined;
+}
+
 /** Minutes between resets. */
 export function sandboxResetMinutes(): number {
   const n = Number(process.env.EDGEPRESS_SANDBOX_RESET_MINUTES);

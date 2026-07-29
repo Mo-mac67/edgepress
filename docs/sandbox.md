@@ -11,7 +11,8 @@ Off by default. A normal install is completely unaffected by everything here.
 
 ```bash
 EDGEPRESS_SANDBOX=1                  # enables sandbox mode
-EDGEPRESS_SANDBOX_RESET_MINUTES=60   # what the banner tells visitors (default 60)
+EDGEPRESS_SANDBOX_RESET_MINUTES=60   # how often it resets (default 60)
+EDGEPRESS_SANDBOX_LOGIN="sandbox / sandbox"  # shown in the banner so people can get in
 CRON_SECRET=<a long random string>   # protects the reset endpoint
 ```
 
@@ -36,7 +37,8 @@ Then:
    GET /api/cron/sandbox-reset?key=$CRON_SECRET
    ```
 
-Publish the sign-in details somewhere obvious — the point is that people get in.
+Set EDGEPRESS_SANDBOX_LOGIN and the banner advertises the credentials itself —
+the point of a sandbox is that people get in.
 
 ## What visitors can and can't do
 

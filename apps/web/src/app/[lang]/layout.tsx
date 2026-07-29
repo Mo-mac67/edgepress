@@ -16,7 +16,7 @@ import { getActiveLocales, getNav, getSeo, getSettings, getTheme } from "@/lib/c
 import { getAIConfig } from "@/lib/ai/engine";
 import { getSnippets, hasSnippetTokens, renderSnippets } from "@/lib/snippets-store";
 import { SandboxBanner } from "@/components/SandboxBanner";
-import { isSandbox, maybeResetSandbox, sandboxResetMinutes } from "@/lib/sandbox";
+import { isSandbox, maybeResetSandbox, sandboxLogin, sandboxResetMinutes } from "@/lib/sandbox";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -151,7 +151,7 @@ export default async function LangLayout({
             /theme.css route so accent/fonts/radius edits apply without a
             redeploy. Falls back to the on-brand @theme defaults in globals. */}
         <link rel="stylesheet" href="/theme.css" />
-        {isSandbox() && <SandboxBanner minutes={sandboxResetMinutes()} />}
+        {isSandbox() && <SandboxBanner minutes={sandboxResetMinutes()} login={sandboxLogin()} />}
         <SeoTags seo={seo} settings={settings} />
         <Analytics />
         <ScrollFx />
