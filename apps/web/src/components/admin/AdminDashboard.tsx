@@ -13,6 +13,7 @@ import { MarketplacePanel } from "./MarketplacePanel";
 import { CollectionsPanel } from "./CollectionsPanel";
 import { FormsPanel } from "./FormsPanel";
 import { DeveloperPanel } from "./DeveloperPanel";
+import { SitesPanel } from "./SitesPanel";
 import { TabPermissionsCard } from "./TabPermissionsCard";
 import { SeoPanel } from "./SeoPanel";
 import { NewsletterPanel } from "./NewsletterPanel";
@@ -38,9 +39,9 @@ const STATUS_LABEL: Record<LeadStatus, string> = {
   lost: "Lost",
 };
 const PALETTE = ["#16324f", "#e0a52e", "#1c4066", "#c2861a", "#5a6571", "#9aa4ae"];
-type Tab = "overview" | "copilot" | "leads" | "marketplace" | "pages" | "menu" | "blog" | "collections" | "forms" | "media" | "courses" | "appearance" | "seo" | "newsletter" | "ai" | "site" | "developer" | "activity" | "settings" | "audit" | "help";
+type Tab = "overview" | "copilot" | "leads" | "marketplace" | "pages" | "menu" | "blog" | "collections" | "forms" | "media" | "courses" | "appearance" | "seo" | "newsletter" | "ai" | "site" | "developer" | "sites" | "activity" | "settings" | "audit" | "help";
 /** Every dashboard tab id — also the vocabulary for per-admin tab permissions ("audit"/"developer" stay super-only regardless). */
-const ALL_TAB_IDS: Tab[] = ["overview", "leads", "marketplace", "activity", "audit", "pages", "menu", "blog", "collections", "forms", "media", "courses", "seo", "newsletter", "appearance", "site", "developer", "settings", "help"];
+const ALL_TAB_IDS: Tab[] = ["overview", "leads", "marketplace", "activity", "audit", "pages", "menu", "blog", "collections", "forms", "media", "courses", "seo", "newsletter", "appearance", "site", "developer", "sites", "settings", "help"];
 
 export function AdminDashboard({
   locale,
@@ -134,6 +135,7 @@ export function AdminDashboard({
         { id: "appearance", label: "Appearance", icon: "star" },
         { id: "site", label: "Site info", icon: "building" },
         ...(isSuper ? [{ id: "developer" as Tab, label: "Developer", icon: "code" as const }] : []),
+        ...(isSuper ? [{ id: "sites" as Tab, label: "Your sites", icon: "building" as const }] : []),
         { id: "settings", label: "Security", icon: "lock" },
         { id: "help", label: "Help & guide", icon: "info" },
       ],
@@ -259,6 +261,7 @@ export function AdminDashboard({
           {tab === "site" && <SitePanel />}
           {tab === "activity" && <Activity events={events} />}
           {tab === "developer" && isSuper && <DeveloperPanel />}
+          {tab === "sites" && isSuper && <SitesPanel />}
           {tab === "settings" && <Settings isSuper={isSuper} channels={channels} adminUsers={adminUsers} />}
           {tab === "audit" && isSuper && <AuditTab audit={audit} />}
         </div>

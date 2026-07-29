@@ -15,7 +15,7 @@ npx create-edgepress my-site
 - CMS vs. theme, and the contract between them:
   [docs/architecture-cms-vs-theme.md](docs/architecture-cms-vs-theme.md)
 - Product app: `apps/web` (Next.js — public site + admin + Content API)
-- Status: **stable (2.1)** — the feature set is complete and covered by 191 unit
+- Status: **stable (2.2)** — the feature set is complete and covered by 209 unit
   tests plus a 112-check integration suite run against production builds in CI,
   with a Docker smoke test and an installer check that scaffolds a project and
   builds it. Storage keys, the Content API and the theme contract are settled;
@@ -28,6 +28,12 @@ Pages → **From WordPress**. Pages keep their original HTML, posts keep their
 dates and taxonomy, media is re-hosted into your own storage, and every old URL
 gets a 301 so your rankings move with you. See
 [docs/wordpress-import.md](docs/wordpress-import.md).
+
+## Running several sites?
+
+One dashboard over every EdgePress install you run — versions, unread leads, and
+which sites aren't answering. Counts only; a client's data stays on their site.
+See [docs/agency-console.md](docs/agency-console.md).
 
 ## What's inside
 

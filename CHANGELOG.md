@@ -9,6 +9,44 @@ Upgrade with `npx create-edgepress upgrade` (scaffolded sites) or `git pull`
 (clones) — your content lives in your storage and is never touched by code
 updates.
 
+## [2.2.0] — 2026-07-29
+
+### Added
+- **Agency console — "Your sites"** (owner only). If you build sites for
+  clients, each one is its own install with its own admin panel, version number
+  and inbox. This puts them in one table: versions and which need updating,
+  published page/post counts, unread lead counts, and which sites aren't
+  answering. See docs/agency-console.md.
+  - Each site is reached with an **API key it issued itself** (Developer → API
+    keys), so access is granted and revoked on the client's side and the console
+    never holds a password. The key is stored on the console install and is
+    **never returned to the browser** — there's a test that greps the whole
+    serialised response for it.
+  - **Counts only, never content.** A console needs to know a site is alive and
+    whether it needs attention; it doesn't need its customers' contact details.
+    Shipping them would turn one leaked key into a breach across every site.
+  - Plain `http` is refused rather than warned about — an API key sent in the
+    clear is a key given away. `localhost` is the exception, for development.
+  - A site being down is *reported*, not thrown: revoked key, timeout,
+    unreachable and "too old to have the endpoint" each say so distinctly. A
+    console that crashes when a client site is offline is useless exactly when
+    you need it.
+  - "Check all" polls sequentially, because each check is an outbound request
+    and hosts cap those per invocation — twenty at once would report false
+    failures.
+- New `GET /api/site-status` on every install: what this site will tell a
+  console about itself, API-key authenticated.
+
+### Fixed
+- **`npm run cf:deploy` no longer loops on Windows.** From wrangler 4.114,
+  wrangler spots an OpenNext project and hands the deploy back to
+  `opennextjs-cloudflare deploy`, which calls wrangler again — ending in an
+  empty error message that gives no clue what went wrong. `cf:deploy` and
+  `cf:preview` now go through `scripts/cf-deploy.mjs`, which cleans, builds, and
+  calls wrangler's bin directly with `OPEN_NEXT_DEPLOY=1` so the hand-off
+  doesn't recurse. Also sidesteps the `npm exec` wrapper that exits 1 with no
+  output on Windows shells.
+
 ## [2.1.1] — 2026-07-29
 
 ### Fixed

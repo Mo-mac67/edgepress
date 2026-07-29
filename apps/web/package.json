@@ -1,6 +1,6 @@
 {
   "name": "edgepress-web",
-  "version": "2.1.1",
+  "version": "2.2.0",
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
@@ -12,8 +12,8 @@
     "smoke": "node scripts/smoke.mjs",
     "clean": "node scripts/clean-build.mjs",
     "cf:build": "opennextjs-cloudflare build",
-    "cf:preview": "node scripts/clean-build.mjs && opennextjs-cloudflare build && opennextjs-cloudflare preview",
-    "cf:deploy": "node scripts/clean-build.mjs && opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "cf:preview": "node scripts/cf-deploy.mjs --preview",
+    "cf:deploy": "node scripts/cf-deploy.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:integration": "node tests/integration/run.mjs"
