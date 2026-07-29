@@ -41,13 +41,46 @@ export async function getPage(slug: string): Promise<Page | null> {
   return (await getPages()).find((p) => p.slug === slug) ?? null;
 }
 
-export async function savePage(page: Page): Promise<void> {
+/**
+ * A slug nobody else is using. Two items sharing one slug means the second is
+ * permanently unreachable — `getPage`/`getPost` return the first match — which
+ * looks like the save worked while the content is invisible. Suffixing the way
+ * WordPress does (`about-2`) keeps every item reachable and is what people
+ * expect, and unlike throwing it can't break the fifteen callers that treat
+ * saving as infallible.
+ *
+ * Trashed items don't reserve their slug: they aren't served, and restoring one
+ * runs back through here and gets re-uniqued.
+ */
+function uniqueSlug(slug: string, id: string, existing: { id: string; slug: string; trashed?: boolean }[]): string {
+  const taken = new Set(existing.filter((p) => p.id !== id && !p.trashed).map((p) => p.slug));
+  if (!taken.has(slug)) return slug;
+  // "" is the home page. A second one can't also be "", so give it a name.
+  const base = slug === "" ? "home" : slug;
+  for (let n = 2; n < 1000; n++) {
+    const candidate = `${base}-${n}`;
+    if (!taken.has(candidate)) return candidate;
+  }
+  return `${base}-${Date.now()}`;
+}
+
+/** Whether this slug is already used by a different page — for warning in the
+ *  editor before a save silently renames it. */
+export async function pageSlugTaken(slug: string, exceptId?: string): Promise<boolean> {
+  return (await getPages()).some((p) => p.slug === slug && p.id !== exceptId && !p.trashed);
+}
+
+/** Returns the slug actually stored, which may differ from the one passed in
+ *  when it was already taken. */
+export async function savePage(page: Page): Promise<string> {
   const pages = await getPages();
   const idx = pages.findIndex((p) => p.id === page.id);
+  page.slug = uniqueSlug(page.slug, page.id, pages);
   page.updatedAt = new Date().toISOString();
   if (idx === -1) pages.push(page);
   else pages[idx] = page;
   await writeJsonDoc(PAGES, pages);
+  return page.slug;
 }
 
 /** Soft delete: pages land in the Trash (restorable). `force` removes forever. */
@@ -231,12 +264,20 @@ export async function getPosts(): Promise<Post[]> {
 export async function getPost(slug: string): Promise<Post | null> {
   return (await getPosts()).find((p) => p.slug === slug) ?? null;
 }
-export async function savePost(post: Post): Promise<void> {
+/** Whether this slug is already used by a different post. */
+export async function postSlugTaken(slug: string, exceptId?: string): Promise<boolean> {
+  return (await getPosts()).some((p) => p.slug === slug && p.id !== exceptId && !p.trashed);
+}
+
+/** Returns the slug actually stored — see savePage for why it may differ. */
+export async function savePost(post: Post): Promise<string> {
   const posts = await readJsonDoc<Post[]>(POSTS, []);
   const idx = posts.findIndex((p) => p.id === post.id);
+  post.slug = uniqueSlug(post.slug, post.id, posts);
   if (idx === -1) posts.push(post);
   else posts[idx] = post;
   await writeJsonDoc(POSTS, posts);
+  return post.slug;
 }
 /** Soft delete (Trash) — `force` removes forever. */
 export async function deletePost(id: string, force = false): Promise<boolean> {

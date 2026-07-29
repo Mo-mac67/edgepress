@@ -62,11 +62,20 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     };
   }
   await snapshotRevision(id); // version history: capture the pre-save state
-  await savePage(merged);
-  await logAudit({ action: "page_save", role: await getRole(), detail: merged.slug || "home" });
+  // Renaming to an address another page already uses would have made one of
+  // them unreachable; the store hands back the slug it actually used so the
+  // editor can say so rather than quietly showing the wrong URL.
+  const requestedSlug = merged.slug;
+  const storedSlug = await savePage(merged);
+  await logAudit({ action: "page_save", role: await getRole(), detail: storedSlug || "home" });
   // Instant indexing: notify search engines when a page goes (or stays) live.
-  if (merged.status === "published") await pingIndexNow(merged.slug);
-  return NextResponse.json({ page: merged });
+  if (merged.status === "published") await pingIndexNow(storedSlug);
+  return NextResponse.json({
+    page: merged,
+    ...(storedSlug !== requestedSlug
+      ? { slugChanged: { requested: requestedSlug, used: storedSlug } }
+      : {}),
+  });
 }
 
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {

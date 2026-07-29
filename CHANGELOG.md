@@ -9,6 +9,26 @@ Upgrade with `npx create-edgepress upgrade` (scaffolded sites) or `git pull`
 (clones) — your content lives in your storage and is never touched by code
 updates.
 
+## [2.1.1] — 2026-07-29
+
+### Fixed
+- **Two pages could share one address, and the second became unreachable.**
+  `savePage`/`savePost` matched on id only, so anything that set a slug without
+  checking — renaming a page in the editor, AI generation, the site and
+  WordPress importers, templates, MCP — could produce a duplicate. `getPage`
+  returns the first match, so the save reported success while the content was
+  invisible. The store now guarantees a slug belongs to exactly one item,
+  suffixing the way WordPress does (`pricing-2`) and returning the slug it
+  actually used. Suffixing rather than refusing because fifteen callers treat
+  saving as infallible; failing them would trade silent loss for silent errors.
+  - Renaming a page to a taken address now reports `slugChanged` so the editor
+    can say which URL it got instead of quietly showing the wrong one.
+  - Trashed items no longer reserve their slug — deleting a page and recreating
+    it with the same address works, and the create endpoint now agrees with the
+    store instead of rejecting it.
+  - Saving a page over itself never renames it; only a *different* item's slug
+    counts as taken.
+
 ## [2.1.0] — 2026-07-29
 
 ### Added
